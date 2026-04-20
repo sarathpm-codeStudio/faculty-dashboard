@@ -25,7 +25,7 @@ const App = () => {
         <Routes>
 
           {/* ✅ Public — no login needed */}
-          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/*" element={<AuthPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
 
           {/* ✅ Protected — must be logged in */}

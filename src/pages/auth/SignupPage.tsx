@@ -1,96 +1,133 @@
+
+
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import AuthLayout from '@/components/layout/AuthLayout'
+import { Button, Input, Paragraph, Checkbox } from '@/components/ui'
+import { ChevronDown } from 'lucide-react'
+import { IoIosArrowRoundBack } from 'react-icons/io'
 
-const SignupPage = () => {
+
+const countryCodes = [
+    { code: '+91', flag: '🇮🇳', country: 'India' },
+    { code: '+1', flag: '🇺🇸', country: 'USA' },
+    { code: '+44', flag: '🇬🇧', country: 'UK' },
+    { code: '+971', flag: '🇦🇪', country: 'UAE' },
+]
+
+const LoginPage = () => {
     const navigate = useNavigate()
     const login = useAuthStore((state) => state.login)
-    const [form, setForm] = useState({ name: '', email: '', phone: '', country: '' })
+
+    const [phone, setPhone] = useState('')
+    const [rememberMe, setRememberMe] = useState(false)
+    const [selectedCode, setSelectedCode] = useState(countryCodes[0])
+    const [dropdownOpen, setDropdownOpen] = useState(false)
     const [error, setError] = useState('')
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value })
-    }
-
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleLogin = (e: React.FormEvent) => {
         e.preventDefault()
-        if (!form.name || !form.email || !form.phone) {
-            return setError('Please fill all fields')
-        }
-        // Mock signup — straight to dashboard
-        login({ id: '1', name: form.name, email: form.email }, 'mock-token-123')
+        if (!phone) return setError('Please enter your phone number')
+        login(
+            { id: '1', name: 'Salsabeel', email: `${selectedCode.code}${phone}` },
+            'mock-token-123'
+        )
         navigate('/dashboard')
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-            <div className="w-full max-w-md">
+        <AuthLayout title="Faculty Sign up" subtitle="Access your dashboard and classrooms">
+            <form onSubmit={handleLogin} className="flex flex-col gap-4">
 
-                <div className="text-center mb-8">
-                    <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
-                        E
-                    </div>
-                    <h1 className="text-2xl font-semibold text-gray-900">Create account</h1>
-                    <p className="text-gray-500 text-sm mt-1">Start teaching on EduPlatform</p>
-                </div>
+                {/* Phone Number field */}
+                <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">
+                        Phone Number
+                    </label>
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <div className="flex gap-2 items-start">
 
-                        {[
-                            { name: 'name', label: 'Full name', type: 'text', placeholder: 'Salsabeel' },
-                            { name: 'email', label: 'Email address', type: 'email', placeholder: 'you@example.com' },
-                            { name: 'phone', label: 'Phone number', type: 'tel', placeholder: '+91 9876543210' },
-                        ].map(({ name, label, type, placeholder }) => (
-                            <div key={name} className="flex flex-col gap-1.5">
-                                <label className="text-sm font-medium text-gray-700">{label}</label>
-                                <input
-                                    type={type}
-                                    name={name}
-                                    value={form[name as keyof typeof form]}
-                                    onChange={handleChange}
-                                    placeholder={placeholder}
-                                    className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all"
-                                />
-                            </div>
-                        ))}
-
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-medium text-gray-700">Country</label>
-                            <select
-                                name="country"
-                                value={form.country}
-                                onChange={handleChange}
-                                className="w-full px-4 py-3 rounded-lg border border-gray-200 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition-all bg-white"
+                        {/* Country code dropdown */}
+                        <div className="relative flex-shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setDropdownOpen(!dropdownOpen)}
+                                className="flex items-center gap-1.5 px-3 py-4 bg-gray-100 hover:bg-gray-200 border border-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors"
                             >
-                                <option value="">Select country</option>
-                                <option value="IN">India</option>
-                                <option value="US">United States</option>
-                                <option value="UK">United Kingdom</option>
-                                <option value="AE">UAE</option>
-                            </select>
+                                <span>{selectedCode.code}</span>
+                                <ChevronDown
+                                    size={14}
+                                    className={`text-gray-500 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''
+                                        }`}
+                                />
+                            </button>
+
+                            {/* Dropdown list */}
+                            {dropdownOpen && (
+                                <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                                    {countryCodes.map((item) => (
+                                        <button
+                                            key={item.code}
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedCode(item)
+                                                setDropdownOpen(false)
+                                            }}
+                                            className={`w-full flex items-center justify-between px-3 py-2.5 text-sm transition-colors hover:bg-gray-50
+                        ${selectedCode.code === item.code
+                                                    ? 'bg-indigo-50 text-indigo-600 font-medium'
+                                                    : 'text-gray-700'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span>{item.flag}</span>
+                                                <span>{item.country}</span>
+                                            </div>
+                                            <span className="text-gray-400 text-xs">{item.code}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
-                        {error && <p className="text-red-500 text-xs">{error}</p>}
+                        {/* Phone input */}
+                        <div className="flex flex-col gap-1 flex-1">
+                            <Input
+                                // label="Phone Number"
+                                type="number"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                placeholder="**********"
+                                error={error}
+                            />
+                            {error && (
+                                <p className="text-red-500 text-xs">{error}</p>
+                            )}
+                        </div>
 
-                        <button
-                            type="submit"
-                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors mt-2"
-                        >
-                            Create account
-                        </button>
-
-                    </form>
-
-                    <p className="text-center text-sm text-gray-500 mt-6">
-                        Already have an account?{' '}
-                        <Link to="/auth" className="text-indigo-600 font-medium hover:underline">Sign in</Link>
-                    </p>
+                    </div>
                 </div>
 
+                {/* <Checkbox
+                    label="Remember me"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className='mt-[15px]'
+                /> */}
+
+                <Button type="submit" fullWidth className='mt-[15px]'>
+                    Sign up
+                </Button>
+
+            </form>
+
+            <div className='w-full mt-[40px]  flex items-center justify-center gap-2 text-[14px] font-bold'>
+                <IoIosArrowRoundBack size={24} className="text-gray-500 cursor-pointer " />
+                <span className=' text-gray-500 cursor-pointer'> Back to sign in</span>
             </div>
-        </div>
+        </AuthLayout>
     )
 }
 
-export default SignupPage
+export default LoginPage
