@@ -41,7 +41,7 @@ export const Heading = ({
   ...props
 }: HeadingProps) => (
   <Tag
-    className={`text-gray-900 tracking-tight text-[30px] ${headingSizes[size]} ${className}`}
+    className={` tracking-tight text-[30px] ${headingSizes[size]} ${className}`}
     {...props}
   >
     {children}
@@ -56,7 +56,7 @@ export const Subheading = ({
   ...props
 }: TextProps) => (
   <p
-    className={`${subheadingSizes[size]} ${muted ? 'text-gray-400' : 'text-gray-600'} ${className}`}
+    className={`${subheadingSizes[size]} text-[20px] ${className}`}
     {...props}
   >
     {children}
@@ -71,7 +71,7 @@ export const Paragraph = ({
   ...props
 }: TextProps) => (
   <p
-    className={`${paragraphSizes[size]}  ${muted ? 'text-gray-400' : 'text-gray-500'} leading-relaxed ${className}`}
+    className={`${paragraphSizes[size]}  text-[16px]  leading-relaxed ${className}`}
     {...props}
   >
     {children}
