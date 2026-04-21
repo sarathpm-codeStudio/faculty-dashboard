@@ -1,26 +1,51 @@
 
 
-import { Bell, Search } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Bell, Search, LogOut, ChevronDown } from 'lucide-react'
+import manAvatar from '@/assets/images/man.jpg'
 import { useAuthStore } from '@/store/authStore'
+import { useNavigate } from 'react-router-dom'
+import { Button2, Input, Paragraph } from '@/components/ui'
 
 const TopNavBar = () => {
     const user = useAuthStore((state) => state.user)
+    const logout = useAuthStore((state) => state.logout)
+    const navigate = useNavigate()
+    const [dropdownOpen, setDropdownOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleLogout = () => {
+        logout()
+        navigate('/auth')
+    }
 
     return (
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
+        <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 pt-7">
 
             {/* Search */}
-            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-4 py-2 w-72">
-                <Search size={16} className="text-gray-400" />
-                <input
-                    type="text"
-                    placeholder="Search..."
-                    className="bg-transparent outline-none text-sm text-gray-700 w-full placeholder:text-gray-400"
+            <div className="w-[700px]">
+                <Input
+                    placeholder="Search by course and students..."
+                    leftIcon={<Search size={16} />}
                 />
             </div>
 
             {/* Right side */}
             <div className="flex items-center gap-4">
+
+                <div className='w-[200px]'>
+                    <Button2>Create Course</Button2>
+                </div>
 
                 {/* Notification bell */}
                 <button className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
@@ -30,15 +55,34 @@ const TopNavBar = () => {
                     </span>
                 </button>
 
-                {/* User avatar */}
-                <div className="flex items-center gap-2">
-                    <div className="w-9 h-9 bg-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        {user?.name?.charAt(0).toUpperCase() ?? 'F'}
-                    </div>
-                    <div className="hidden md:block">
-                        <p className="text-sm font-medium text-gray-900">{user?.name ?? 'Faculty'}</p>
-                        <p className="text-xs text-gray-400">{user?.email ?? ''}</p>
-                    </div>
+                {/* Divider */}
+                <div className="w-px h-8 bg-gray-300" />
+
+                {/* User dropdown */}
+                <div className="relative" ref={dropdownRef}>
+                    <button
+                        onClick={() => setDropdownOpen(!dropdownOpen)}
+                        className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors"
+                    >
+
+                        <Paragraph className="font-bold hidden md:block">{user?.name ?? 'Faculty'}</Paragraph>
+                        <ChevronDown size={14} className={`text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                            <img src={manAvatar} alt="avatar" className="w-full h-full object-cover" />
+                        </div>
+                    </button>
+
+                    {dropdownOpen && (
+                        <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                                <LogOut size={14} />
+                                Logout
+                            </button>
+                        </div>
+                    )}
                 </div>
 
             </div>
