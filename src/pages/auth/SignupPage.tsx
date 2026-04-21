@@ -33,7 +33,7 @@ const LoginPage = () => {
             { id: '1', name: 'Salsabeel', email: `${selectedCode.code}${phone}` },
             'mock-token-123'
         )
-        navigate('/dashboard')
+        navigate('/auth/otp')
     }
 
     return (
@@ -53,7 +53,7 @@ const LoginPage = () => {
                             <button
                                 type="button"
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                                className="flex items-center gap-1.5 px-3 py-4 bg-gray-100 hover:bg-gray-200 border border-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                                className="flex items-center gap-1.5 px-3 h-[56px] bg-[#F2F4F6] hover:bg-gray-200 border border-gray-100 rounded-lg text-base font-medium text-gray-700 transition-colors"
                             >
                                 <span>{selectedCode.code}</span>
                                 <ChevronDown
@@ -124,7 +124,7 @@ const LoginPage = () => {
 
             <div className='w-full mt-[40px]  flex items-center justify-center gap-2 text-[14px] font-bold'>
                 <IoIosArrowRoundBack size={24} className="text-gray-500 cursor-pointer " />
-                <span className=' text-gray-500 cursor-pointer'> Back to sign in</span>
+                <Link to="/auth"> <span className=' text-gray-500 cursor-pointer'> Back to sign in</span></Link>
             </div>
         </AuthLayout>
     )

@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'ghost' | 'secondary' | 'danger'
+  variant?: 'primary' | 'ghost' | 'secondary' | 'danger' | "white"
   loading?: boolean
   fullWidth?: boolean
 }
@@ -26,7 +26,10 @@ const Button = ({
       },
     },
     secondary: {
-      cls: 'px-5 py-2 bg-blue-50 hover:bg-blue-100 text-[#000B60] text-sm border border-blue-100',
+      cls: ' bg-[#BCC2FF]  text-[#000B60] px-6 text-[18px] h-[56px]',
+    },
+    white: {
+      cls: ' bg-white  text-[#000B60] px-6 text-[18px] h-[56px]',
     },
     ghost: {
       cls: 'px-4 py-2 text-[#000B60] hover:underline bg-transparent text-sm',
@@ -34,6 +37,9 @@ const Button = ({
     danger: {
       cls: 'px-4 py-1.5 text-red-500 hover:text-red-700 bg-transparent text-xs',
     },
+
+
+
   }
 
   const { cls, style } = variants[variant]

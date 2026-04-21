@@ -2,6 +2,8 @@ import { Mail, Phone } from 'lucide-react'
 import OnboardingLayout from './OnboardingLayout'
 import { Input, Textarea, Button, DateInput } from '@/components/ui'
 import { IdentityData } from './index'
+import { IoMdArrowForward } from "react-icons/io";
+
 
 interface Props {
     data: IdentityData
@@ -32,7 +34,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
             animClass={animClass}
         >
             <form onSubmit={handleSubmit} className="w-full max-w-4xl">
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
+                <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-6">
                     <div className="flex flex-col gap-5">
 
                         {/* First + Last name */}
@@ -90,7 +92,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
 
                         {/* Continue — inside card */}
                         <div className="flex justify-end pt-2">
-                            <Button type="submit">Continue →</Button>
+                            <Button type="submit">Continue <IoMdArrowForward /></Button>
                         </div>
 
                     </div>

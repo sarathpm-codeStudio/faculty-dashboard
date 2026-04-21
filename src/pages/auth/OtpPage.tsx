@@ -18,9 +18,9 @@ const OtpPage = () => {
 
     const handleVerify = (e: React.FormEvent) => {
         e.preventDefault()
-        if (otp.join('').length < 6) return setError('Please enter the full 6-digit OTP')
+        if (otp.join('').length < 4) return setError('Please enter the full 6-digit OTP')
         login({ id: '1', name: 'Salsabeel', email }, 'mock-token-123')
-        navigate('/dashboard')
+        navigate('/onboarding')
     }
 
     const handleResend = () => {

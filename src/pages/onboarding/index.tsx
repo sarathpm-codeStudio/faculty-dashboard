@@ -31,7 +31,33 @@ const OnboardingPage = () => {
     firstName: '', lastName: '', email: '',
     phone: '', dob: '', bio: '',
   })
-  const [qualifications, setQualifications] = useState<Qualification[]>([])
+  const [qualifications, setQualifications] = useState<Qualification[]>([
+    {
+      id: '1',
+      type: 'PhD',
+      fieldOfStudy: 'Computer Science',
+      graduationYear: '2018-06-15',
+      teachingExperience: '6 Years',
+      fileName: 'phd_certificate.pdf',
+      fileSize: '2.4 MB',
+    },
+    {
+      id: '2',
+      type: 'Masters',
+      fieldOfStudy: 'Artificial Intelligence',
+      graduationYear: '2014-05-20',
+      teachingExperience: '2 Years',
+      fileName: 'masters_degree.pdf',
+      fileSize: '1.8 MB',
+    },
+    {
+      id: '3',
+      type: 'Degree',
+      fieldOfStudy: 'Mathematics',
+      graduationYear: '2012-04-10',
+      teachingExperience: '',
+    },
+  ])
 
   const goNext = (to: number) => { setDirection('forward'); setStep(to) }
   const goBack = (to: number | (() => void)) => {

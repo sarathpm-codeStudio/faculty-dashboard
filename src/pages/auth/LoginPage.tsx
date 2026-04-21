@@ -32,7 +32,7 @@ const LoginPage = () => {
             { id: '1', name: 'Salsabeel', email: `${selectedCode.code}${phone}` },
             'mock-token-123'
         )
-        navigate('/dashboard')
+        navigate('/auth/otp')
     }
 
     return (
@@ -52,7 +52,7 @@ const LoginPage = () => {
                             <button
                                 type="button"
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                                className="flex items-center gap-1.5 px-3 py-4 bg-gray-100 hover:bg-gray-200 border border-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-4.5 bg-gray-100 hover:bg-gray-200 border border-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors"
                             >
                                 <span>{selectedCode.code}</span>
                                 <ChevronDown
@@ -100,9 +100,9 @@ const LoginPage = () => {
                                 placeholder="**********"
                                 error={error}
                             />
-                            {error && (
+                            {/* {error && (
                                 <p className="text-red-500 text-xs">{error}</p>
-                            )}
+                            )} */}
                         </div>
 
                     </div>
@@ -123,7 +123,7 @@ const LoginPage = () => {
 
             <Paragraph size="sm" className="text-center mt-6 mb-[10px]">
                 Don't have an account?{' '}
-                <Link to="/auth/signup" className="text-[#000B60] font-bold hover:underline">
+                <Link to="/auth/signup" className="text-[#000B60] font-bold ">
                     Sign up
                 </Link>
             </Paragraph>

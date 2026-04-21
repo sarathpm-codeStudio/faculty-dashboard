@@ -1,8 +1,11 @@
 import { useState, useRef } from 'react'
-import { CloudUpload, Plus, Trash2, Eye, Download, GraduationCap } from 'lucide-react'
+import { CloudUpload, Plus, Trash2, Eye, FileText, Download, GraduationCap } from 'lucide-react'
 import OnboardingLayout from './OnboardingLayout'
 import { Input, Select, Button, Subheading, Paragraph, DateInput } from '@/components/ui'
 import { Qualification } from './index'
+import { IoMdArrowForward } from "react-icons/io";
+import { IoAddCircleOutline } from "react-icons/io5";
+
 
 interface Props {
     qualifications: Qualification[]
@@ -70,8 +73,8 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
             <div className="w-full max-w-4xl flex flex-col gap-4">
 
                 {/* Add Qualification card */}
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-                    <Subheading className='text-[#000B60]'> Add New Qualification</Subheading>
+                <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-5">
+                    <Subheading className='text-[#000B60] font-bold'> Add New Qualification</Subheading>
                     <Paragraph className='mb-4 text-gray-500' > Fill in the details for your next academic degree. </Paragraph>
 
 
@@ -141,9 +144,9 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                     </div>
 
                     {/* Add button */}
-                    <div className="flex justify-end mt-4">
+                    <div className="flex justify-end mt-10">
                         <Button type="button" variant="secondary" onClick={handleAdd}>
-                            <Plus size={15} />
+                            <IoAddCircleOutline size={25} />
                             Add Qualification
                         </Button>
                     </div>
@@ -151,37 +154,40 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
 
                 {/* Added qualifications */}
                 {qualifications.map((q) => (
-                    <div key={q.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+                    <div key={q.id} className="rounded-xl bg-white p-5">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                                <div className="w-8 h-8 bg-[#DFE0FF] rounded-lg flex items-center justify-center">
                                     <GraduationCap size={15} className="text-[#000B60]" />
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-sm text-gray-800">{q.fieldOfStudy}</p>
-                                    <p className="text-xs text-gray-400">Primary Qualification</p>
+                                    <Subheading > {q.fieldOfStudy} </Subheading>
+                                    <Paragraph className='text-gray-500' > {q.type} </Paragraph>
+
                                 </div>
                             </div>
                             <button
                                 onClick={() => handleRemove(q.id)}
-                                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
+                                className="flex items-center gap-1 text-[14px] text-[#BA1A1A] hover:text-red-700"
                             >
                                 <Trash2 size={12} />
-                                Remove
+                                <span className="font-bold cursor-pointer">
+                                    Remove
+                                </span>
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                             {[
                                 { label: 'Degree Type', value: q.type },
                                 { label: 'Field of Study', value: q.fieldOfStudy },
                                 { label: 'Graduation Year', value: q.graduationYear },
                                 { label: 'Teaching Experience', value: q.teachingExperience },
                             ].map(({ label, value }) => (
-                                <div key={label}>
-                                    <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">{label}</p>
-                                    <div className="px-3 py-2 bg-[#F2F4F6] border border-gray-100 rounded-lg text-sm text-gray-700">
-                                        {value}
+                                <div key={label} className="flex flex-col gap-1.5">
+                                    <span className="text-sm font-bold text-gray-700">{label}</span>
+                                    <div className="w-full px-4 py-4 bg-[#F2F4F6] rounded-lg border border-gray-100 text-base font-medium text-gray-700">
+                                        {value || <span className="text-gray-400">—</span>}
                                     </div>
                                 </div>
                             ))}
@@ -191,7 +197,7 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                             <div className="flex items-center justify-between px-3 py-2.5 bg-[#F2F4F6] border border-gray-100 rounded-lg mt-2">
                                 <div className="flex items-center gap-2">
                                     <div className="w-7 h-7 bg-red-50 rounded flex items-center justify-center border border-red-100">
-                                        <span className="text-red-500 text-[9px] font-bold">PDF</span>
+                                        <span className="text-red-500 text-[9px] font-bold"><FileText size={20} /></span>
                                     </div>
                                     <div>
                                         <p className="text-xs font-medium text-gray-700">{q.fileName}</p>
@@ -199,8 +205,8 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <button className="text-gray-400 hover:text-gray-600"><Eye size={14} /></button>
-                                    <button className="text-gray-400 hover:text-gray-600"><Download size={14} /></button>
+                                    <button className="text-[#000B60] font-bold "><Eye size={20} /></button>
+                                    <button className="text-[#000B60] font-bold "><Download size={20} /></button>
                                 </div>
                             </div>
                         )}
@@ -208,8 +214,8 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                 ))}
 
                 {/* Continue — inside the section */}
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex justify-end">
-                    <Button type="button" onClick={onNext}>Continue →</Button>
+                <div className="flex justify-end">
+                    <Button type="button" onClick={onNext}>Continue <IoMdArrowForward /></Button>
                 </div>
 
             </div>

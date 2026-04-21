@@ -56,7 +56,7 @@ export const Subheading = ({
   ...props
 }: TextProps) => (
   <p
-    className={`${subheadingSizes[size]} text-[20px] ${className}`}
+    className={`text-[20px] ${className}`}
     {...props}
   >
     {children}
