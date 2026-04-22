@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-    ArrowLeft, Share2, Trash2, Pencil, Play, Clock,
+    ArrowLeft, Share2, Trash2, Pencil, Clock,
     Layers, BookOpen, Wallet, Users, MousePointer2, Globe, TrendingUp, Star,
 } from 'lucide-react'
 import { Button, Heading, Paragraph, Subheading } from '@/components/ui'
-import { ReviewCard } from '@/components/features'
+import { ReviewCard, VideoPlayer } from '@/components/features'
 import man from '@/assets/images/man.jpg'
+import coverImge from "@/assets/images/cou1.png"
 
 const MOCK_STATS = [
     { icon: <Clock size={15} className="text-[#00A6BF]" />, label: '6 Months Duration' },
@@ -133,23 +134,11 @@ const CourseDetailPage = () => {
                         className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[500px]"
                         {...fadeUp(0.1)}
                     >
-                        {/* Video — full-bleed top of card */}
-                        <div
-                            className="relative h-[300px] flex items-center justify-center"
-                            style={{ background: 'linear-gradient(135deg, #0d1440 0%, #1a2a6c 100%)' }}
-                        >
-                            <div className="absolute inset-0 flex flex-col items-center justify-center select-none pointer-events-none">
-                                <p className="text-white/20 text-xl font-black tracking-[0.25em] uppercase">
-                                    CA Inter Costing Lecture
-                                </p>
-                                <p className="text-white/10 text-sm tracking-[0.3em] uppercase mt-2">
-                                    Safeeur Diregturl Safe Work
-                                </p>
-                            </div>
-                            <button className="relative z-10 w-14 h-14 rounded-full bg-white/20 hover:bg-white/35 border border-white/30 flex items-center justify-center backdrop-blur-sm transition-all hover:scale-105">
-                                <Play size={20} className="text-white fill-white ml-1" />
-                            </button>
-                        </div>
+                        {/* Video player — full-bleed top of card */}
+                        <VideoPlayer
+                            src="https://app.tpstreams.com/embed/8bg4u9/ed3bUZqud8f/?access_token=722e9ac8-9bad-40f0-98f3-92dabafdd10a"
+                            poster={coverImge}
+                        />
 
                         {/* About this Course — below video, same card */}
                         <div className="p-6">
@@ -183,13 +172,13 @@ const CourseDetailPage = () => {
 
                     {/* Students Reviews */}
                     <motion.div {...fadeUp(0.24)} className='w-[1000px]'>
-                        <div className="flex items-center justify-between mb-4 ">
+                        <div className="flex items-center justify-between mb-4 w-[1045px]">
                             <Subheading className="font-bold text-[#000b60]">Students Reviews</Subheading>
-                            <button className="text-sm font-semibold text-[#000B60] hover:underline underline-offset-2">
+                            <button className="text-sm   font-semibold text-[#000B60] hover:underline underline-offset-2">
                                 View All 124 Reviews
                             </button>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                             {MOCK_REVIEWS.map((r, i) => (
                                 <ReviewCard key={i} {...r} />
                             ))}

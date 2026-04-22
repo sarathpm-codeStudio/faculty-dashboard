@@ -43,15 +43,13 @@ const TopNavBar = () => {
             {/* Right side */}
             <div className="flex items-center gap-4">
 
-                {/* <div className='w-[200px]'>
-                    <Button2>Create Course</Button2>
-                </div> */}
+
                 <Button
                     variant="primary"
                     className="!h-10 !text-sm !px-4 !font-semibold"
                     onClick={() => console.log('Create course')}
                 >
-                    {/* <Plus size={16} /> */}
+
 
                     Create course
                 </Button>
