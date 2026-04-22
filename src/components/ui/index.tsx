@@ -1,4 +1,8 @@
 export { default as Button } from './Button'
+export { default as DataTable } from './DataTable'
+export type { TableColumn } from './DataTable'
+export { default as FilterSelect } from './FilterSelect'
+export { default as FilterDatePicker } from './FilterDatePicker'
 export { default as Spinner } from './Spinner'
 export { default as StarRating } from './StarRating'
 export { default as Button2 } from './Button2'

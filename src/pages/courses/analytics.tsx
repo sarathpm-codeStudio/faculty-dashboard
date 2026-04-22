@@ -1,0 +1,121 @@
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { ArrowLeft, Download } from 'lucide-react'
+import { FaUsers } from 'react-icons/fa6'
+import { HiMiniCurrencyDollar } from 'react-icons/hi2'
+import { BsFillStarFill } from 'react-icons/bs'
+import { Button, Heading, Paragraph, Spinner } from '@/components/ui'
+import { StatCard } from '@/components/features'
+import EnrollmentCompletionChart from './EnrollmentCompletionChart'
+import RevenueChart from '@/pages/dashboard/RevenueChart'
+import { FaRegCircleCheck } from "react-icons/fa6";
+
+const fadeUp = (delay = 0) => ({
+    initial: { opacity: 0, y: 18 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.36, delay, ease: 'easeOut' as const },
+})
+
+const CourseAnalyticsPage = () => {
+    const navigate = useNavigate()
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const t = setTimeout(() => setLoading(false), 800)
+        return () => clearTimeout(t)
+    }, [])
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <Spinner label="Loading analytics..." />
+            </div>
+        )
+    }
+
+    return (
+        <div className="p-8 bg-gray-50 min-h-screen">
+
+            {/* Back */}
+            <motion.button
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-5 transition-colors"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.28 }}
+            >
+                <ArrowLeft size={14} />
+                Back
+            </motion.button>
+
+            {/* Header */}
+            <motion.div className="flex items-start justify-between mb-7" {...fadeUp(0.05)}>
+                <div>
+                    <Heading className="text-black">
+                        Course Performance:{' '}
+                        <span className="text-[#000b60]">Cost Accounting</span>
+                    </Heading>
+                    {/* <Paragraph className="text-[#767683] mt-1">
+                        Track enrollment trends, revenue, and student performance for this course.
+                    </Paragraph> */}
+                </div>
+                <Button className="!h-10 !text-sm !px-5 shrink-0 mt-1">
+                    <Download size={14} />
+                    Export Data
+                </Button>
+            </motion.div>
+
+            {/* Stat Cards */}
+            <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5" {...fadeUp(0.1)}>
+                <StatCard
+                    icon={
+                        <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
+
+
+                    label="Total Revenue"
+                    value="1,24,500"
+                    prefix="₹"
+                />
+                <StatCard
+
+                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#000b60]" size={25} /></div>}
+
+                    label="Active Students"
+                    value="342"
+                />
+                <StatCard
+                    icon={
+                        <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]">
+                            <FaRegCircleCheck className="text-[#00875A]" size={24} />
+                        </div>
+                    }
+                    label="Completion Rate"
+                    value="68%"
+                // valueColor="#00875A"
+                />
+                <StatCard
+                    icon={
+                        <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFF3CC]">
+                            <BsFillStarFill className="text-[#E6A800]" size={20} />
+                        </div>
+                    }
+                    label="Test Score"
+                    value="4.8/5"
+                // valueColor="#E6A800"
+                />
+            </motion.div>
+
+            {/* Charts */}
+            <motion.div className="grid grid-cols-1 lg:grid-cols-3 gap-4" {...fadeUp(0.16)}>
+                <div className="lg:col-span-2">
+                    <EnrollmentCompletionChart />
+                </div>
+                <RevenueChart />
+            </motion.div>
+
+        </div>
+    )
+}
+
+export default CourseAnalyticsPage

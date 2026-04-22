@@ -114,7 +114,7 @@ const ReviewPage = () => {
             {/* Back */}
             <motion.button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-1.5 text-sm text-[#767683] hover:text-[#000B60] mb-5 transition-colors"
+                className="flex items-center gap-1.5 font-bold  text-sm text-[#767683] hover:text-[#000B60] mb-5 transition-colors"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.28 }}

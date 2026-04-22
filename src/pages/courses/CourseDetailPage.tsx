@@ -69,7 +69,7 @@ const CourseDetailPage = () => {
             {/* Back */}
             <motion.button
                 onClick={() => navigate('/courses')}
-                className="flex items-center gap-1.5 text-sm text-[#767683] hover:text-[#000B60] mb-4 transition-colors"
+                className="flex items-center gap-1.5 text-sm font-bold text-[#767683] hover:text-[#000B60] mb-4 transition-colors"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.28 }}
@@ -229,6 +229,7 @@ const CourseDetailPage = () => {
 
                     {/* View Analytics */}
                     <motion.div
+                        onClick={() => navigate('/courses/1/analytics')}
                         className="rounded-2xl p-5 cursor-pointer overflow-hidden"
                         style={{ background: 'linear-gradient(135deg, #000B60 0%, #1a2a9c 100%)' }}
                         {...fadeUp(0.22)}
