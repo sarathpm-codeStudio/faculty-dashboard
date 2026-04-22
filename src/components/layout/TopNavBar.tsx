@@ -5,7 +5,7 @@ import { Bell, Search, LogOut, ChevronDown } from 'lucide-react'
 import manAvatar from '@/assets/images/man.jpg'
 import { useAuthStore } from '@/store/authStore'
 import { useNavigate } from 'react-router-dom'
-import { Button2, Input, Paragraph } from '@/components/ui'
+import { Button, Button2, Input, Paragraph } from '@/components/ui'
 
 const TopNavBar = () => {
     const user = useAuthStore((state) => state.user)
@@ -43,9 +43,18 @@ const TopNavBar = () => {
             {/* Right side */}
             <div className="flex items-center gap-4">
 
-                <div className='w-[200px]'>
+                {/* <div className='w-[200px]'>
                     <Button2>Create Course</Button2>
-                </div>
+                </div> */}
+                <Button
+                    variant="primary"
+                    className="!h-10 !text-sm !px-4 !font-semibold"
+                    onClick={() => console.log('Create course')}
+                >
+                    {/* <Plus size={16} /> */}
+
+                    Create course
+                </Button>
 
                 {/* Notification bell */}
                 <button className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">

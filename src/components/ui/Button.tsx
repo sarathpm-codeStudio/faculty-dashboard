@@ -29,7 +29,7 @@ const Button = ({
       cls: ' bg-[#BCC2FF]  text-[#000B60] px-6 text-[18px] h-[56px]',
     },
     white: {
-      cls: ' bg-white  text-[#000B60] px-6 text-[18px] h-[56px]',
+      cls: ' bg-[#F2F4F6]  text-black px-6 text-[18px] h-[56px]',
     },
     ghost: {
       cls: 'px-4 py-2 text-[#000B60] hover:underline bg-transparent text-sm',

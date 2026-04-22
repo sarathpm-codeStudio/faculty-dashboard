@@ -7,6 +7,7 @@ import AuthPage from '@/pages/auth'
 import OnboardingPage from '@/pages/onboarding'
 import DashboardPage from '@/pages/dashboard'
 import CoursesPage from '@/pages/courses'
+import CourseDetailPage from '@/pages/courses/CourseDetailPage'
 import BundlesPage from '@/pages/bundles'
 import TestsPage from '@/pages/tests'
 import StudentsPage from '@/pages/students'
@@ -33,6 +34,7 @@ const App = () => {
             <Route element={<AppShell />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/bundles" element={<BundlesPage />} />
               <Route path="/tests" element={<TestsPage />} />
               <Route path="/students" element={<StudentsPage />} />
