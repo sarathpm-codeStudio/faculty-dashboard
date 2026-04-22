@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowLeft, Share2, Trash2, Pencil, Clock,
-    Layers, BookOpen, Wallet, Users, MousePointer2, Globe, TrendingUp, Star,
+    Layers, BookOpen, Wallet, Users, MousePointer2, Globe, TrendingUp,
 } from 'lucide-react'
-import { Button, Heading, Paragraph, Subheading } from '@/components/ui'
+import { Button, Heading, Paragraph, Spinner, Subheading, StarRating } from '@/components/ui'
 import { ReviewCard, VideoPlayer } from '@/components/features'
 import man from '@/assets/images/man.jpg'
 import coverImge from "@/assets/images/cou1.png"
@@ -38,17 +39,6 @@ const MOCK_REVIEWS = [
     },
 ]
 
-const StarRating = ({ rating, max = 5 }: { rating: number; max?: number }) => (
-    <div className="flex items-center gap-0.5">
-        {Array.from({ length: max }).map((_, i) => (
-            <Star
-                key={i}
-                size={15}
-                className={i < rating ? 'text-orange-400 fill-orange-400' : 'text-gray-200 fill-gray-200'}
-            />
-        ))}
-    </div>
-)
 
 const fadeUp = (delay = 0) => ({
     initial: { opacity: 0, y: 18 },
@@ -58,6 +48,20 @@ const fadeUp = (delay = 0) => ({
 
 const CourseDetailPage = () => {
     const navigate = useNavigate()
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        const t = setTimeout(() => setLoading(false), 800)
+        return () => clearTimeout(t)
+    }, [])
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+                <Spinner label="Loading course..." />
+            </div>
+        )
+    }
 
     return (
         <div className="p-8 bg-gray-50 min-h-screen">
@@ -174,7 +178,10 @@ const CourseDetailPage = () => {
                     <motion.div {...fadeUp(0.24)} className='w-[1000px]'>
                         <div className="flex items-center justify-between mb-4 w-[1045px]">
                             <Subheading className="font-bold text-[#000b60]">Students Reviews</Subheading>
-                            <button className="text-sm   font-semibold text-[#000B60] hover:underline underline-offset-2">
+                            <button
+                                onClick={() => navigate('/courses/1/reviews')}
+                                className="text-sm font-semibold text-[#000B60] hover:underline underline-offset-2"
+                            >
                                 View All 124 Reviews
                             </button>
                         </div>

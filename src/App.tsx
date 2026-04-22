@@ -8,6 +8,7 @@ import OnboardingPage from '@/pages/onboarding'
 import DashboardPage from '@/pages/dashboard'
 import CoursesPage from '@/pages/courses'
 import CourseDetailPage from '@/pages/courses/CourseDetailPage'
+import ReviewPage from '@/pages/courses/reviewPage'
 import BundlesPage from '@/pages/bundles'
 import TestsPage from '@/pages/tests'
 import StudentsPage from '@/pages/students'
@@ -35,6 +36,7 @@ const App = () => {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/courses" element={<CoursesPage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
+              <Route path="/courses/:id/reviews" element={<ReviewPage />} />
               <Route path="/bundles" element={<BundlesPage />} />
               <Route path="/tests" element={<TestsPage />} />
               <Route path="/students" element={<StudentsPage />} />

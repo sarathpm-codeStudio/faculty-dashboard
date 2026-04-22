@@ -30,7 +30,7 @@ const TopNavBar = () => {
     }
 
     return (
-        <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 pt-7">
+        <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 pt-7 bg-gray-50 z-20 sticky top-0">
 
             {/* Search */}
             <div className="w-[700px]">

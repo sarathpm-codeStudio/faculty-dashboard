@@ -1,5 +1,6 @@
 export { default as Button } from './Button'
 export { default as Spinner } from './Spinner'
+export { default as StarRating } from './StarRating'
 export { default as Button2 } from './Button2'
 export { default as DateInput } from './DateInput'
 export { default as Input } from './Input'
