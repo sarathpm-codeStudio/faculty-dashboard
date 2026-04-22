@@ -76,7 +76,7 @@ const TopNavBar = () => {
 
                         <Paragraph className="font-bold hidden md:block">{user?.name ?? 'Faculty'}</Paragraph>
                         <ChevronDown size={14} className={`text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
                             <img src={manAvatar} alt="avatar" className="w-full h-full object-cover" />
                         </div>
                     </button>
