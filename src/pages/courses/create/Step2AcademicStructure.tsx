@@ -1,0 +1,347 @@
+import { useState } from 'react'
+import { Plus, FolderSimple, Trash, VideoCamera, Article, Image as ImageIcon, PencilSimpleLine, X, UploadSimple } from '@phosphor-icons/react'
+import { Button, Input, Textarea } from '@/components/ui'
+import type { CourseFormData, Lesson } from './index'
+
+interface Props {
+  form: CourseFormData
+  update: (fields: Partial<CourseFormData>) => void
+  onNext: () => void
+}
+
+type ContentType = 'video' | 'test' | 'document' | 'image'
+
+const VideoUploadModal = ({
+  onClose,
+  onSave,
+}: {
+  onClose: () => void
+  onSave: (lesson: Omit<Lesson, 'id'>) => void
+}) => {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [videoAccess, setVideoAccess] = useState(true)
+  const [hh, setHh] = useState('00')
+  const [mm, setMm] = useState('00')
+  const [ss, setSs] = useState('00')
+  const [uploading, setUploading] = useState(true)
+  const [progress] = useState(78)
+
+  const handleSave = () => {
+    onSave({
+      title: title || 'Untitled Lesson',
+      description,
+      type: 'video',
+      videoAccess,
+      watchTimeHH: hh,
+      watchTimeMM: mm,
+      watchTimeSS: ss,
+    })
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h3 className="text-base font-bold text-[#000B60]">Upload & Manage Video</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="px-6 py-4 flex flex-col gap-5 max-h-[70vh] overflow-y-auto">
+          {/* Upload status */}
+          {uploading && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">Lecture_04_Intro.mp4</p>
+                  <p className="text-xs text-gray-400">Transcoding...</p>
+                </div>
+                <span className="text-sm font-bold text-[#000B60]">{progress}%</span>
+              </div>
+              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${progress}%`, background: 'linear-gradient(to right, #000B60, #142283)' }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setUploading(false)}
+                className="text-xs text-[#000B60] underline self-start"
+              >
+                Mark as complete (demo)
+              </button>
+            </div>
+          )}
+
+          {/* Lesson details */}
+          <div className="flex flex-col gap-1">
+            <h4 className="text-sm font-bold text-gray-700">Lesson Details</h4>
+          </div>
+          <Input
+            label="Lesson Title"
+            placeholder="Business Laws"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <Textarea
+            label="Description"
+            placeholder="This session explores..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={3}
+          />
+
+          {/* Access control */}
+          <div className="flex flex-col gap-3">
+            <h4 className="text-sm font-bold text-gray-700">Access Control</h4>
+            <div className="p-3 bg-[#F2F4F6] rounded-xl flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-700">Video Access</span>
+                <button
+                  type="button"
+                  onClick={() => setVideoAccess(!videoAccess)}
+                  className={`w-10 h-5 rounded-full transition-colors relative ${videoAccess ? 'bg-[#000B60]' : 'bg-gray-200'}`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${videoAccess ? 'left-5' : 'left-0.5'}`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-gray-400">
+                Locking prevents students from viewing until unlocked manually or via schedule.
+              </p>
+            </div>
+          </div>
+
+          {/* Watch time */}
+          <div className="flex flex-col gap-2">
+            <h4 className="text-sm font-bold text-gray-700">Video time</h4>
+            <div className="flex items-center gap-2">
+              <input
+                className="w-16 text-center px-2 py-2 bg-[#F2F4F6] border border-gray-100 rounded-lg text-sm font-mono outline-none"
+                placeholder="HH"
+                value={hh}
+                onChange={(e) => setHh(e.target.value)}
+                maxLength={2}
+              />
+              <span className="text-gray-400">:</span>
+              <input
+                className="w-16 text-center px-2 py-2 bg-[#F2F4F6] border border-gray-100 rounded-lg text-sm font-mono outline-none"
+                placeholder="MM"
+                value={mm}
+                onChange={(e) => setMm(e.target.value)}
+                maxLength={2}
+              />
+              <span className="text-gray-400">:</span>
+              <input
+                className="w-16 text-center px-2 py-2 bg-[#F2F4F6] border border-gray-100 rounded-lg text-sm font-mono outline-none"
+                placeholder="SS"
+                value={ss}
+                onChange={(e) => setSs(e.target.value)}
+                maxLength={2}
+              />
+              <span className="text-xs text-gray-400 ml-1">Set the watching time</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100">
+          <Button variant="white" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={handleSave}>Save & Close</Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const CONTENT_TYPES: { type: ContentType; label: string; icon: React.ReactNode }[] = [
+  { type: 'video', label: 'Video', icon: <VideoCamera size={18} /> },
+  { type: 'test', label: 'Online Test', icon: <PencilSimpleLine size={18} /> },
+  { type: 'document', label: 'Document', icon: <Article size={18} /> },
+  { type: 'image', label: 'Image', icon: <ImageIcon size={18} /> },
+]
+
+const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
+  const [showModal, setShowModal] = useState(false)
+  const [activeFolderIdx, setActiveFolderIdx] = useState<number | null>(null)
+  const [expandedFolder, setExpandedFolder] = useState<number | null>(null)
+
+  const addFolder = () => {
+    const idx = form.modules.length + 1
+    update({
+      modules: [
+        ...form.modules,
+        { id: crypto.randomUUID(), title: `Folder ${idx}: New Module`, lessons: [] },
+      ],
+    })
+  }
+
+  const deleteFolder = (idx: number) => {
+    update({ modules: form.modules.filter((_, i) => i !== idx) })
+  }
+
+  const handleOpenModal = (folderIdx: number) => {
+    setActiveFolderIdx(folderIdx)
+    setShowModal(true)
+  }
+
+  const handleSaveLesson = (lesson: Omit<Lesson, 'id'>) => {
+    if (activeFolderIdx === null) return
+    const modules = form.modules.map((m, i) =>
+      i === activeFolderIdx
+        ? { ...m, lessons: [...m.lessons, { ...lesson, id: crypto.randomUUID() }] }
+        : m
+    )
+    update({ modules })
+  }
+
+  const toggle = (field: 'offlineDownload' | 'pdfPermissions') =>
+    update({ [field]: !form[field] })
+
+  return (
+    <div className="grid grid-cols-12 gap-6">
+      {/* Left: Curriculum builder (8 cols) */}
+      <div className="col-span-8 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-[#000B60]">Course Modules</h3>
+          <button
+            type="button"
+            onClick={addFolder}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#000B60] text-[#000B60] text-sm font-semibold hover:bg-[#000B60] hover:text-white transition-colors"
+          >
+            <Plus size={16} />
+            Add New Folder
+          </button>
+        </div>
+
+        {form.modules.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-gray-200 rounded-xl text-gray-400">
+            <FolderSimple size={40} className="mb-2 text-gray-300" />
+            <p className="text-sm">No modules yet. Click "Add New Folder" to start.</p>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {form.modules.map((mod, idx) => (
+            <div key={mod.id} className="border border-gray-100 rounded-xl overflow-hidden">
+              <div
+                className="flex items-center justify-between px-4 py-3 bg-[#F2F4F6] cursor-pointer"
+                onClick={() => setExpandedFolder(expandedFolder === idx ? null : idx)}
+              >
+                <div>
+                  <p className="text-sm font-bold text-[#000B60]">{mod.title}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {mod.lessons.length} Lesson{mod.lessons.length !== 1 ? 's' : ''}
+                    {mod.lessons.length === 0 ? ' • Empty' : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleOpenModal(idx) }}
+                    className="p-2 rounded-lg hover:bg-white text-[#000B60] transition-colors"
+                    title="Add content"
+                  >
+                    <Plus size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); deleteFolder(idx) }}
+                    className="p-2 rounded-lg hover:bg-white text-red-400 transition-colors"
+                    title="Delete folder"
+                  >
+                    <Trash size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {expandedFolder === idx && mod.lessons.length > 0 && (
+                <div className="divide-y divide-gray-50">
+                  {mod.lessons.map((lesson) => (
+                    <div key={lesson.id} className="flex items-center gap-3 px-4 py-3">
+                      <VideoCamera size={16} className="text-[#000B60] shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-700">{lesson.title}</p>
+                        {lesson.watchTimeHH !== '00' || lesson.watchTimeMM !== '00' ? (
+                          <p className="text-xs text-gray-400">
+                            {lesson.watchTimeHH}:{lesson.watchTimeMM}:{lesson.watchTimeSS}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right sidebar (4 cols) */}
+      <div className="col-span-4 flex flex-col gap-5">
+        {/* Add Content */}
+        <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-3">
+          <h3 className="text-sm font-bold text-[#000B60]">Add Content</h3>
+          <div className="flex flex-col gap-2">
+            {CONTENT_TYPES.map(({ type, label, icon }) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  if (form.modules.length === 0) addFolder()
+                  handleOpenModal(form.modules.length === 0 ? 0 : form.modules.length - 1)
+                }}
+                className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 text-sm font-semibold text-[#000B60] hover:border-[#000B60] transition-colors"
+              >
+                <span className="text-[#000B60]">{icon}</span>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Advance Settings */}
+        <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-4">
+          <h3 className="text-sm font-bold text-[#000B60]">Advance Settings</h3>
+          {[
+            { key: 'offlineDownload' as const, label: 'Offline Download' },
+            { key: 'pdfPermissions' as const, label: 'PDF Permissions' },
+          ].map(({ key, label }) => (
+            <div key={key} className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700">{label}</span>
+              <button
+                type="button"
+                onClick={() => toggle(key)}
+                className={`w-10 h-5 rounded-full transition-colors relative ${form[key] ? 'bg-[#000B60]' : 'bg-gray-200'}`}
+              >
+                <span
+                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form[key] ? 'left-5' : 'left-0.5'}`}
+                />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <Button variant="primary" fullWidth onClick={onNext}>
+          Add Price
+        </Button>
+      </div>
+
+      {showModal && (
+        <VideoUploadModal
+          onClose={() => setShowModal(false)}
+          onSave={handleSaveLesson}
+        />
+      )}
+    </div>
+  )
+}
+
+export default Step2AcademicStructure

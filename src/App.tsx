@@ -8,6 +8,7 @@ import OnboardingPage from '@/pages/onboarding'
 import DashboardPage from '@/pages/dashboard'
 import CoursesPage from '@/pages/courses'
 import CourseDetailPage from '@/pages/courses/CourseDetailPage'
+import CourseCreatePage from '@/pages/courses/create'
 import ReviewPage from '@/pages/courses/reviewPage'
 import CourseAnalyticsPage from '@/pages/courses/analytics'
 import StudentDetailPage from '@/pages/students/StudentDetailPage'
@@ -37,6 +38,7 @@ const App = () => {
             <Route element={<AppShell />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/courses" element={<CoursesPage />} />
+              <Route path="/courses/create" element={<CourseCreatePage />} />
               <Route path="/courses/:id" element={<CourseDetailPage />} />
               <Route path="/courses/:id/reviews" element={<ReviewPage />} />
               <Route path="/courses/:id/analytics" element={<CourseAnalyticsPage />} />

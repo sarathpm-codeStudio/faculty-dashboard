@@ -181,7 +181,7 @@ const CoursesPage = () => {
           <Button
             variant="primary"
             className="!h-10 !text-sm !px-4 !font-semibold"
-            onClick={() => console.log('Create course')}
+            onClick={() => navigate('/courses/create')}
           >
             <IoAddCircleOutline size={20} />
             Create course
