@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
-import { Input, Select, Button } from '@/components/ui'
+import { ArrowRight } from 'lucide-react'
+import { Select, Button } from '@/components/ui'
 import type { CourseFormData } from './index'
 
 interface Props {
@@ -67,6 +68,12 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Discount Type"
+              options={discountTypeOptions}
+              value={form.discountType}
+              onChange={(e) => update({ discountType: e.target.value })}
+            />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-bold text-gray-700">Discount</label>
               <div className="relative">
@@ -84,36 +91,33 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
                 </span>
               </div>
             </div>
-            <Select
-              label="Discount Type"
-              options={discountTypeOptions}
-              value={form.discountType}
-              onChange={(e) => update({ discountType: e.target.value })}
-            />
           </div>
         </div>
 
         {/* Section 2: Promotional Tools */}
         <div className="flex flex-col gap-3 p-4 bg-[#F2F4F6] rounded-xl border border-gray-100">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-sm font-bold text-[#000B60]">Promotional Tools</h3>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[#000B60]">🏷</span>
+                <h3 className="text-sm font-bold text-[#000B60]">Promotional Tools</h3>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5 ml-6">
                 Allow students to apply additional discount codes at checkout
               </p>
             </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Enable Coupons</span>
-            <button
-              type="button"
-              onClick={() => toggle('enableCoupons')}
-              className={`w-10 h-5 rounded-full transition-colors relative ${form.enableCoupons ? 'bg-[#000B60]' : 'bg-gray-200'}`}
-            >
-              <span
-                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form.enableCoupons ? 'left-5' : 'left-0.5'}`}
-              />
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => toggle('enableCoupons')}
+                className={`w-10 h-5 rounded-full transition-colors relative ${form.enableCoupons ? 'bg-[#000B60]' : 'bg-gray-200'}`}
+              >
+                <span
+                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form.enableCoupons ? 'left-5' : 'left-0.5'}`}
+                />
+              </button>
+              <span className="text-xs font-semibold text-gray-600">Enable Coupons</span>
+            </div>
           </div>
         </div>
       </div>
@@ -154,25 +158,27 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
         </div>
 
         {/* Discount Calculator */}
-        <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-3">
+        <div className="bg-white rounded-xl p-4 flex flex-col gap-3 border border-gray-100">
           <h3 className="text-sm font-bold text-[#000B60]">Discount Calculator</h3>
-          <div className="flex justify-between text-sm py-2 border-b border-gray-200">
-            <span className="text-gray-500">Sum of Courses</span>
-            <span className="font-semibold text-gray-700">₹{price.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm py-2 border-b border-gray-200">
-            <span className="text-gray-500">Student Price</span>
-            <span className="font-semibold text-gray-700">₹{studentPrice.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm py-2 bg-white rounded-lg px-3">
-            <span className="text-[#000B60] font-bold">Student Saved</span>
-            <span className="font-bold text-green-600">₹{saved.toFixed(2)}</span>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col gap-1 bg-[#F2F4F6] rounded-xl p-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Sum of Courses</p>
+              <p className="text-sm font-bold text-gray-700">₹{price.toFixed(2)}</p>
+            </div>
+            <div className="flex flex-col gap-1 bg-[#F2F4F6] rounded-xl p-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Student Price</p>
+              <p className="text-sm font-bold text-gray-700">₹{studentPrice.toFixed(2)}</p>
+            </div>
+            <div className="flex flex-col gap-1 bg-[#EAF9F6] rounded-xl p-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#00A98F]">Student Saved</p>
+              <p className="text-sm font-bold text-[#00A98F]">₹{saved.toFixed(2)}</p>
+            </div>
           </div>
         </div>
 
         {/* CTA */}
         <Button variant="primary" fullWidth onClick={onNext}>
-          Preview
+          Preview <ArrowRight size={18} />
         </Button>
       </div>
     </div>

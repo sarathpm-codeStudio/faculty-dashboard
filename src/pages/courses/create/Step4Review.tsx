@@ -38,16 +38,6 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Step 04/04</p>
-          <span className="inline-block mt-1 px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-            Ready to Publish
-          </span>
-        </div>
-      </div>
-
       <div className="grid grid-cols-12 gap-4">
         {/* Hero Card: Course Name & Visual */}
         <div className="col-span-7 bg-[#F2F4F6] rounded-2xl p-5 flex gap-4">
@@ -62,22 +52,24 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
               <ImageIcon size={28} />
             </div>
           )}
-          <div className="flex flex-col gap-1">
-            {form.category && (
-              <span
-                className="inline-block px-2 py-0.5 rounded text-xs font-bold text-white w-fit"
-                style={{ background: 'linear-gradient(to right, #000B60, #142283)' }}
-              >
-                {form.category.toUpperCase()}
-              </span>
-            )}
+          <div className="flex flex-col gap-1 flex-1">
+            <div className="flex items-center justify-between">
+              {form.category && (
+                <span
+                  className="inline-block px-2 py-0.5 rounded text-xs font-bold text-white w-fit"
+                  style={{ background: 'linear-gradient(to right, #000B60, #142283)' }}
+                >
+                  {form.category.toUpperCase()}
+                </span>
+              )}
+              {videoLessons > 0 && (
+                <span className="text-xs text-gray-400">{videoLessons} Hours</span>
+              )}
+            </div>
             <h2 className="text-lg font-bold text-[#000B60] mt-1">
               {form.name || 'Untitled Course'}
             </h2>
-            <p className="text-xs text-gray-500 line-clamp-2">{form.description}</p>
-            {form.duration && (
-              <p className="text-xs text-gray-400 mt-1">{durationLabel[form.duration] || form.duration}</p>
-            )}
+            <p className="text-xs text-gray-500 line-clamp-3">{form.description}</p>
           </div>
         </div>
 
@@ -145,13 +137,13 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
         </div>
       </div>
 
-      {/* Sticky Footer Actions */}
-      <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
+      {/* Footer Actions */}
+      <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-100">
         <Button variant="white" onClick={onDraft}>
           Save as draft
         </Button>
         <Button variant="primary" onClick={onPublish}>
-          Publish Course
+          Publish Course 🚀
         </Button>
       </div>
     </div>

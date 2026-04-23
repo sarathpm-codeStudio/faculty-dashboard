@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from '@phosphor-icons/react'
+import { ArrowLeft } from 'lucide-react'
 import Step1BasicDetails from './Step1BasicDetails'
 import Step2AcademicStructure from './Step2AcademicStructure'
 import Step3Pricing from './Step3Pricing'
 import Step4Review from './Step4Review'
+import { Heading } from '@/components/ui'
 
 export type CourseFormData = {
   // Step 1
@@ -14,6 +15,7 @@ export type CourseFormData = {
   level: string
   languages: string[]
   coverImage: File | null
+  introVideo: File | null
   // Step 2
   modules: { id: string; title: string; lessons: Lesson[] }[]
   offlineDownload: boolean
@@ -58,6 +60,7 @@ const emptyForm = (): CourseFormData => ({
   level: '',
   languages: [],
   coverImage: null,
+  introVideo: null,
   modules: [],
   offlineDownload: false,
   pdfPermissions: false,
@@ -82,8 +85,6 @@ const CourseCreatePage = () => {
     else setStep((s) => s - 1)
   }
 
-  const progressPct = ((step - 1) / 3) * 100
-
   return (
     <div className="flex flex-col h-full">
       {/* Back link */}
@@ -91,24 +92,37 @@ const CourseCreatePage = () => {
         onClick={back}
         className="flex items-center gap-2 text-[#000B60] font-semibold text-sm hover:opacity-70 transition-opacity mb-5 w-fit"
       >
-        <ArrowLeft size={16} weight="bold" />
+        <ArrowLeft size={16} />
         {BACK_LABELS[step - 1]}
       </button>
 
-      {/* Step header + progress rail */}
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-xl font-bold text-[#000B60]">{STEPS[step - 1]}</h1>
-        <span className="text-sm font-medium text-gray-400">
-          <span className="text-[#000B60] font-bold">{String(step).padStart(2, '0')}</span>
-          <span className="text-gray-300"> / 04</span>
-        </span>
+      {/* Step header */}
+      <div className="flex items-center justify-between mb-3">
+        <Heading className="text-[#000B60]" > {STEPS[step - 1]}  </Heading>
+        {/* <h1 className="text-xl font-bold text-[#000B60]">{STEPS[step - 1]}</h1> */}
+
+        <div className="flex items-center gap-3">
+          {step === 4 && (
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+              Ready to Publish
+            </span>
+          )}
+          <span className="text-sm font-medium text-gray-400">
+            <span className="text-[#000B60] font-bold">Step {String(step).padStart(2, '0')}</span>
+            <span className="text-gray-300"> / 04</span>
+          </span>
+        </div>
       </div>
-      <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-6">
+
+      {/* Progress rail */}
+      <div className="w-full mb-15" style={{ height: '6px', background: '#E5E7EB', borderRadius: '999px' }}>
         <div
-          className="h-full rounded-full transition-all duration-500"
           style={{
-            width: `${progressPct}%`,
+            height: '6px',
+            borderRadius: '999px',
+            width: `${(step / 4) * 100}%`,
             background: 'linear-gradient(to right, #000B60, #142283)',
+            transition: 'width 0.5s ease',
           }}
         />
       </div>

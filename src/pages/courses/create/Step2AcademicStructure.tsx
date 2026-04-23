@@ -1,7 +1,15 @@
 import { useState } from 'react'
-import { Plus, FolderSimple, Trash, VideoCamera, Article, Image as ImageIcon, PencilSimpleLine, X, UploadSimple } from '@phosphor-icons/react'
-import { Button, Input, Textarea } from '@/components/ui'
+import { Plus, FolderSimple, VideoCamera, Article, Image as ImageIcon, PencilSimpleLine, X, DotsSixVertical } from '@phosphor-icons/react'
+import { ArrowRight, Download, FileText as FilePdfIcon } from 'lucide-react'
+import { Button, Input, Paragraph, Subheading, Textarea } from '@/components/ui'
 import type { CourseFormData, Lesson } from './index'
+import { IoAddCircleOutline } from "react-icons/io5";
+import { FaFolder } from "react-icons/fa";
+import { MdVideoLibrary } from "react-icons/md";
+import { BsPencilSquare } from "react-icons/bs";
+import { HiDocumentDuplicate } from "react-icons/hi";
+import { FaRegImage } from "react-icons/fa6";
+
 
 interface Props {
   form: CourseFormData
@@ -161,10 +169,10 @@ const VideoUploadModal = ({
 }
 
 const CONTENT_TYPES: { type: ContentType; label: string; icon: React.ReactNode }[] = [
-  { type: 'video', label: 'Video', icon: <VideoCamera size={18} /> },
-  { type: 'test', label: 'Online Test', icon: <PencilSimpleLine size={18} /> },
-  { type: 'document', label: 'Document', icon: <Article size={18} /> },
-  { type: 'image', label: 'Image', icon: <ImageIcon size={18} /> },
+  { type: 'video', label: 'Video', icon: <MdVideoLibrary size={18} /> },
+  { type: 'test', label: 'Online Test', icon: <BsPencilSquare size={18} /> },
+  { type: 'document', label: 'Document', icon: <HiDocumentDuplicate size={18} /> },
+  { type: 'image', label: 'Image', icon: <FaRegImage size={18} /> },
 ]
 
 const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
@@ -180,10 +188,6 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
         { id: crypto.randomUUID(), title: `Folder ${idx}: New Module`, lessons: [] },
       ],
     })
-  }
-
-  const deleteFolder = (idx: number) => {
-    update({ modules: form.modules.filter((_, i) => i !== idx) })
   }
 
   const handleOpenModal = (folderIdx: number) => {
@@ -209,15 +213,23 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
       {/* Left: Curriculum builder (8 cols) */}
       <div className="col-span-8 flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-bold text-[#000B60]">Course Modules</h3>
-          <button
+          <Subheading className='text-black font-bold' > Course Modules </Subheading>
+          {/* <h3 className="text-base font-bold text-[#000B60]">Course Modules</h3> */}
+          {/* <button
             type="button"
             onClick={addFolder}
             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#000B60] text-[#000B60] text-sm font-semibold hover:bg-[#000B60] hover:text-white transition-colors"
           >
             <Plus size={16} />
             Add New Folder
-          </button>
+          </button> */}
+
+          <span onClick={addFolder} className="flex items-center gap-2 px-4 py-2  text-[#000B60] text-sm font-semibold"
+          >
+            <IoAddCircleOutline size={20} />
+            Add New Folder
+          </span>
+
         </div>
 
         {form.modules.length === 0 && (
@@ -234,30 +246,22 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
                 className="flex items-center justify-between px-4 py-3 bg-[#F2F4F6] cursor-pointer"
                 onClick={() => setExpandedFolder(expandedFolder === idx ? null : idx)}
               >
-                <div>
-                  <p className="text-sm font-bold text-[#000B60]">{mod.title}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {mod.lessons.length} Lesson{mod.lessons.length !== 1 ? 's' : ''}
-                    {mod.lessons.length === 0 ? ' • Empty' : ''}
-                  </p>
+                <div className='flex items-center gap-2' >
+                  <div className='h-10 w-10 rounded-xl bg-gray-200 flex items-center justify-center' >
+                    <FaFolder size={20} className="text-[#000B60]" />
+                  </div>
+                  <div>
+                    <Paragraph className='text-black  font-bold ' > {mod.title} </Paragraph>
+                    <p className="text-xs text-gray-500 mt-0.5 ">
+                      {mod.lessons.length} Lesson{mod.lessons.length !== 1 ? 's' : ''}
+                      {mod.lessons.length === 0 ? ' • Empty' : ''}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleOpenModal(idx) }}
-                    className="p-2 rounded-lg hover:bg-white text-[#000B60] transition-colors"
-                    title="Add content"
-                  >
-                    <Plus size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); deleteFolder(idx) }}
-                    className="p-2 rounded-lg hover:bg-white text-red-400 transition-colors"
-                    title="Delete folder"
-                  >
-                    <Trash size={16} />
-                  </button>
+                <div className="flex items-center">
+                  <span className="p-2 text-gray-700 cursor-grab">
+                    <DotsSixVertical size={30} />
+                  </span>
                 </div>
               </div>
 
@@ -287,8 +291,8 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
       <div className="col-span-4 flex flex-col gap-5">
         {/* Add Content */}
         <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-3">
-          <h3 className="text-sm font-bold text-[#000B60]">Add Content</h3>
-          <div className="flex flex-col gap-2">
+          <Paragraph className="text-[#000B60] font-bold" > Add Content </Paragraph>
+          <div className="grid grid-cols-2 gap-2">
             {CONTENT_TYPES.map(({ type, label, icon }) => (
               <button
                 key={type}
@@ -297,7 +301,7 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
                   if (form.modules.length === 0) addFolder()
                   handleOpenModal(form.modules.length === 0 ? 0 : form.modules.length - 1)
                 }}
-                className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-gray-100 text-sm font-semibold text-[#000B60] hover:border-[#000B60] transition-colors"
+                className="flex flex-col items-center gap-2 px-3 py-4 bg-white rounded-xl border border-gray-100 text-xs font-semibold text-[#000B60] hover:border-[#000B60] transition-colors"
               >
                 <span className="text-[#000B60]">{icon}</span>
                 {label}
@@ -308,13 +312,17 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
 
         {/* Advance Settings */}
         <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-4">
-          <h3 className="text-sm font-bold text-[#000B60]">Advance Settings</h3>
+
+          <h3 className="text-xs font-bold text-[#000B60] uppercase tracking-widest">Advance Settings</h3>
           {[
-            { key: 'offlineDownload' as const, label: 'Offline Download' },
-            { key: 'pdfPermissions' as const, label: 'PDF Permissions' },
-          ].map(({ key, label }) => (
+            { key: 'offlineDownload' as const, label: 'Offline Download', icon: <Download size={16} className="text-[#000B60]" /> },
+            { key: 'pdfPermissions' as const, label: 'PDF Permissions', icon: <FilePdfIcon size={16} className="text-[#000B60]" /> },
+          ].map(({ key, label, icon }) => (
             <div key={key} className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">{label}</span>
+              <div className="flex items-center gap-2">
+                {icon}
+                <span className="text-sm font-medium text-gray-700">{label}</span>
+              </div>
               <button
                 type="button"
                 onClick={() => toggle(key)}
@@ -330,7 +338,7 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
 
         {/* CTA */}
         <Button variant="primary" fullWidth onClick={onNext}>
-          Add Price
+          Add Price <ArrowRight size={18} />
         </Button>
       </div>
 
