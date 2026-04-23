@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { SlidersHorizontal, MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal } from 'lucide-react'
 import { Heading, Paragraph, Spinner, DataTable, FilterSelect, FilterDatePicker } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import man from '@/assets/images/man.jpg'
-import { IoFilterSharp } from "react-icons/io5";
 
 type Student = {
   id: number
@@ -91,6 +91,7 @@ const fadeUp = (delay = 0) => ({
 })
 
 const StudentsPage = () => {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [department, setDepartment] = useState('')
   const [filterDate, setFilterDate] = useState('')
@@ -141,7 +142,6 @@ const StudentsPage = () => {
           />
 
           <button className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-gray-200 bg-[#E6E8EA] text-sm font-semibold text-gray-500 transition-colors">
-            <IoFilterSharp size={14} className="text-[#767683]" />
             More Filters
           </button>
         </div>
@@ -157,6 +157,7 @@ const StudentsPage = () => {
           data={MOCK_STUDENTS}
           defaultPageSize={10}
           onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s}–${e} of ${t}`)}
+          onRowClick={row => navigate(`/students/${row.id}`)}
         />
       </motion.div>
 

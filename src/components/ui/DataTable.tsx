@@ -15,11 +15,12 @@ type DataTableProps<T> = {
   defaultPageSize?: number
   className?: string
   onRangeChange?: (start: number, end: number, total: number) => void
+  onRowClick?: (row: T) => void
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
-function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onRangeChange }: DataTableProps<T>) {
+function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onRangeChange, onRowClick }: DataTableProps<T>) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(defaultPageSize)
 
@@ -59,7 +60,11 @@ function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onR
           </thead>
           <tbody className="divide-y divide-gray-50">
             {pageData.map((row, i) => (
-              <tr key={i} className="hover:bg-gray-50/60 transition-colors">
+              <tr
+                key={i}
+                onClick={() => onRowClick?.(row)}
+                className={`hover:bg-gray-50/60 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+              >
                 {columns.map(col => (
                   <td key={col.key} className={`px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
                     {col.render(row)}
