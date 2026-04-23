@@ -31,20 +31,17 @@ const activity = [
 const DashboardPage = () => (
   <div className="space-y-5">
     {/* ── Greeting + Filter ── */}
-    <div className="flex items-end justify-between">
+    <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
       <div>
         <Heading className='text-[#000b60]'>Hi, Salsabeel</Heading>
-        <Paragraph className='text-[#454652] font-semibold' > Welcome back! Here's what's happening with your courses. </Paragraph>
-        {/* <p className="mt-2 text-base font-medium text-[#454652]"> */}
-
-        {/* </p> */}
+        <Paragraph className='text-[#454652] font-semibold'>Welcome back! Here's what's happening with your courses.</Paragraph>
       </div>
       <div className="flex items-center gap-3">
-        <span className="text-[11px] font-bold uppercase tracking-[0.6px] text-[#767683]">
+        <span className="text-[11px] font-bold uppercase tracking-[0.6px] text-[#767683] whitespace-nowrap">
           Filter View
         </span>
-        <div className="relative">
-          <select className="h-9 w-40 appearance-none rounded-[8px] bg-white pl-4 pr-8 text-sm font-semibold text-[#191c1e] shadow-sm focus:outline-none cursor-pointer">
+        <div className="relative flex-1 md:flex-none">
+          <select className="h-9 w-full md:w-40 appearance-none rounded-[8px] bg-white pl-4 pr-8 text-sm font-semibold text-[#191c1e] shadow-sm focus:outline-none cursor-pointer">
             <option>All Courses</option>
           </select>
           <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#767683]" />
@@ -53,7 +50,7 @@ const DashboardPage = () => (
     </div>
 
     {/* ── Stat Cards ── */}
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#000b60]" size={25} /></div>}
         label="Total Students"
@@ -79,17 +76,17 @@ const DashboardPage = () => (
     </div>
 
     {/* ── Charts Row ── */}
-    <div className="grid grid-cols-3 gap-4 mt-10">
-      <div className="col-span-2">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6 md:mt-10">
+      <div className="lg:col-span-2">
         <EnrollmentChart />
       </div>
       <RevenueChart />
     </div>
 
     {/* ── Bottom Row ── */}
-    <div className="grid grid-cols-3 gap-4 items-start pb-4 mt-10">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start pb-4 mt-6 md:mt-10">
       {/* Top Courses */}
-      <div className="col-span-2">
+      <div className="lg:col-span-2">
         <SectionCard
           title="Top Courses Performance"
           title_color='text-[#000b60]'

@@ -70,14 +70,14 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
     <div className="flex flex-col gap-5">
 
       {/* ── Row 1: Hero + Content Inventory ── */}
-      <div className="grid grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
         {/* Hero — no card, plain white */}
-        <div className="col-span-7 flex gap-4 bg-white rounded-2xl p-7 shadow-sm border border-gray-100">
+        <div className="lg:col-span-7 flex flex-col sm:flex-row gap-4 bg-white rounded-2xl p-5 md:p-7 shadow-sm border border-gray-100">
           <img
             src={form.coverImage ? URL.createObjectURL(form.coverImage) : img}
             alt="Cover"
-            className="w-42 h-42 object-cover rounded-xl shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
+            className="w-full sm:w-42 sm:h-42 object-cover rounded-xl shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
           />
           <div className="flex flex-col gap-1.5 flex-1 pt-1">
             <div className="flex items-center justify-between">
@@ -95,7 +95,7 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
         </div>
 
         {/* Content Inventory — gray card */}
-        <div className="col-span-5 bg-[#F2F4F6] rounded-2xl p-5 flex flex-col gap-3 shadow-sm border border-gray-100">
+        <div className="lg:col-span-5 bg-[#F2F4F6] rounded-2xl p-5 flex flex-col gap-3 shadow-sm border border-gray-100">
           <Paragraph className="font-bold uppercase tracking-widest text-black"> Content Inventory </Paragraph>
           {[
             { icon: <MdVideoLibrary size={20} />, label: 'Video Lessons', count: videoLessons, blue: false },
@@ -121,10 +121,10 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
       </div>
 
       {/* ── Row 2: Pricing & Access + Enabled Features ── */}
-      <div className="grid grid-cols-12 gap-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
 
         {/* Pricing & Access — no card */}
-        <div className="col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100">
+        <div className="md:col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100">
           <Paragraph className="font-bold uppercase tracking-widest text-black"> Pricing &amp; Access </Paragraph>
           <div className="flex items-baseline gap-1.5">
             <Heading className="text-[#000B60] font-bold"> ₹{studentPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} </Heading>
@@ -149,7 +149,7 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
         </div>
 
         {/* Enabled Features — no card */}
-        <div className="col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100 self-center">
+        <div className="md:col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100 md:self-center">
           <Paragraph className="font-bold uppercase tracking-widest text-black"> Enabled Features </Paragraph>
           <div className="grid grid-cols-2 gap-4">
             {features.map((f) => (

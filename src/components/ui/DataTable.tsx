@@ -45,13 +45,13 @@ function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onR
   return (
     <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden ${className}`}>
       <div className="flex-1 min-h-0 overflow-auto scrollbar-hide">
-        <table className="w-full">
+        <table className="w-full min-w-[720px]">
           <thead className="sticky top-0 z-10 bg-[#F2F4F6]">
             <tr className="border-b border-gray-100">
               {columns.map(col => (
                 <th
                   key={col.key}
-                  className={`px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-[#767683] ${col.headerClassName ?? ''}`}
+                  className={`px-4 md:px-6 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-[#767683] whitespace-nowrap ${col.headerClassName ?? ''}`}
                 >
                   {col.header}
                 </th>
@@ -66,7 +66,7 @@ function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onR
                 className={`hover:bg-gray-50/60 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map(col => (
-                  <td key={col.key} className={`px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
+                  <td key={col.key} className={`px-4 md:px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
                     {col.render(row)}
                   </td>
                 ))}
@@ -77,9 +77,10 @@ function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onR
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 md:px-6 py-4 border-t border-gray-100">
         <div className="flex items-center gap-2.5">
-          <span className="text-xs text-[#767683] font-medium">Rows per page:</span>
+          <span className="text-xs text-[#767683] font-medium hidden sm:inline">Rows per page:</span>
+          <span className="text-xs text-[#767683] font-medium sm:hidden">Rows:</span>
           <select
             value={pageSize}
             onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}

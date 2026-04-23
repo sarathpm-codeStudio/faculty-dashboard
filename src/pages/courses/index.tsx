@@ -152,10 +152,10 @@ const CoursesPage = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-2 md:p-4">
       {/* Header */}
       <motion.div
-        className="flex items-start justify-between mb-6"
+        className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-6"
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -172,19 +172,21 @@ const CoursesPage = () => {
         <div className="flex items-center gap-3">
           <Button
             variant="white"
-            className="!h-10 !text-sm !px-4 !font-semibold"
+            className="!h-10 !text-sm !px-4 !font-semibold flex-1 md:flex-none"
             onClick={() => console.log('Create bundle')}
           >
             <Package size={16} />
-            Create Bundle
+            <span className="hidden sm:inline">Create Bundle</span>
+            <span className="sm:hidden">Bundle</span>
           </Button>
           <Button
             variant="primary"
-            className="!h-10 !text-sm !px-4 !font-semibold"
+            className="!h-10 !text-sm !px-4 !font-semibold flex-1 md:flex-none"
             onClick={() => navigate('/courses/create')}
           >
             <IoAddCircleOutline size={20} />
-            Create course
+            <span className="hidden sm:inline">Create course</span>
+            <span className="sm:hidden">Course</span>
           </Button>
         </div>
       </motion.div>
@@ -226,7 +228,7 @@ const CoursesPage = () => {
         ) : (
           <motion.div
             key={activeTab}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"
             variants={gridVariants}
             initial="hidden"
             animate="visible"

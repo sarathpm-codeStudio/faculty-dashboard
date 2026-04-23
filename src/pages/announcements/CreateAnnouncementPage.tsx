@@ -26,7 +26,7 @@ const CreateAnnouncementPage = () => {
   }
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
 
       {/* Back */}
       <button
@@ -38,23 +38,23 @@ const CreateAnnouncementPage = () => {
       </button>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-6">
         <div>
           <Heading className="text-[#000B60]">Create Campaign</Heading>
           <Paragraph className="text-[#767683] mt-1">
             Design and distribute high-impact academic updates.
           </Paragraph>
         </div>
-        <Button variant="white" className="!h-10 !text-sm !px-5 shrink-0">
+        <Button variant="white" className="!h-10 !text-sm !px-5 md:shrink-0">
           Save Draft
         </Button>
       </div>
 
       {/* Grid layout */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Left: Form */}
-        <div className="col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
+        <div className="lg:col-span-8 order-2 lg:order-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col gap-5">
 
           <Input
             label="Announcement Name"
@@ -111,7 +111,7 @@ const CreateAnnouncementPage = () => {
         </div>
 
         {/* Right sidebar */}
-        <div className="col-span-4 flex flex-col gap-4">
+        <div className="lg:col-span-4 order-1 lg:order-2 flex flex-col gap-4">
 
           {/* Ready to Send */}
           <div

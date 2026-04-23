@@ -126,20 +126,20 @@ const CouponsPage = () => {
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* Header */}
-      <motion.div className="flex items-start justify-between mb-5 px-2 pt-2" {...fadeUp(0.04)}>
+      <motion.div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5 px-2 pt-2" {...fadeUp(0.04)}>
         <div>
           <Heading className="text-[#000B60]">Coupon Management</Heading>
           <Paragraph className="text-[#767683] mt-1">
             Create and manage academic promotion campaigns and discount codes.
           </Paragraph>
         </div>
-        <Button variant="primary" className="!h-10 !text-sm !px-5 shrink-0" onClick={() => navigate('/coupon-management/create')}>
+        <Button variant="primary" className="!h-10 !text-sm !px-5 md:shrink-0" onClick={() => navigate('/coupon-management/create')}>
           <IoAddCircleOutline size={20} /> Create New Coupon
         </Button>
       </motion.div>
 
       {/* Stat cards */}
-      <motion.div className="grid grid-cols-3 gap-4 mb-5 px-2" {...fadeUp(0.08)}>
+      <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-5 px-2" {...fadeUp(0.08)}>
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><Tag className="text-[#000B60]" size={20} /></div>}
           label="Active Coupons"
@@ -160,10 +160,10 @@ const CouponsPage = () => {
       </motion.div>
 
       {/* Filter bar */}
-      <motion.div className="flex items-center justify-between mb-4 px-2" {...fadeUp(0.1)}>
-        <div className="flex items-center gap-2">
+      <motion.div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 px-2" {...fadeUp(0.1)}>
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-[#767683]">Filter by:</span>
-          <div className="flex items-center gap-1 bg-[#F2F4F6] rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-[#F2F4F6] rounded-xl p-1 overflow-x-auto scrollbar-hide">
             {FILTER_TABS.map(tab => (
               <button
                 key={tab}

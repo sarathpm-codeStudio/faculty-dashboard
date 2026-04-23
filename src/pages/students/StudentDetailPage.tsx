@@ -128,7 +128,7 @@ const StudentDetailPage = () => {
     }
 
     return (
-        <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
 
             {/* Back */}
             <motion.button
@@ -144,11 +144,11 @@ const StudentDetailPage = () => {
             </motion.button>
 
             {/* Profile card */}
-            <motion.div className=" p-6 mb-5" {...fadeUp(0.05)}>
-                <div className="flex items-start justify-between gap-6">
+            <motion.div className="p-2 md:p-6 mb-5" {...fadeUp(0.05)}>
+                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
 
                     {/* Avatar + info */}
-                    <div className="flex items-start gap-5">
+                    <div className="flex flex-col sm:flex-row items-start gap-5">
                         <div className="relative shrink-0">
                             <img src={man} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
                             <span className="absolute -bottom-2.5 left-2/2 -translate-x-1/2 bg-[#00A6BF] text-white text-[9px] font-bold px-3.5 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
@@ -157,7 +157,7 @@ const StudentDetailPage = () => {
                         </div>
                         <div className="mt-1">
                             <Heading className="text-[#000B60] mb-3">Elena Rodriguez</Heading>
-                            <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-2 mt-1">
                                 <span className="flex items-center gap-1.5 text-xs text-black font-medium">
                                     <User className='text-[#00A6BF]' size={12} /> ID: 2024-ER8921
                                 </span>
@@ -181,7 +181,7 @@ const StudentDetailPage = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex flex-col items-end gap-2.5 shrink-0">
+                    <div className="flex flex-row lg:flex-col items-stretch lg:items-end gap-2.5 lg:shrink-0 w-full lg:w-auto">
                         <Button className="!h-10 !text-sm !px-5">
                             <Mail size={14} />
                             Message Student
@@ -195,7 +195,7 @@ const StudentDetailPage = () => {
             </motion.div>
 
             {/* Stat cards */}
-            <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" {...fadeUp(0.1)}>
+            <motion.div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" {...fadeUp(0.1)}>
                 <StatCard
 
                     icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}

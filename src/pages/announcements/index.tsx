@@ -129,21 +129,21 @@ const AnnouncementsPage = () => {
     <div className="flex flex-col h-full overflow-hidden">
 
       {/* Header */}
-      <motion.div className="flex items-start justify-between mb-5 px-2 pt-2" {...fadeUp(0.04)}>
+      <motion.div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-5 px-2 pt-2" {...fadeUp(0.04)}>
         <div>
           <Heading className="text-[#000B60]">Announcements</Heading>
           <Paragraph className="text-[#767683] mt-1">
             Communicate important updates and academic news across your enrolled student groups.
           </Paragraph>
         </div>
-        <Button variant="primary" className="!h-10 !text-sm !px-5 shrink-0" onClick={() => navigate('/announcements/create')}>
+        <Button variant="primary" className="!h-10 !text-sm !px-5 md:shrink-0" onClick={() => navigate('/announcements/create')}>
           <IoAddCircleOutline size={20} /> Create Announcement
         </Button>
       </motion.div>
 
       {/* Tabs + Filters */}
-      <motion.div className="flex items-center justify-between bg-[#F2F4F6] rounded-xl px-4 py-2 mb-5 mx-2" {...fadeUp(0.08)}>
-        <div className="flex items-center gap-1">
+      <motion.div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-[#F2F4F6] rounded-xl px-4 py-2 mb-5 mx-2" {...fadeUp(0.08)}>
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
           {TABS.map(tab => (
             <button
               key={tab}

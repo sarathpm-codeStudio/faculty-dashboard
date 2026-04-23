@@ -96,10 +96,10 @@ const Step1BasicDetails = ({ form, update, onNext }: Props) => {
   }
 
   return (
-    <div className="grid grid-cols-12 gap-6 items-stretch">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 
       {/* ── Left: form card (8 cols) ─────────────────────────────── */}
-      <div className="col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-10 flex flex-col gap-5">
+      <div className="lg:col-span-8 order-2 lg:order-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:p-10 flex flex-col gap-5">
 
         {/* Course Name */}
         <Input
@@ -123,7 +123,7 @@ const Step1BasicDetails = ({ form, update, onNext }: Props) => {
         </div>
 
         {/* Category + Level */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             label="Category"
             placeholder="Select category"
@@ -193,7 +193,7 @@ const Step1BasicDetails = ({ form, update, onNext }: Props) => {
       </div>
 
       {/* ── Right: uploads + actions (4 cols) ───────────────────── */}
-      <div className="col-span-4 flex flex-col gap-3">
+      <div className="lg:col-span-4 order-1 lg:order-2 flex flex-col gap-3">
 
         {/* Cover Image */}
         <div>

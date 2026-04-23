@@ -94,9 +94,9 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
     update({ [field]: !form[field] })
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left: Curriculum builder (8 cols) */}
-      <div className="col-span-8 flex flex-col gap-4">
+      <div className="lg:col-span-8 order-2 lg:order-1 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <Subheading className='text-black font-bold'>Course Modules</Subheading>
           <span onClick={addFolder} className="flex items-center gap-2 px-4 py-2 text-[#000B60] text-sm font-semibold cursor-pointer">
@@ -161,7 +161,7 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
       </div>
 
       {/* Right sidebar (4 cols) */}
-      <div className="col-span-4 flex flex-col gap-5">
+      <div className="lg:col-span-4 order-1 lg:order-2 flex flex-col gap-5">
         {/* Add Content */}
         <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-3">
           <Paragraph className="text-[#000B60] font-bold">Add Content</Paragraph>

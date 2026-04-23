@@ -45,7 +45,7 @@ const CreateCouponPage = () => {
     : 'Dec 31, 2024'
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
 
       {/* Header */}
       <div className="mb-6">
@@ -56,10 +56,10 @@ const CreateCouponPage = () => {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Left: Form card */}
-        <div className="col-span-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-6">
+        <div className="lg:col-span-7 order-2 lg:order-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col gap-6">
 
           {/* Coupon Code */}
           <Input
@@ -90,7 +90,7 @@ const CreateCouponPage = () => {
           </div>
 
           {/* Discount Value + Expiry Date */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label={discountType === 'Percentage' ? 'Discount Value (%)' : 'Discount Value (₹)'}
               labelClassName={LABEL_CLS}
@@ -150,7 +150,7 @@ const CreateCouponPage = () => {
         </div>
 
         {/* Right: Preview + Actions */}
-        <div className="col-span-5 flex flex-col gap-5">
+        <div className="lg:col-span-5 order-1 lg:order-2 flex flex-col gap-5">
 
           {/* Coupon Preview card with top accent */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

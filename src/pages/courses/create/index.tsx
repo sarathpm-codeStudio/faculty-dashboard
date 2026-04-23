@@ -98,9 +98,8 @@ const CourseCreatePage = () => {
       </button>
 
       {/* Step header */}
-      <div className="flex items-center justify-between mb-3">
-        <Heading className="text-[#000B60]" > {STEPS[step - 1]}  </Heading>
-        {/* <h1 className="text-xl font-bold text-[#000B60]">{STEPS[step - 1]}</h1> */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+        <Heading className="text-[#000B60]">{STEPS[step - 1]}</Heading>
 
         <div className="flex items-center gap-3">
           {step === 4 && (
@@ -116,7 +115,7 @@ const CourseCreatePage = () => {
       </div>
 
       {/* Progress rail */}
-      <div className="w-full mb-15" style={{ height: '6px', background: '#E5E7EB', borderRadius: '999px' }}>
+      <div className="w-full mb-8 md:mb-15" style={{ height: '6px', background: '#E5E7EB', borderRadius: '999px' }}>
         <div
           style={{
             height: '6px',

@@ -37,13 +37,13 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
   const saved = price - studentPrice
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       {/* ── Left column (8 cols) ─────────────────────────── */}
-      <div className="col-span-8 flex flex-col gap-4">
+      <div className="lg:col-span-8 order-2 lg:order-1 flex flex-col gap-4">
 
         {/* White form card */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 md:p-6 flex flex-col gap-5">
           <Select
             label="Course Duration"
             placeholder="Select duration"
@@ -62,7 +62,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
             leftIcon={<span className="font-semibold text-gray-500">₹</span>}
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Select
               label="Discount Type"
               options={discountTypeOptions}
@@ -83,7 +83,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
         </div>
 
         {/* Promotional Tools — separate section */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-10 py-10 flex items-start justify-between gap-3">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 md:px-10 md:py-10 flex flex-col sm:flex-row items-start sm:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-base"><RiCoupon2Fill size={25} className='text-[#000B60] font-bold' /></span>
@@ -108,7 +108,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
       </div>
 
       {/* ── Right column (4 cols) ────────────────────────── */}
-      <div className="col-span-4 flex flex-col gap-4">
+      <div className="lg:col-span-4 order-1 lg:order-2 flex flex-col gap-4">
 
         {/* Students Price card */}
         <div

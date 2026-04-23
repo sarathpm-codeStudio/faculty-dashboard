@@ -122,8 +122,8 @@ const StudentsPage = () => {
       </motion.div>
 
       {/* Filter bar */}
-      <motion.div className="flex items-center gap-3 mb-5 px-2 justify-between" {...fadeUp(0.08)}>
-        <div className="flex items-center gap-3">
+      <motion.div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5 px-2 sm:justify-between" {...fadeUp(0.08)}>
+        <div className="flex flex-wrap items-center gap-3">
           <FilterSelect
             value={department}
             onChange={e => setDepartment(e.target.value)}
