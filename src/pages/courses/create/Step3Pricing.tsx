@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { Select, Button } from '@/components/ui'
+import { Input, Select, Button, Subheading, Paragraph } from '@/components/ui'
 import type { CourseFormData } from './index'
+import { RiCoupon2Fill } from "react-icons/ri";
 
 interface Props {
   form: CourseFormData
@@ -35,15 +36,14 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
 
   const saved = price - studentPrice
 
-  const toggle = (field: 'enableCoupons') =>
-    update({ [field]: !form[field] })
-
   return (
     <div className="grid grid-cols-12 gap-6">
-      {/* Left: Configuration Form (7 cols) */}
-      <div className="col-span-7 flex flex-col gap-6">
-        {/* Section 1: Pricing */}
-        <div className="flex flex-col gap-4">
+
+      {/* ── Left column (8 cols) ─────────────────────────── */}
+      <div className="col-span-8 flex flex-col gap-4">
+
+        {/* White form card */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
           <Select
             label="Course Duration"
             placeholder="Select duration"
@@ -52,20 +52,15 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
             onChange={(e) => update({ duration: e.target.value })}
           />
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-bold text-gray-700">Course Price</label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-base">₹</span>
-              <input
-                type="number"
-                min={0}
-                placeholder="0"
-                value={form.price}
-                onChange={(e) => update({ price: e.target.value })}
-                className="w-full pl-8 pr-4 py-4 bg-[#F2F4F6] border border-gray-100 rounded-lg text-base font-medium outline-none"
-              />
-            </div>
-          </div>
+          <Input
+            label="Course Price"
+            type="number"
+            min={0}
+            placeholder="0"
+            value={form.price}
+            onChange={(e) => update({ price: e.target.value })}
+            leftIcon={<span className="font-semibold text-gray-500">₹</span>}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -74,109 +69,102 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
               value={form.discountType}
               onChange={(e) => update({ discountType: e.target.value })}
             />
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-bold text-gray-700">Discount</label>
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  max={form.discountType === 'percentage' ? 100 : undefined}
-                  placeholder="0"
-                  value={form.discount}
-                  onChange={(e) => update({ discount: e.target.value })}
-                  className="w-full px-4 py-4 bg-[#F2F4F6] border border-gray-100 rounded-lg text-base font-medium outline-none"
-                />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
-                  {form.discountType === 'percentage' ? '%' : '₹'}
-                </span>
-              </div>
+            <Input
+              label="Discount"
+              type="number"
+              min={0}
+              max={form.discountType === 'percentage' ? 100 : undefined}
+              placeholder="0"
+              value={form.discount}
+              onChange={(e) => update({ discount: e.target.value })}
+            />
+          </div>
+
+        </div>
+
+        {/* Promotional Tools — separate section */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-10 py-10 flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-base"><RiCoupon2Fill size={25} className='text-[#000B60] font-bold' /></span>
+              <Subheading className='text-[#000B60] font-bold' >Promotional Tools</Subheading>
             </div>
+            <Paragraph className='text-gray-400 mt-0.5 ml-8'>
+              Allow students to apply additional discount codes at checkout
+            </Paragraph>
+          </div>
+          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+            <button
+              type="button"
+              onClick={() => update({ enableCoupons: !form.enableCoupons })}
+              className={`w-10 h-5 rounded-full transition-colors relative ${form.enableCoupons ? 'bg-[#000B60]' : 'bg-gray-200'}`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form.enableCoupons ? 'left-5' : 'left-0.5'}`} />
+            </button>
+            <Paragraph className='text-xs font-semibold text-gray-600'>Enable Coupons</Paragraph>
           </div>
         </div>
 
-        {/* Section 2: Promotional Tools */}
-        <div className="flex flex-col gap-3 p-4 bg-[#F2F4F6] rounded-xl border border-gray-100">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[#000B60]">🏷</span>
-                <h3 className="text-sm font-bold text-[#000B60]">Promotional Tools</h3>
-              </div>
-              <p className="text-xs text-gray-400 mt-0.5 ml-6">
-                Allow students to apply additional discount codes at checkout
-              </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => toggle('enableCoupons')}
-                className={`w-10 h-5 rounded-full transition-colors relative ${form.enableCoupons ? 'bg-[#000B60]' : 'bg-gray-200'}`}
-              >
-                <span
-                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form.enableCoupons ? 'left-5' : 'left-0.5'}`}
-                />
-              </button>
-              <span className="text-xs font-semibold text-gray-600">Enable Coupons</span>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Right: Summary + Discount Calculator (5 cols) */}
-      <div className="col-span-5 flex flex-col gap-4">
-        {/* Student Price Card */}
+      {/* ── Right column (4 cols) ────────────────────────── */}
+      <div className="col-span-4 flex flex-col gap-4">
+
+        {/* Students Price card */}
         <div
-          className="rounded-2xl p-5 text-white"
+          className="rounded-2xl p-7 text-white"
           style={{ background: 'linear-gradient(135deg, #000B60, #142283)' }}
         >
-          <p className="text-xs font-medium opacity-70 mb-1">Students Price</p>
-          <p className="text-4xl font-bold">₹{studentPrice.toFixed(2)}</p>
+          <p className="text-xs font-semibold uppercase tracking-widest opacity-70 mb-2">Students Price</p>
+          <p className="text-4xl font-bold tracking-tight">₹{studentPrice.toFixed(2)}</p>
+          <p className="text-xs opacity-60 mt-2 leading-relaxed">
+            Calculated based on a {discount}{form.discountType === 'percentage' ? '%' : '₹'} discount applied to the ₹{price.toFixed(2)}.
+          </p>
           {discount > 0 && (
-            <p className="text-xs opacity-70 mt-2">
-              Calculated based on a {discount}
-              {form.discountType === 'percentage' ? '%' : '₹'} discount applied to the ₹{price.toFixed(2)}.
+            <p className="text-xs opacity-60 mt-2 leading-relaxed">
+              You save ₹{saved.toFixed(2)} on this course.
             </p>
           )}
         </div>
 
-        {/* Revenue Breakdown */}
-        <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-3">
+        {/* Price breakdown */}
+        <div className="flex flex-col gap-3 px-1">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Course Price</span>
+            <Paragraph className='text-xs font-semibold text-gray-600'>Course Price</Paragraph>
             <span className="font-semibold text-gray-700">₹{price.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Discount</span>
+            <Paragraph className='text-xs font-semibold text-gray-600'>Discount</Paragraph>
             <span className="font-semibold text-gray-700">
               {discount}{form.discountType === 'percentage' ? '%' : '₹'}
             </span>
           </div>
-          <div className="border-t border-gray-200 pt-2 flex justify-between text-sm">
-            <span className="font-bold text-[#000B60]">Students Price</span>
+          <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
+            <Paragraph className='text-xs font-semibold text-gray-600'>Students Price</Paragraph>
             <span className="font-bold text-[#000B60]">₹{studentPrice.toFixed(2)}</span>
           </div>
         </div>
 
         {/* Discount Calculator */}
-        <div className="bg-white rounded-xl p-4 flex flex-col gap-3 border border-gray-100">
-          <h3 className="text-sm font-bold text-[#000B60]">Discount Calculator</h3>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="flex flex-col gap-1 bg-[#F2F4F6] rounded-xl p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Sum of Courses</p>
+        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col gap-4">
+          <Subheading className='text-[#000B60] font-bold'>Discount Calculator</Subheading>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-col gap-1 bg-[#F2F4F6] rounded-xl p-2">
+              <Paragraph className='text-xs font-semibold text-gray-600'>Sum of Courses</Paragraph>
               <p className="text-sm font-bold text-gray-700">₹{price.toFixed(2)}</p>
             </div>
             <div className="flex flex-col gap-1 bg-[#F2F4F6] rounded-xl p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Student Price</p>
+              <Paragraph className='text-xs font-semibold text-gray-600'>Student Price</Paragraph>
               <p className="text-sm font-bold text-gray-700">₹{studentPrice.toFixed(2)}</p>
             </div>
-            <div className="flex flex-col gap-1 bg-[#EAF9F6] rounded-xl p-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#00A98F]">Student Saved</p>
+            <div className="flex flex-col gap-1 bg-[#E6FBF7] rounded-xl p-3">
+              <Paragraph className='text-xs font-semibold text-[#00A98F]'>Student Saved</Paragraph>
               <p className="text-sm font-bold text-[#00A98F]">₹{saved.toFixed(2)}</p>
             </div>
           </div>
         </div>
 
-        {/* CTA */}
+        {/* Preview CTA */}
         <Button variant="primary" fullWidth onClick={onNext}>
           Preview <ArrowRight size={18} />
         </Button>

@@ -16,9 +16,12 @@ import BundlesPage from '@/pages/bundles'
 import TestsPage from '@/pages/tests'
 import StudentsPage from '@/pages/students'
 import AnalyticsPage from '@/pages/analytics'
-import FinancePage from '@/pages/finance'
+import CouponsPage from '@/pages/coupons'
 import ChatsPage from '@/pages/chats'
 import AnnouncementsPage from '@/pages/announcements'
+import AnnouncementDetailPage from '@/pages/announcements/AnnouncementDetailPage'
+import CreateAnnouncementPage from '@/pages/announcements/CreateAnnouncementPage'
+import CreateCouponPage from '@/pages/coupons/CreateCouponPage'
 import ProfilePage from '@/pages/profile'
 
 const queryClient = new QueryClient()
@@ -47,10 +50,13 @@ const App = () => {
               <Route path="/students" element={<StudentsPage />} />
               <Route path="/students/:id" element={<StudentDetailPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/finance" element={<FinancePage />} />
+              <Route path="/coupon-management" element={<CouponsPage />} />
+              <Route path="/coupon-management/create" element={<CreateCouponPage />} />
               <Route path="/chats" element={<ChatsPage />} />
               <Route path="/announcements" element={<AnnouncementsPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
+              <Route path="/announcements/create" element={<CreateAnnouncementPage />} />
+              <Route path="/account" element={<ProfilePage />} />
             </Route>
           </Route>
 

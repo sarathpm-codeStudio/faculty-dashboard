@@ -90,7 +90,8 @@ const CourseCreatePage = () => {
       {/* Back link */}
       <button
         onClick={back}
-        className="flex items-center gap-2 text-[#000B60] font-semibold text-sm hover:opacity-70 transition-opacity mb-5 w-fit"
+        className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-5 transition-colors"
+
       >
         <ArrowLeft size={16} />
         {BACK_LABELS[step - 1]}
@@ -103,13 +104,13 @@ const CourseCreatePage = () => {
 
         <div className="flex items-center gap-3">
           {step === 4 && (
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-200 text-green-700">
               Ready to Publish
             </span>
           )}
           <span className="text-sm font-medium text-gray-400">
             <span className="text-[#000B60] font-bold">Step {String(step).padStart(2, '0')}</span>
-            <span className="text-gray-300"> / 04</span>
+            <span className="text-gray-500"> / 04</span>
           </span>
         </div>
       </div>

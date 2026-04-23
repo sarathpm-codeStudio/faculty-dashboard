@@ -2,12 +2,13 @@ import type { InputHTMLAttributes, ReactNode } from 'react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
+  labelClassName?: string
   error?: string
   leftIcon?: ReactNode
   showCount?: boolean
 }
 
-const Input = ({ label, error, id, leftIcon, showCount = false, className = '', ...props }: InputProps) => {
+const Input = ({ label, labelClassName = '', error, id, leftIcon, showCount = false, className = '', ...props }: InputProps) => {
   const inputId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
   const current = String(props.value ?? '').length
   const max = props.maxLength
@@ -15,7 +16,7 @@ const Input = ({ label, error, id, leftIcon, showCount = false, className = '', 
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label htmlFor={inputId} className="text-sm font-bold text-gray-700">
+        <label htmlFor={inputId} className={`text-sm font-bold text-gray-700 ${labelClassName}`}>
           {label}
         </label>
       )}

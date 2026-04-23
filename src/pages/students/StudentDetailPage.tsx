@@ -6,7 +6,7 @@ import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsPencilFill } from 'react-icons/bs'
 import { PiCoinsFill } from 'react-icons/pi'
 import { HiMiniCurrencyDollar } from 'react-icons/hi2'
-import { Button, Heading, Spinner, DataTable } from '@/components/ui'
+import { Button, Heading, Spinner, DataTable, Subheading } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import man from '@/assets/images/man.jpg'
@@ -137,6 +137,7 @@ const StudentDetailPage = () => {
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.28 }}
+
             >
                 <ArrowLeft size={14} />
                 Back
@@ -149,33 +150,31 @@ const StudentDetailPage = () => {
                     {/* Avatar + info */}
                     <div className="flex items-start gap-5">
                         <div className="relative shrink-0">
-                            <img src={man} alt="Elena Rodriguez" className="w-20 h-20 rounded-2xl object-cover" />
-                            <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-[#000B60] text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider whitespace-nowrap">
+                            <img src={man} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
+                            <span className="absolute -bottom-2.5 left-2/2 -translate-x-1/2 bg-[#00A6BF] text-white text-[9px] font-bold px-3.5 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
                                 Active
                             </span>
                         </div>
                         <div className="mt-1">
                             <Heading className="text-[#000B60] mb-3">Elena Rodriguez</Heading>
-                            <div className="flex flex-wrap gap-x-6 gap-y-1.5">
-                                <span className="flex items-center gap-1.5 text-xs text-[#767683] font-medium">
-                                    <User size={12} /> ID: 2024-ER8921
+                            <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
+                                <span className="flex items-center gap-1.5 text-xs text-black font-medium">
+                                    <User className='text-[#00A6BF]' size={12} /> ID: 2024-ER8921
                                 </span>
-                                <span className="flex items-center gap-1.5 text-xs text-[#767683] font-medium">
-                                    <MdOutlineMenuBook size={13} /> CMA
+                                <span className="flex items-center gap-1.5 text-xs text-black font-medium">
+                                    <MdOutlineMenuBook className='text-[#00A6BF]' size={13} /> CMA
                                 </span>
-                                <span className="flex items-center gap-1.5 text-xs text-[#767683] font-medium">
-                                    <Clock size={12} /> Last login: Today 11:40 pm
+                                <span className="flex items-center gap-1.5 text-xs text-black font-medium">
+                                    <Clock className='text-[#00A6BF]' size={12} /> Last login: Today 11:40 pm
                                 </span>
-                            </div>
-                            <div className="flex flex-wrap gap-x-6 gap-y-1.5 mt-1.5">
-                                <span className="flex items-center gap-1.5 text-xs text-[#767683] font-medium">
-                                    <Calendar size={12} /> Joined 02/12/2026
+                                <span className="flex items-center gap-1.5 text-xs text-black font-medium">
+                                    <Calendar className='text-[#00A6BF]' size={12} /> Joined 02/12/2026
                                 </span>
-                                <span className="flex items-center gap-1.5 text-xs text-[#767683] font-medium">
-                                    <Phone size={12} /> +91 52485545665
+                                <span className="flex items-center gap-1.5 text-xs text-black font-medium">
+                                    <Phone className='text-[#00A6BF]' size={12} /> +91 52485545665
                                 </span>
-                                <span className="flex items-center gap-1.5 text-xs text-[#767683] font-medium">
-                                    <Mail size={12} /> e.rodriguez@academy.edu
+                                <span className="flex items-center gap-1.5 text-xs text-black font-medium">
+                                    <Mail className='text-[#00A6BF]' size={12} /> e.rodriguez@academy.edu
                                 </span>
                             </div>
                         </div>
@@ -187,9 +186,9 @@ const StudentDetailPage = () => {
                             <Mail size={14} />
                             Message Student
                         </Button>
-                        <button className="text-sm font-bold text-[#BA1A1A] hover:underline underline-offset-2 transition-colors">
+                        <Button variant="white" className="!h-10 !text-sm !px-5 !text-red-500 w-full">
                             Block
-                        </button>
+                        </Button>
                     </div>
 
                 </div>
@@ -198,7 +197,9 @@ const StudentDetailPage = () => {
             {/* Stat cards */}
             <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" {...fadeUp(0.1)}>
                 <StatCard
-                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><MdOutlineMenuBook className="text-[#000B60]" size={22} /></div>}
+
+                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
+
                     label="Course Enrolled"
                     value="03"
                 />
@@ -206,26 +207,28 @@ const StudentDetailPage = () => {
                     icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><BsPencilFill className="text-[#00875A]" size={18} /></div>}
                     label="Test Score"
                     value="94.8%"
-                    valueColor="#00875A"
+                // valueColor="#00875A"
                 />
                 <StatCard
                     icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFE8CC]"><PiCoinsFill className="text-[#E6A800]" size={22} /></div>}
                     label="Total Coins"
                     value="1200"
-                    valueColor="#E6A800"
+                // valueColor="#E6A800"
                 />
                 <StatCard
-                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><HiMiniCurrencyDollar className="text-[#00875A]" size={24} /></div>}
+
+                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
+
                     label="Total Spend"
                     value="12500"
                     prefix="₹"
-                    valueColor="#00875A"
+                // valueColor="#00875A"
                 />
             </motion.div>
 
             {/* Enrolled Courses */}
             <motion.div {...fadeUp(0.15)}>
-                <p className="font-bold text-[#000B60] text-base mb-3">Enrolled Courses</p>
+                <Subheading className='text-[#000B60] font-bold' >Enrolled Courses</Subheading>
                 <DataTable columns={COURSE_COLUMNS} data={ENROLLED_COURSES} defaultPageSize={10} />
             </motion.div>
 
