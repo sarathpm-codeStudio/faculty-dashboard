@@ -13,6 +13,7 @@ import ReviewPage from '@/pages/courses/reviewPage'
 import CourseAnalyticsPage from '@/pages/courses/analytics'
 import StudentDetailPage from '@/pages/students/StudentDetailPage'
 import BundlesPage from '@/pages/bundles'
+import CreateBundlePage from '@/pages/bundles/CreateBundlePage'
 import TestsPage from '@/pages/tests'
 import StudentsPage from '@/pages/students'
 import AnalyticsPage from '@/pages/analytics'
@@ -46,6 +47,7 @@ const App = () => {
               <Route path="/courses/:id/reviews" element={<ReviewPage />} />
               <Route path="/courses/:id/analytics" element={<CourseAnalyticsPage />} />
               <Route path="/bundles" element={<BundlesPage />} />
+              <Route path="/bundles/create" element={<CreateBundlePage />} />
               <Route path="/tests" element={<TestsPage />} />
               <Route path="/students" element={<StudentsPage />} />
               <Route path="/students/:id" element={<StudentDetailPage />} />
