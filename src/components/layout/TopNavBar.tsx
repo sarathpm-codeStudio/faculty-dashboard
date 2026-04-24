@@ -7,7 +7,11 @@ import { useAuthStore } from '@/store/authStore'
 import { useNavigate } from 'react-router-dom'
 import { Button, Button2, Input, Paragraph } from '@/components/ui'
 
-const TopNavBar = () => {
+interface Props {
+    onNotifClick: () => void
+}
+
+const TopNavBar = ({ onNotifClick }: Props) => {
     const user = useAuthStore((state) => state.user)
     const logout = useAuthStore((state) => state.logout)
     const navigate = useNavigate()
@@ -55,7 +59,7 @@ const TopNavBar = () => {
                 </Button>
 
                 {/* Notification bell */}
-                <button className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
                     <Bell size={20} className="text-gray-500" />
                     <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-medium">
                         3

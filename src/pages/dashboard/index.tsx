@@ -68,7 +68,6 @@ const DashboardPage = () => (
         icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFDAD6]"><BsChatSquareTextFill className="text-[#BA1A1A]" size={25} /></div>}
         label="Pending Doubts"
         value="56"
-        valueColor="#ba1a1a"
       />
       <StatCard
         icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
