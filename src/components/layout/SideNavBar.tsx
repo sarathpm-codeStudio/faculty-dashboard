@@ -1,14 +1,15 @@
 
-
-import { NavLink } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {
     LayoutDashboard, BookOpen, Package, MessageCircle,
-    Users, Megaphone, Settings,
-    ClipboardList, HelpCircle,
+    Users, Megaphone,
+    ClipboardList, HelpCircle, User, Landmark, LogOut, ChevronUp,
 } from 'lucide-react'
-import { RiCoupon2Line } from "react-icons/ri";
+import { RiCoupon2Line } from 'react-icons/ri'
 import { useAuthStore } from '@/store/authStore'
 import logo from '@/assets/icons/Icon.svg'
+import { Heading, Paragraph } from '../ui'
 
 const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -19,10 +20,32 @@ const navLinks = [
     { to: '/students', label: 'Students', icon: Users },
     { to: '/announcements', label: 'Announcements', icon: Megaphone },
     { to: '/coupon-management', label: 'Coupon Management', icon: RiCoupon2Line },
-    { to: '/account', label: 'Account', icon: Settings },
 ]
-import { Heading, Paragraph } from '../ui'
+
 const SideNavBar = () => {
+    const [accountOpen, setAccountOpen] = useState(false)
+    const accountRef = useRef<HTMLDivElement>(null)
+    const navigate = useNavigate()
+    const { user, logout } = useAuthStore()
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+                setAccountOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleLogout = () => {
+        logout()
+        navigate('/auth/login')
+    }
+
+    const initials = user?.name
+        ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+        : 'FA'
 
     return (
         <aside className="w-70 h-screen bg-input-bg border-r border-gray-100 flex flex-col py-6 flex-shrink-0">
@@ -49,18 +72,67 @@ const SideNavBar = () => {
                         }
                     >
                         <Icon size={18} />
-                        {/* <span className='text-[24px' >{label}</span> */}
-                        <Paragraph className='font-bold' >{label}</Paragraph>
+                        <Paragraph className='font-bold'>{label}</Paragraph>
                     </NavLink>
                 ))}
             </nav>
 
-            {/* Help Center */}
-            <div className="px-3 pt-4 border-t border-gray-100">
+            {/* Bottom section */}
+            <div className="px-3 pt-4 border-t border-gray-100 flex flex-col gap-1">
+                {/* Help Center */}
                 <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
                     <HelpCircle size={18} />
-                    <Paragraph className="">Help Center</Paragraph>
+                    <Paragraph>Help Center</Paragraph>
                 </button>
+
+                {/* Account selector */}
+                <div className="relative" ref={accountRef}>
+                    {/* Popup */}
+                    {accountOpen && (
+                        <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-xl border border-gray-100 shadow-lg overflow-hidden z-50">
+                            <button
+                                onClick={() => { navigate('/account'); setAccountOpen(false) }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#F2F4F6] transition-colors"
+                            >
+                                <User size={16} className="text-[#000B60]" />
+                                <Paragraph className="font-bold text-[#000B60]">Personal Information</Paragraph>
+                            </button>
+                            <div className="h-px bg-gray-100 mx-3" />
+                            <button
+                                onClick={() => { navigate('/account/bank'); setAccountOpen(false) }}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#F2F4F6] transition-colors"
+                            >
+                                <Landmark size={16} className="text-[#000B60]" />
+                                <Paragraph className="font-bold text-[#000B60]">Bank Details</Paragraph>
+                            </button>
+                            <div className="h-px bg-gray-100 mx-3" />
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-red-50 transition-colors"
+                            >
+                                <LogOut size={16} className="text-red-500" />
+                                <Paragraph className="font-bold text-red-500">Logout</Paragraph>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Trigger button */}
+                    <button
+                        onClick={() => setAccountOpen(prev => !prev)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${accountOpen ? 'bg-[#000B60] text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+                    >
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${accountOpen ? 'bg-white text-[#000B60]' : 'bg-[#000B60] text-white'}`}>
+                            {initials}
+                        </div>
+                        <Paragraph className={`font-bold flex-1 text-left truncate ${accountOpen ? 'text-white' : ''}`}>
+                            {user?.name ?? 'Account'}
+                        </Paragraph>
+                        <ChevronUp
+                            size={15}
+                            className={`shrink-0 transition-transform duration-200 ${accountOpen ? 'rotate-0 text-white' : 'rotate-180 text-gray-400'}`}
+                        />
+                    </button>
+                </div>
             </div>
 
         </aside>

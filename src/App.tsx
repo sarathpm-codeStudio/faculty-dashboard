@@ -15,6 +15,8 @@ import StudentDetailPage from '@/pages/students/StudentDetailPage'
 import BundlesPage from '@/pages/bundles'
 import CreateBundlePage from '@/pages/bundles/CreateBundlePage'
 import TestsPage from '@/pages/tests'
+import TestDetailPage from '@/pages/tests/TestDetailPage'
+import CreateTestPage from '@/pages/tests/CreateTestPage'
 import StudentsPage from '@/pages/students'
 import AnalyticsPage from '@/pages/analytics'
 import CouponsPage from '@/pages/coupons'
@@ -24,6 +26,9 @@ import AnnouncementDetailPage from '@/pages/announcements/AnnouncementDetailPage
 import CreateAnnouncementPage from '@/pages/announcements/CreateAnnouncementPage'
 import CreateCouponPage from '@/pages/coupons/CreateCouponPage'
 import ProfilePage from '@/pages/profile'
+import BankDetailsAndTransaction from '@/pages/profile/BankDetails&Transaction'
+import UpdateBankDetails from '@/pages/profile/UpdateBankDetails'
+import FullTransactionHistory from '@/pages/profile/FullTransactionHistory'
 
 const queryClient = new QueryClient()
 
@@ -49,6 +54,8 @@ const App = () => {
               <Route path="/bundles" element={<BundlesPage />} />
               <Route path="/bundles/create" element={<CreateBundlePage />} />
               <Route path="/tests" element={<TestsPage />} />
+              <Route path="/tests/create" element={<CreateTestPage />} />
+              <Route path="/tests/:id" element={<TestDetailPage />} />
               <Route path="/students" element={<StudentsPage />} />
               <Route path="/students/:id" element={<StudentDetailPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
@@ -59,6 +66,9 @@ const App = () => {
               <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
               <Route path="/announcements/create" element={<CreateAnnouncementPage />} />
               <Route path="/account" element={<ProfilePage />} />
+              <Route path="/account/bank" element={<BankDetailsAndTransaction />} />
+              <Route path="/account/bank/update" element={<UpdateBankDetails />} />
+              <Route path="/account/bank/history" element={<FullTransactionHistory />} />
             </Route>
           </Route>
 

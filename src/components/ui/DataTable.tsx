@@ -14,13 +14,14 @@ type DataTableProps<T> = {
   data: T[]
   defaultPageSize?: number
   className?: string
+  hidePagination?: boolean
   onRangeChange?: (start: number, end: number, total: number) => void
   onRowClick?: (row: T) => void
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
-function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onRangeChange, onRowClick }: DataTableProps<T>) {
+function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', hidePagination = false, onRangeChange, onRowClick }: DataTableProps<T>) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(defaultPageSize)
 
@@ -77,7 +78,7 @@ function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onR
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+      {!hidePagination && (<div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
         <div className="flex items-center gap-2.5">
           <span className="text-xs text-[#767683] font-medium">Rows per page:</span>
           <select
@@ -126,7 +127,7 @@ function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', onR
             <ChevronRight size={14} />
           </button>
         </div>
-      </div>
+      </div>)}
     </div>
   )
 }
