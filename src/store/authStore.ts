@@ -13,8 +13,10 @@ interface AuthState {
     isAuthenticated: boolean
     user: User | null
     token: string | null
+    isPending: boolean
     login: (user: User, token: string) => void
     logout: () => void
+    setIsPending: (value: boolean) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -23,8 +25,10 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             user: null,
             token: null,
+            isPending: false,
             login: (user, token) => set({ isAuthenticated: true, user, token }),
-            logout: () => set({ isAuthenticated: false, user: null, token: null }),
+            logout: () => set({ isAuthenticated: false, user: null, token: null, isPending: false }),
+            setIsPending: (value) => set({ isPending: value }),
         }),
         { name: 'auth-storage' }
     )

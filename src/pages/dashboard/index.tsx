@@ -37,10 +37,11 @@ const activity = [
 
 const DashboardPage = () => {
 
+  const { user, isPending, setIsPending } = useAuthStore()
+
   useEffect(() => {
     const getProfile = async () => {
       try {
-        const user = useAuthStore.getState().user
         if (!user) {
           toast.error('User not found')
           return
@@ -49,13 +50,12 @@ const DashboardPage = () => {
         if (!profile) {
           toast.error('Profile not found')
           return
-
         }
-
-        if (profile?.account_verified === "PENDING") {
-          toast.error('Account not verified')
+        if (profile?.account_verified === 'PENDING') {
+          setIsPending(true)
           return
         }
+        setIsPending(false)
         console.log('user profile', profile)
       } catch (error: any) {
         toast.error(error.message)

@@ -12,8 +12,7 @@ interface Props {
 }
 
 const TopNavBar = ({ onNotifClick }: Props) => {
-    const user = useAuthStore((state) => state.user)
-    const logout = useAuthStore((state) => state.logout)
+    const { user, logout, isPending } = useAuthStore()
     const navigate = useNavigate()
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -37,34 +36,38 @@ const TopNavBar = ({ onNotifClick }: Props) => {
         <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 pt-7 bg-gray-50 z-20 sticky top-0">
 
             {/* Search */}
-            <div className="w-[700px]">
-                <Input
-                    placeholder="Search by course and students..."
-                    leftIcon={<Search size={16} />}
-                />
-            </div>
+            {!isPending && (
+                <div className="w-[700px]">
+                    <Input
+                        placeholder="Search by course and students..."
+                        leftIcon={<Search size={16} />}
+                    />
+                </div>
+            )}
+            {isPending && <div />}
 
             {/* Right side */}
             <div className="flex items-center gap-4">
 
-
-                <Button
-                    variant="primary"
-                    className="!h-10 !text-sm !px-4 !font-semibold"
-                    onClick={() => navigate('/courses/create')}
-                >
-
-
-                    Create course
-                </Button>
+                {!isPending && (
+                    <Button
+                        variant="primary"
+                        className="!h-10 !text-sm !px-4 !font-semibold"
+                        onClick={() => navigate('/courses/create')}
+                    >
+                        Create course
+                    </Button>
+                )}
 
                 {/* Notification bell */}
-                <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                    <Bell size={20} className="text-gray-500" />
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-medium">
-                        3
-                    </span>
-                </button>
+                {!isPending && (
+                    <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                        <Bell size={20} className="text-gray-500" />
+                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-medium">
+                            3
+                        </span>
+                    </button>
+                )}
 
                 {/* Divider */}
                 <div className="w-px h-8 bg-gray-300" />

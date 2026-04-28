@@ -26,7 +26,7 @@ const SideNavBar = () => {
     const [accountOpen, setAccountOpen] = useState(false)
     const accountRef = useRef<HTMLDivElement>(null)
     const navigate = useNavigate()
-    const { user, logout } = useAuthStore()
+    const { user, logout, isPending } = useAuthStore()
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -61,33 +61,45 @@ const SideNavBar = () => {
             {/* Nav links */}
             <nav className="flex-1 flex flex-col gap-1 px-3 pt-4 overflow-y-auto">
                 {navLinks.map(({ to, label, icon: Icon }) => (
-                    <NavLink
-                        key={to}
-                        to={to}
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive
-                                ? 'bg-[#000B60] text-white font-medium'
-                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                            }`
-                        }
-                    >
-                        <Icon size={18} />
-                        <Paragraph className='font-bold'>{label}</Paragraph>
-                    </NavLink>
+                    isPending ? (
+                        <div
+                            key={to}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 blur-[1.5px] cursor-not-allowed select-none"
+                        >
+                            <Icon size={18} />
+                            <Paragraph className='font-bold'>{label}</Paragraph>
+                        </div>
+                    ) : (
+                        <NavLink
+                            key={to}
+                            to={to}
+                            className={({ isActive }) =>
+                                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${isActive
+                                    ? 'bg-[#000B60] text-white font-medium'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                                }`
+                            }
+                        >
+                            <Icon size={18} />
+                            <Paragraph className='font-bold'>{label}</Paragraph>
+                        </NavLink>
+                    )
                 ))}
             </nav>
 
             {/* Bottom section */}
             <div className="px-3 pt-4 border-t border-gray-100 flex flex-col gap-1">
                 {/* Help Center */}
-                <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <button
+                    disabled={isPending}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isPending ? 'text-gray-300 blur-[1.5px] cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+                >
                     <HelpCircle size={18} />
                     <Paragraph>Help Center</Paragraph>
                 </button>
 
-                {/* Account selector */}
+                {/* Account selector — always accessible */}
                 <div className="relative" ref={accountRef}>
-                    {/* Popup */}
                     {accountOpen && (
                         <div className="absolute bottom-full mb-2 left-0 right-0 bg-white rounded-xl border border-gray-100 shadow-lg overflow-hidden z-50">
                             <button
@@ -116,7 +128,6 @@ const SideNavBar = () => {
                         </div>
                     )}
 
-                    {/* Trigger button */}
                     <button
                         onClick={() => setAccountOpen(prev => !prev)}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${accountOpen ? 'bg-[#000B60] text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
