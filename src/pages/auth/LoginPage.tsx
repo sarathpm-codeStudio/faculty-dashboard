@@ -1,129 +1,89 @@
-
-
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useFormik } from 'formik'
+import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
 import AuthLayout from '@/components/layout/AuthLayout'
 import { Button, Input, Paragraph, Checkbox } from '@/components/ui'
-import { ChevronDown } from 'lucide-react'
+import { authService } from '@/services/authService'
+import { validationSchema } from '@/utils/validator/auth.validator'
 
 
-const countryCodes = [
-    { code: '+91', flag: '🇮🇳', country: 'India' },
-    { code: '+1', flag: '🇺🇸', country: 'USA' },
-    { code: '+44', flag: '🇬🇧', country: 'UK' },
-    { code: '+971', flag: '🇦🇪', country: 'UAE' },
-]
 
 const LoginPage = () => {
     const navigate = useNavigate()
     const login = useAuthStore((state) => state.login)
-
-    const [phone, setPhone] = useState('')
     const [rememberMe, setRememberMe] = useState(false)
-    const [selectedCode, setSelectedCode] = useState(countryCodes[0])
-    const [dropdownOpen, setDropdownOpen] = useState(false)
-    const [error, setError] = useState('')
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!phone) return setError('Please enter your phone number')
-        login(
-            { id: '1', name: 'Salsabeel', email: `${selectedCode.code}${phone}` },
-            'mock-token-123'
-        )
-        navigate('/auth/otp')
-    }
+    const formik = useFormik({
+        initialValues: { email: '', password: '' },
+        validationSchema,
+        onSubmit: async (values, { setSubmitting }) => {
+            try {
+                const data = await authService.signIn(values.email, values.password)
+                const user = data.user
+                login(
+                    {
+                        id: user?.id ?? '',
+                        name: `${user?.user_metadata?.first_name} ${user?.user_metadata?.last_name}` || " ",
+                        email: user?.email ? values.email : " ",
+                    },
+                    data.session?.access_token ?? ''
+                )
+                console.log(data)
+                toast.success('Signed in successfully')
+                navigate('/dashboard')
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Sign in failed. Please try again.'
+                toast.error(message)
+            } finally {
+                setSubmitting(false)
+            }
+        },
+    })
 
     return (
         <AuthLayout title="Faculty Sign in" subtitle="Access your dashboard and classrooms">
-            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
 
-                {/* Phone Number field */}
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-gray-700">
-                        Phone Number
-                    </label>
+                <Input
+                    label="Email"
+                    type="email"
+                    id="email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="you@example.com"
+                    error={formik.touched.email && formik.errors.email ? formik.errors.email : undefined}
+                />
 
-                    <div className="flex gap-2 items-start">
-
-                        {/* Country code dropdown */}
-                        <div className="relative flex-shrink-0">
-                            <button
-                                type="button"
-                                onClick={() => setDropdownOpen(!dropdownOpen)}
-                                className="flex items-center gap-1.5 px-3 py-4.5 bg-gray-100 hover:bg-gray-200 border border-gray-100 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-                            >
-                                <span>{selectedCode.code}</span>
-                                <ChevronDown
-                                    size={14}
-                                    className={`text-gray-500 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''
-                                        }`}
-                                />
-                            </button>
-
-                            {/* Dropdown list */}
-                            {dropdownOpen && (
-                                <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
-                                    {countryCodes.map((item) => (
-                                        <button
-                                            key={item.code}
-                                            type="button"
-                                            onClick={() => {
-                                                setSelectedCode(item)
-                                                setDropdownOpen(false)
-                                            }}
-                                            className={`w-full flex items-center justify-between px-3 py-2.5 text-sm transition-colors hover:bg-gray-50
-                        ${selectedCode.code === item.code
-                                                    ? 'bg-indigo-50 text-indigo-600 font-medium'
-                                                    : 'text-gray-700'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <span>{item.flag}</span>
-                                                <span>{item.country}</span>
-                                            </div>
-                                            <span className="text-gray-400 text-xs">{item.code}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Phone input */}
-                        <div className="flex flex-col gap-1 flex-1">
-                            <Input
-                                // label="Phone Number"
-                                type="number"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                placeholder="**********"
-                                error={error}
-                            />
-                            {/* {error && (
-                                <p className="text-red-500 text-xs">{error}</p>
-                            )} */}
-                        </div>
-
-                    </div>
-                </div>
+                <Input
+                    label="Password"
+                    type="password"
+                    id="password"
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="••••••••"
+                    error={formik.touched.password && formik.errors.password ? formik.errors.password : undefined}
+                />
 
                 <Checkbox
                     label="Remember me"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className='mt-[15px]'
+                    className="mt-2"
                 />
 
-                <Button type="submit" fullWidth className='mt-[15px]'>
-                    Sign in
+                <Button type="submit" fullWidth className="mt-4" disabled={formik.isSubmitting}>
+                    {formik.isSubmitting ? 'Signing in…' : 'Sign in'}
                 </Button>
 
             </form>
 
             <Paragraph size="sm" className="text-center mt-6 mb-[10px]">
                 Don't have an account?{' '}
-                <Link to="/auth/signup" className="text-[#000B60] font-bold ">
+                <Link to="/auth/signup" className="text-[#000B60] font-bold">
                     Sign up
                 </Link>
             </Paragraph>

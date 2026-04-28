@@ -1,133 +1,118 @@
-
-
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
+import { useFormik } from 'formik'
+import { toast } from 'sonner'
 import AuthLayout from '@/components/layout/AuthLayout'
-import { Button, Input, Paragraph, Checkbox } from '@/components/ui'
-import { ChevronDown } from 'lucide-react'
+import { Button, Input, Paragraph } from '@/components/ui'
 import { IoIosArrowRoundBack } from 'react-icons/io'
+import { authService } from '@/services/authService'
+import { signupValidationSchema } from '@/utils/validator/auth.validator'
 
-
-const countryCodes = [
-    { code: '+91', flag: '🇮🇳', country: 'India' },
-    { code: '+1', flag: '🇺🇸', country: 'USA' },
-    { code: '+44', flag: '🇬🇧', country: 'UK' },
-    { code: '+971', flag: '🇦🇪', country: 'UAE' },
-]
-
-const LoginPage = () => {
+const SignupPage = () => {
     const navigate = useNavigate()
-    const login = useAuthStore((state) => state.login)
+    const [success, setSuccess] = useState(false)
 
-    const [phone, setPhone] = useState('')
-    const [rememberMe, setRememberMe] = useState(false)
-    const [selectedCode, setSelectedCode] = useState(countryCodes[0])
-    const [dropdownOpen, setDropdownOpen] = useState(false)
-    const [error, setError] = useState('')
+    const formik = useFormik({
+        initialValues: { name: '', email: '', password: '', confirmPassword: '' },
+        validationSchema: signupValidationSchema,
+        onSubmit: async (values, { setSubmitting }) => {
+            try {
+                await authService.signUp(values.email, values.password, values.name)
+                toast.success('Account created! Check your email to confirm.')
+                setSuccess(true)
+            } catch (err: unknown) {
+                const message = err instanceof Error ? err.message : 'Sign up failed. Please try again.'
+                toast.error(message)
+            } finally {
+                setSubmitting(false)
+            }
+        },
+    })
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!phone) return setError('Please enter your phone number')
-        login(
-            { id: '1', name: 'Salsabeel', email: `${selectedCode.code}${phone}` },
-            'mock-token-123'
+    if (success) {
+        return (
+            <AuthLayout title="Check your email" subtitle="We sent a confirmation link to your inbox">
+                <div className="flex flex-col items-center gap-6 py-4">
+                    <p className="text-sm text-gray-600 text-center">
+                        Please click the link in your email to verify your account, then sign in.
+                    </p>
+                    <Button fullWidth onClick={() => navigate('/auth')}>
+                        Go to Sign in
+                    </Button>
+                </div>
+            </AuthLayout>
         )
-        navigate('/auth/otp')
     }
 
     return (
-        <AuthLayout title="Faculty Sign up" subtitle="Access your dashboard and classrooms">
-            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+        <AuthLayout title="Faculty Sign up" subtitle="Create your faculty account">
+            <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
 
-                {/* Phone Number field */}
-                <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-gray-700">
-                        Phone Number
-                    </label>
+                <Input
+                    label="Full Name"
+                    type="text"
+                    id="name"
+                    value={formik.values.name}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="Your full name"
+                    error={formik.touched.name && formik.errors.name ? formik.errors.name : undefined}
+                />
 
-                    <div className="flex gap-2 items-start">
+                <Input
+                    label="Email"
+                    type="email"
+                    id="email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="you@example.com"
+                    error={formik.touched.email && formik.errors.email ? formik.errors.email : undefined}
+                />
 
-                        {/* Country code dropdown */}
-                        <div className="relative flex-shrink-0">
-                            <button
-                                type="button"
-                                onClick={() => setDropdownOpen(!dropdownOpen)}
-                                className="flex items-center gap-1.5 px-3 h-[56px] bg-[#F2F4F6] hover:bg-gray-200 border border-gray-100 rounded-lg text-base font-medium text-gray-700 transition-colors"
-                            >
-                                <span>{selectedCode.code}</span>
-                                <ChevronDown
-                                    size={14}
-                                    className={`text-gray-500 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''
-                                        }`}
-                                />
-                            </button>
+                <Input
+                    label="Password"
+                    type="password"
+                    id="password"
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="••••••••"
+                    error={formik.touched.password && formik.errors.password ? formik.errors.password : undefined}
+                />
 
-                            {/* Dropdown list */}
-                            {dropdownOpen && (
-                                <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
-                                    {countryCodes.map((item) => (
-                                        <button
-                                            key={item.code}
-                                            type="button"
-                                            onClick={() => {
-                                                setSelectedCode(item)
-                                                setDropdownOpen(false)
-                                            }}
-                                            className={`w-full flex items-center justify-between px-3 py-2.5 text-sm transition-colors hover:bg-gray-50
-                        ${selectedCode.code === item.code
-                                                    ? 'bg-indigo-50 text-indigo-600 font-medium'
-                                                    : 'text-gray-700'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <span>{item.flag}</span>
-                                                <span>{item.country}</span>
-                                            </div>
-                                            <span className="text-gray-400 text-xs">{item.code}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                <Input
+                    label="Confirm Password"
+                    type="password"
+                    id="confirmPassword"
+                    value={formik.values.confirmPassword}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder="••••••••"
+                    error={formik.touched.confirmPassword && formik.errors.confirmPassword ? formik.errors.confirmPassword : undefined}
+                />
 
-                        {/* Phone input */}
-                        <div className="flex flex-col gap-1 flex-1">
-                            <Input
-                                // label="Phone Number"
-                                type="number"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                placeholder="**********"
-                                error={error}
-                            />
-                            {error && (
-                                <p className="text-red-500 text-xs">{error}</p>
-                            )}
-                        </div>
-
-                    </div>
-                </div>
-
-                {/* <Checkbox
-                    label="Remember me"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className='mt-[15px]'
-                /> */}
-
-                <Button type="submit" fullWidth className='mt-[15px]'>
-                    Sign up
+                <Button type="submit" fullWidth className="mt-4" disabled={formik.isSubmitting}>
+                    {formik.isSubmitting ? 'Creating account…' : 'Sign up'}
                 </Button>
 
             </form>
 
-            <div className='w-full mt-[40px]  flex items-center justify-center gap-2 text-[14px] font-bold'>
-                <IoIosArrowRoundBack size={24} className="text-gray-500 cursor-pointer " />
-                <Link to="/auth"> <span className=' text-gray-500 cursor-pointer'> Back to sign in</span></Link>
+            <div className="w-full mt-8 flex items-center justify-center gap-2 text-[14px] font-bold">
+                <IoIosArrowRoundBack size={24} className="text-gray-500" />
+                <Link to="/auth">
+                    <span className="text-gray-500 cursor-pointer">Back to sign in</span>
+                </Link>
             </div>
+
+            <Paragraph size="sm" className="text-center mt-4 mb-[10px]">
+                Already have an account?{' '}
+                <Link to="/auth" className="text-[#000B60] font-bold">
+                    Sign in
+                </Link>
+            </Paragraph>
         </AuthLayout>
     )
 }
 
-export default LoginPage
+export default SignupPage
