@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useFormik } from 'formik'
 import { toast } from 'sonner'
@@ -13,7 +13,20 @@ import { validationSchema } from '@/utils/validator/auth.validator'
 const LoginPage = () => {
     const navigate = useNavigate()
     const login = useAuthStore((state) => state.login)
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
     const [rememberMe, setRememberMe] = useState(false)
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const session = await authService.getSession()
+            if (session && isAuthenticated) {
+                navigate('/dashboard')
+            }
+        }
+        checkSession()
+    }, [])
+
+
 
     const formik = useFormik({
         initialValues: { email: '', password: '' },
@@ -22,10 +35,18 @@ const LoginPage = () => {
             try {
                 const data = await authService.signIn(values.email, values.password)
                 const user = data.user
+                console.log("user", user, data.session)
+
+                // get user profile
+                const profile = await authService.getUserProfile(user?.id ?? '')
+                console.log("profile", profile)
+
+
+
                 login(
                     {
                         id: user?.id ?? '',
-                        name: `${user?.user_metadata?.first_name} ${user?.user_metadata?.last_name}` || " ",
+                        name: `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || "",
                         email: user?.email ? values.email : " ",
                     },
                     data.session?.access_token ?? ''

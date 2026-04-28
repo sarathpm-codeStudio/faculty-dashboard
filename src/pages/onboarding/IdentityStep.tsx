@@ -1,9 +1,10 @@
 import { Mail, Phone } from 'lucide-react'
+import { useFormik } from 'formik'
 import OnboardingLayout from './OnboardingLayout'
 import { Input, Textarea, Button, DateInput } from '@/components/ui'
 import { IdentityData } from './index'
+import { identitySchema } from '@/utils/validator/auth.validator'
 import { IoMdArrowForward } from "react-icons/io";
-
 
 interface Props {
     data: IdentityData
@@ -14,14 +15,17 @@ interface Props {
 }
 
 const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props) => {
-    const set = (field: keyof IdentityData) =>
-        (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-            onChange({ ...data, [field]: e.target.value })
+    const formik = useFormik<IdentityData>({
+        initialValues: data,
+        validationSchema: identitySchema,
+        onSubmit: (values) => {
+            onChange(values)
+            onNext()
+        },
+    })
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        onNext()
-    }
+    const err = (field: keyof IdentityData) =>
+        formik.touched[field] && formik.errors[field] ? formik.errors[field] : undefined
 
     return (
         <OnboardingLayout
@@ -33,64 +37,75 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
             onBack={onBack}
             animClass={animClass}
         >
-            <form onSubmit={handleSubmit} className="w-full max-w-4xl">
+            <form onSubmit={formik.handleSubmit} className="w-full max-w-4xl">
                 <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-6">
                     <div className="flex flex-col gap-5">
 
-                        {/* First + Last name */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
                                 label="First Name"
-                                value={data.firstName}
-                                onChange={set('firstName')}
+                                id="first_name"
+                                value={formik.values.first_name}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
                                 placeholder="Enter first name"
+                                error={err('first_name')}
                             />
                             <Input
                                 label="Last Name"
-                                value={data.lastName}
-                                onChange={set('lastName')}
+                                id="last_name"
+                                value={formik.values.last_name}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
                                 placeholder="Enter last name"
+                                error={err('last_name')}
                             />
                         </div>
 
-                        {/* Email */}
                         <Input
                             label="Email Address"
                             type="email"
-                            value={data.email}
-                            onChange={set('email')}
+                            id="email"
+                            value={formik.values.email}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
                             placeholder="name@university.edu"
                             leftIcon={<Mail size={14} />}
+                            error={err('email')}
                         />
 
-                        {/* Phone + DOB */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
                                 label="Phone Number"
                                 type="tel"
-                                value={data.phone}
-                                onChange={set('phone')}
+                                id="phone"
+                                value={formik.values.phone}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
                                 placeholder="+91 98765 •••••"
                                 leftIcon={<Phone size={14} />}
+                                error={err('phone')}
                             />
                             <DateInput
                                 label="Date of Birth"
-                                value={data.dob}
-                                onChange={(val) => onChange({ ...data, dob: val })}
+                                value={formik.values.date_of_birth}
+                                onChange={(val) => formik.setFieldValue('date_of_birth', val)}
+                                onBlur={() => formik.setFieldTouched('date_of_birth', true)}
+                                error={err('date_of_birth')}
                             />
                         </div>
 
-                        {/* Bio */}
                         <Textarea
                             label="Bio"
-                            value={data.bio}
-                            onChange={set('bio')}
+                            id="bio"
+                            value={formik.values.bio}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
                             placeholder="Say Something About You"
                             rows={3}
+                            error={err('bio')}
                         />
 
-
-                        {/* Continue — inside card */}
                         <div className="flex justify-end pt-2">
                             <Button type="submit">Continue <IoMdArrowForward /></Button>
                         </div>

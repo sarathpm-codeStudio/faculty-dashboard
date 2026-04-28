@@ -1,15 +1,37 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import SideNavBar from './SideNavBar'
 import TopNavBar from './TopNavBar'
 import NotificationPanel from '@/components/features/NotificationPanel'
 import PendingScreen from './PendingScreen'
 import { useAuthStore } from '@/store/authStore'
+import { authService } from '@/services/authService'
+import { toast } from 'sonner'
 
 const AppShell = () => {
     const [notifOpen, setNotifOpen] = useState(false)
-    const isPending = useAuthStore((state) => state.isPending)
+    const { user, isPending, setIsPending, setNoProfile } = useAuthStore()
     const { pathname } = useLocation()
+
+    useEffect(() => {
+        const getProfile = async () => {
+            try {
+                if (!user) return
+                const profile = await authService.getUserProfile(user.id)
+                console.log('user profile', profile)
+                if (profile === null) {
+                    setNoProfile(true)
+                    setIsPending(true)
+                    return
+                }
+                setNoProfile(false)
+                setIsPending(profile?.account_verified === 'PENDING')
+            } catch (error: any) {
+                toast.error(error.message)
+            }
+        }
+        getProfile()
+    }, [user?.id])
 
     const showPending = isPending && !pathname.startsWith('/account')
 

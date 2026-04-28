@@ -19,12 +19,11 @@ export const authService = {
     },
 
     // Sign up with email + password
-    signUp: async (email: string, password: string, name: string) => {
+    signUp: async (email: string, password: string) => {
         try {
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
-                options: { data: { full_name: name } },
             })
             if (error) throw error
             return data
@@ -68,7 +67,7 @@ export const authService = {
     // get user profile
     getUserProfile: async (userId: string) => {
         try {
-            const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+            const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
             if (error) throw error
             return data
         } catch (error: any) {

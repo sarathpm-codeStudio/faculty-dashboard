@@ -1,6 +1,24 @@
 
 import * as Yup from 'yup'
 
+export const identitySchema = Yup.object({
+    first_name: Yup.string().trim().required('First name is required'),
+    last_name: Yup.string().trim().required('Last name is required'),
+    email: Yup.string().email('Enter a valid email address').required('Email is required'),
+    phone: Yup.string()
+        .matches(/^\+?[0-9\s\-()]{7,15}$/, 'Enter a valid phone number')
+        .required('Phone number is required'),
+    date_of_birth: Yup.string().required('Date of birth is required'),
+    bio: Yup.string().trim().min(20, 'Bio must be at least 20 characters').required('Bio is required'),
+})
+
+export const qualificationFormSchema = Yup.object({
+    type: Yup.string().required('Qualification type is required'),
+    fieldOfStudy: Yup.string().trim().required('Field of study is required'),
+    graduationYear: Yup.string().required('Graduation date is required'),
+    teachingExperience: Yup.string().trim(),
+})
+
 export const validationSchema = Yup.object({
     email: Yup.string()
         .email('Enter a valid email address')
@@ -10,9 +28,9 @@ export const validationSchema = Yup.object({
 })
 
 export const signupValidationSchema = Yup.object({
-    name: Yup.string()
-        .trim()
-        .required('Please enter your name'),
+    // name: Yup.string()
+    //     .trim()
+    //     .required('Please enter your name'),
     email: Yup.string()
         .email('Enter a valid email address')
         .required('Please enter your email'),

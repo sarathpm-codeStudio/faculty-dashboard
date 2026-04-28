@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Bell, Search, LogOut, ChevronDown } from 'lucide-react'
 import manAvatar from '@/assets/images/man.jpg'
 import { useAuthStore } from '@/store/authStore'
+import { authService } from '@/services/authService'
 import { useNavigate } from 'react-router-dom'
 import { Button, Button2, Input, Paragraph } from '@/components/ui'
 
@@ -27,9 +28,10 @@ const TopNavBar = ({ onNotifClick }: Props) => {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await authService.signOut()
         logout()
-        navigate('/auth')
+        navigate('/auth/login')
     }
 
     return (

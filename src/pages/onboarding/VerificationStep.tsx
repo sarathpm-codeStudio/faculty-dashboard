@@ -14,7 +14,7 @@ interface Props {
 }
 
 const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClass = '' }: Props) => {
-    const fullName = `${identity.firstName} ${identity.lastName}`.trim() || 'Salsabeel k'
+    const fullName = `${identity.first_name} ${identity.last_name}`.trim() || 'Salsabeel k'
     const department = qualifications[0]?.fieldOfStudy || 'CMA'
     const experience = qualifications[0]?.teachingExperience || '4 Years'
     const courses = qualifications.length > 0

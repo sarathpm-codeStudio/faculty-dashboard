@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { RiCoupon2Line } from 'react-icons/ri'
 import { useAuthStore } from '@/store/authStore'
+import { authService } from '@/services/authService'
 import logo from '@/assets/icons/Icon.svg'
 import { Heading, Paragraph } from '../ui'
 
@@ -38,7 +39,8 @@ const SideNavBar = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        await authService.signOut()
         logout()
         navigate('/auth/login')
     }

@@ -7,19 +7,34 @@ import { Button, Input, Paragraph } from '@/components/ui'
 import { IoIosArrowRoundBack } from 'react-icons/io'
 import { authService } from '@/services/authService'
 import { signupValidationSchema } from '@/utils/validator/auth.validator'
+import { useAuthStore } from '@/store/authStore'
 
 const SignupPage = () => {
     const navigate = useNavigate()
     const [success, setSuccess] = useState(false)
+    const login = useAuthStore((state) => state.login)
+
 
     const formik = useFormik({
-        initialValues: { name: '', email: '', password: '', confirmPassword: '' },
+        initialValues: { email: '', password: '', confirmPassword: '' },
         validationSchema: signupValidationSchema,
         onSubmit: async (values, { setSubmitting }) => {
             try {
-                await authService.signUp(values.email, values.password, values.name)
-                toast.success('Account created! Check your email to confirm.')
-                setSuccess(true)
+                await authService.signUp(values.email, values.password)
+                const data = await authService.signIn(values.email, values.password)
+                const user = data.user
+                login(
+                    {
+                        id: user?.id ?? '',
+                        name: `${user?.user_metadata?.first_name ?? ''} ${user?.user_metadata?.last_name ?? ''}`.trim() || "",
+                        email: user?.email ? values.email : " ",
+                    },
+                    data.session?.access_token ?? ''
+                )
+
+
+                // toast.success('Account created! Check your email to confirm.')
+                navigate('/onboarding')
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : 'Sign up failed. Please try again.'
                 toast.error(message)
@@ -29,35 +44,26 @@ const SignupPage = () => {
         },
     })
 
-    if (success) {
-        return (
-            <AuthLayout title="Check your email" subtitle="We sent a confirmation link to your inbox">
-                <div className="flex flex-col items-center gap-6 py-4">
-                    <p className="text-sm text-gray-600 text-center">
-                        Please click the link in your email to verify your account, then sign in.
-                    </p>
-                    <Button fullWidth onClick={() => navigate('/auth')}>
-                        Go to Sign in
-                    </Button>
-                </div>
-            </AuthLayout>
-        )
-    }
+    // if (success) {
+    //     return (
+    //         <AuthLayout title="Check your email" subtitle="We sent a confirmation link to your inbox">
+    //             <div className="flex flex-col items-center gap-6 py-4">
+    //                 <p className="text-sm text-gray-600 text-center">
+    //                     Please click the link in your email to verify your account, then sign in.
+    //                 </p>
+    //                 <Button fullWidth onClick={() => navigate('/auth')}>
+    //                     Go to Sign in
+    //                 </Button>
+    //             </div>
+    //         </AuthLayout>
+    //     )
+    // }
 
     return (
         <AuthLayout title="Faculty Sign up" subtitle="Create your faculty account">
             <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
 
-                <Input
-                    label="Full Name"
-                    type="text"
-                    id="name"
-                    value={formik.values.name}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    placeholder="Your full name"
-                    error={formik.touched.name && formik.errors.name ? formik.errors.name : undefined}
-                />
+
 
                 <Input
                     label="Email"

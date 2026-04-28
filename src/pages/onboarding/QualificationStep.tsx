@@ -1,11 +1,12 @@
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { CloudUpload, Plus, Trash2, Eye, FileText, Download, GraduationCap } from 'lucide-react'
+import { useFormik } from 'formik'
 import OnboardingLayout from './OnboardingLayout'
 import { Input, Select, Button, Subheading, Paragraph, DateInput } from '@/components/ui'
 import { Qualification } from './index'
+import { qualificationFormSchema } from '@/utils/validator/auth.validator'
 import { IoMdArrowForward } from "react-icons/io";
 import { IoAddCircleOutline } from "react-icons/io5";
-
 
 interface Props {
     qualifications: Qualification[]
@@ -13,6 +14,15 @@ interface Props {
     onNext: () => void
     onBack: () => void
     animClass?: string
+}
+
+interface QualificationForm {
+    type: string
+    fieldOfStudy: string
+    graduationYear: string
+    teachingExperience: string
+    fileName: string
+    fileSize: string
 }
 
 const qualificationTypes = [
@@ -24,7 +34,7 @@ const qualificationTypes = [
     { value: 'Certificate', label: 'Certificate' },
 ]
 
-const emptyForm = (): Omit<Qualification, 'id'> => ({
+const emptyForm = (): QualificationForm => ({
     type: 'Degree',
     fieldOfStudy: '',
     graduationYear: '',
@@ -34,30 +44,39 @@ const emptyForm = (): Omit<Qualification, 'id'> => ({
 })
 
 const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass = '' }: Props) => {
-    const [form, setForm] = useState(emptyForm())
     const [dragOver, setDragOver] = useState(false)
+    const [noQualError, setNoQualError] = useState(false)
     const fileRef = useRef<HTMLInputElement>(null)
 
-    const set = (field: keyof typeof form) =>
-        (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-            setForm({ ...form, [field]: e.target.value })
+    const formik = useFormik<QualificationForm>({
+        initialValues: emptyForm(),
+        validationSchema: qualificationFormSchema,
+        onSubmit: (values, { resetForm }) => {
+            onChange([...qualifications, { ...values, id: Date.now().toString() }])
+            resetForm()
+            setNoQualError(false)
+        },
+    })
+
+    const err = (field: keyof QualificationForm) =>
+        formik.touched[field] && formik.errors[field] ? formik.errors[field] : undefined
 
     const handleFile = (file: File) => {
-        setForm({
-            ...form,
-            fileName: file.name,
-            fileSize: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-        })
-    }
-
-    const handleAdd = () => {
-        if (!form.fieldOfStudy || !form.graduationYear) return
-        onChange([...qualifications, { ...form, id: Date.now().toString() }])
-        setForm(emptyForm())
+        formik.setFieldValue('fileName', file.name)
+        formik.setFieldValue('fileSize', `${(file.size / 1024 / 1024).toFixed(1)} MB`)
     }
 
     const handleRemove = (id: string) =>
         onChange(qualifications.filter((q) => q.id !== id))
+
+    const handleContinue = () => {
+        if (qualifications.length === 0) {
+            setNoQualError(true)
+            return
+        }
+        setNoQualError(false)
+        onNext()
+    }
 
     return (
         <OnboardingLayout
@@ -65,7 +84,6 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
             total={3}
             title="Academic Profile"
             subtitle="To tailor your platform experience, please provide your academic background and professional history."
-
             backLabel="Back to information"
             onBack={onBack}
             animClass={animClass}
@@ -74,39 +92,46 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
 
                 {/* Add Qualification card */}
                 <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-5">
-                    <Subheading className='text-[#000B60] font-bold'> Add New Qualification</Subheading>
-                    <Paragraph className='mb-4 text-gray-500' > Fill in the details for your next academic degree. </Paragraph>
+                    <Subheading className='text-[#000B60] font-bold'>Add New Qualification</Subheading>
+                    <Paragraph className='mb-4 text-gray-500'>Fill in the details for your next academic degree.</Paragraph>
 
+                    <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
 
-                    <div className="flex flex-col gap-4">
-
-                        {/* Type + Field */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Select
                                 label="Qualification Type"
-                                value={form.type}
-                                onChange={set('type')}
+                                id="type"
+                                value={formik.values.type}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
                                 options={qualificationTypes}
+                                error={err('type')}
                             />
                             <Input
                                 label="Field of Study"
-                                value={form.fieldOfStudy}
-                                onChange={set('fieldOfStudy')}
+                                id="fieldOfStudy"
+                                value={formik.values.fieldOfStudy}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
                                 placeholder="e.g. Theoretical Physics"
+                                error={err('fieldOfStudy')}
                             />
                         </div>
 
-                        {/* Year + Experience */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <DateInput
                                 label="Graduation Date"
-                                value={form.graduationYear}
-                                onChange={(val: string) => setForm({ ...form, graduationYear: val })}
+                                value={formik.values.graduationYear}
+                                onChange={(val: string) => formik.setFieldValue('graduationYear', val)}
+                                onBlur={() => formik.setFieldTouched('graduationYear', true)}
+                                error={err('graduationYear')}
                             />
                             <Input
                                 label="Teaching Experience"
-                                value={form.teachingExperience}
-                                onChange={set('teachingExperience')}
+                                id="teachingExperience"
+                                value={formik.values.teachingExperience}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
                                 placeholder="e.g. 2 Years"
                             />
                         </div>
@@ -123,8 +148,8 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                                     ${dragOver ? 'border-[#000B60] bg-blue-50' : 'border-gray-200 hover:border-[#000B60]'}`}
                             >
                                 <CloudUpload size={26} className="text-[#000B60]" />
-                                {form.fileName ? (
-                                    <p className="text-sm font-medium text-[#000B60]">{form.fileName}</p>
+                                {formik.values.fileName ? (
+                                    <p className="text-sm font-medium text-[#000B60]">{formik.values.fileName}</p>
                                 ) : (
                                     <>
                                         <p className="text-sm text-gray-500">Click to upload or drag and drop</p>
@@ -141,15 +166,13 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                             />
                         </div>
 
-                    </div>
-
-                    {/* Add button */}
-                    <div className="flex justify-end mt-10">
-                        <Button type="button" variant="secondary" onClick={handleAdd}>
-                            <IoAddCircleOutline size={25} />
-                            Add Qualification
-                        </Button>
-                    </div>
+                        <div className="flex justify-end mt-4">
+                            <Button type="submit" variant="secondary">
+                                <IoAddCircleOutline size={25} />
+                                Add Qualification
+                            </Button>
+                        </div>
+                    </form>
                 </div>
 
                 {/* Added qualifications */}
@@ -161,19 +184,17 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                                     <GraduationCap size={15} className="text-[#000B60]" />
                                 </div>
                                 <div>
-                                    <Subheading > {q.fieldOfStudy} </Subheading>
-                                    <Paragraph className='text-gray-500' > {q.type} </Paragraph>
-
+                                    <Subheading>{q.fieldOfStudy}</Subheading>
+                                    <Paragraph className='text-gray-500'>{q.type}</Paragraph>
                                 </div>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => handleRemove(q.id)}
                                 className="flex items-center gap-1 text-[14px] text-[#BA1A1A] hover:text-red-700"
                             >
                                 <Trash2 size={12} />
-                                <span className="font-bold cursor-pointer">
-                                    Remove
-                                </span>
+                                <span className="font-bold cursor-pointer">Remove</span>
                             </button>
                         </div>
 
@@ -205,17 +226,22 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <button className="text-[#000B60] font-bold "><Eye size={20} /></button>
-                                    <button className="text-[#000B60] font-bold "><Download size={20} /></button>
+                                    <button type="button" className="text-[#000B60] font-bold"><Eye size={20} /></button>
+                                    <button type="button" className="text-[#000B60] font-bold"><Download size={20} /></button>
                                 </div>
                             </div>
                         )}
                     </div>
                 ))}
 
-                {/* Continue — inside the section */}
+                {noQualError && (
+                    <p className="text-sm text-red-500 font-medium">
+                        Please add at least one qualification before continuing.
+                    </p>
+                )}
+
                 <div className="flex justify-end">
-                    <Button type="button" onClick={onNext}>Continue <IoMdArrowForward /></Button>
+                    <Button type="button" onClick={handleContinue}>Continue <IoMdArrowForward /></Button>
                 </div>
 
             </div>

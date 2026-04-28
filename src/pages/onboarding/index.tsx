@@ -3,13 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import IdentityStep from './IdentityStep'
 import QualificationStep from './QualificationStep'
 import VerificationStep from './VerificationStep'
+import { onBoardingService } from '@/services/onBoardingService'
+import { toast } from 'sonner'
+import { formatDate } from '@/utils/helper/formatDate'
+import { useAuthStore } from '@/store/authStore'
 
 export interface IdentityData {
-  firstName: string
-  lastName: string
+  first_name: string
+  last_name: string
   email: string
   phone: string
-  dob: string
+  date_of_birth: string
   bio: string
 }
 
@@ -28,36 +32,10 @@ const OnboardingPage = () => {
   const [step, setStep] = useState(1)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
   const [identity, setIdentity] = useState<IdentityData>({
-    firstName: '', lastName: '', email: '',
-    phone: '', dob: '', bio: '',
+    first_name: '', last_name: '', email: '',
+    phone: '', date_of_birth: '', bio: '',
   })
-  const [qualifications, setQualifications] = useState<Qualification[]>([
-    {
-      id: '1',
-      type: 'PhD',
-      fieldOfStudy: 'Computer Science',
-      graduationYear: '2018-06-15',
-      teachingExperience: '6 Years',
-      fileName: 'phd_certificate.pdf',
-      fileSize: '2.4 MB',
-    },
-    {
-      id: '2',
-      type: 'Masters',
-      fieldOfStudy: 'Artificial Intelligence',
-      graduationYear: '2014-05-20',
-      teachingExperience: '2 Years',
-      fileName: 'masters_degree.pdf',
-      fileSize: '1.8 MB',
-    },
-    {
-      id: '3',
-      type: 'Degree',
-      fieldOfStudy: 'Mathematics',
-      graduationYear: '2012-04-10',
-      teachingExperience: '',
-    },
-  ])
+  const [qualifications, setQualifications] = useState<Qualification[]>([])
 
   const goNext = (to: number) => { setDirection('forward'); setStep(to) }
   const goBack = (to: number | (() => void)) => {
@@ -66,6 +44,36 @@ const OnboardingPage = () => {
   }
 
   const animClass = direction === 'forward' ? 'slide-in-right' : 'slide-in-left'
+
+  const id = useAuthStore((state) => state.user?.id)
+
+
+  const handleVerificationSubmit = async () => {
+
+    try {
+
+      // creae profile
+
+
+      await onBoardingService.createProfile({
+        ...identity,
+        role: "FACULTY",
+        date_of_birth: formatDate(identity.date_of_birth),
+      }, id)
+
+      // add qualifications
+      await onBoardingService.createAcademicProfiles(qualifications, id)
+      toast.success("Profile created successfully")
+      navigate("/dashboard")
+
+    } catch (error: any) {
+
+      toast.error(error.message || "Something went wrong")
+
+    }
+  }
+
+
 
   return (
     <div className="min-h-screen">
@@ -95,7 +103,7 @@ const OnboardingPage = () => {
           identity={identity}
           qualifications={qualifications}
           onBack={() => goBack(2)}
-          onSubmit={() => navigate('/dashboard')}
+          onSubmit={handleVerificationSubmit}
           animClass={animClass}
         />
       )}

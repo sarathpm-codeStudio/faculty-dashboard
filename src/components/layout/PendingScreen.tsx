@@ -1,19 +1,32 @@
+import { Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { Heading, Paragraph } from '@/components/ui'
 
 const PendingScreen = () => {
     const user = useAuthStore((state) => state.user)
+    const noProfile = useAuthStore((state) => state.noProfile)
 
     return (
         <div className="space-y-4">
             <Heading className="text-[#000b60]">Hi, {user?.name}</Heading>
-            <Paragraph className="text-[#454652]">
-                Thank you for submitting your details.{' '}
-                <span className="font-bold">Your account is under review</span>{' '}
-                Our admin team is currently reviewing your faculty profile.
-                You will gain access to the dashboard once your account is approved.{' '}
-                <span className="font-bold text-[#000b60] cursor-pointer">Check The Mail</span>
-            </Paragraph>
+            {noProfile ? (
+                <Paragraph className="text-[#454652]">
+                    Welcome! To get started,{' '}
+                    <span className="font-bold">please complete your profile</span>{' '}
+                    so our admin team can review and activate your faculty account.{' '}
+                    <Link to="/onboarding" className="font-bold text-[#000b60] underline cursor-pointer">
+                        Complete Your Profile
+                    </Link>
+                </Paragraph>
+            ) : (
+                <Paragraph className="text-[#454652]">
+                    Thank you for submitting your details.{' '}
+                    <span className="font-bold">Your account is under review</span>{' '}
+                    Our admin team is currently reviewing your faculty profile.
+                    You will gain access to the dashboard once your account is approved.{' '}
+                    <span className="font-bold text-[#000b60] cursor-pointer">Check The Mail</span>
+                </Paragraph>
+            )}
 
             <div className="flex justify-center mt-6">
                 <svg width="380" height="280" viewBox="0 0 380 280" fill="none" xmlns="http://www.w3.org/2000/svg">

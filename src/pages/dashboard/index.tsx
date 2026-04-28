@@ -3,9 +3,6 @@ import { FaUsers } from "react-icons/fa6";
 import { MdOutlineMenuBook } from "react-icons/md";
 import { BsChatSquareTextFill } from "react-icons/bs";
 import { HiMiniCurrencyDollar } from "react-icons/hi2";
-import { useAuthStore } from '@/store/authStore'
-import { authService } from '@/services/authService'
-import { useEffect } from 'react'
 import { MdVideoSettings } from "react-icons/md";
 import {
   StatCard,
@@ -17,8 +14,6 @@ import {
 import EnrollmentChart from './EnrollmentChart'
 import RevenueChart from './RevenueChart'
 import { Heading, Paragraph } from '@/components/ui'
-import { toast } from 'sonner';
-
 const courses = [
   { id: 1, title: 'Advanced Macroeconomics', students: '1,240', revenue: '₹62,000.00' },
   { id: 2, title: 'CA Inter - Costing', students: '842', revenue: '₹42,100.00' },
@@ -36,33 +31,6 @@ const activity = [
 
 
 const DashboardPage = () => {
-
-  const { user, isPending, setIsPending } = useAuthStore()
-
-  useEffect(() => {
-    const getProfile = async () => {
-      try {
-        if (!user) {
-          toast.error('User not found')
-          return
-        }
-        const profile = await authService.getUserProfile(user.id)
-        if (!profile) {
-          toast.error('Profile not found')
-          return
-        }
-        if (profile?.account_verified === 'PENDING') {
-          setIsPending(true)
-          return
-        }
-        setIsPending(false)
-        console.log('user profile', profile)
-      } catch (error: any) {
-        toast.error(error.message)
-      }
-    }
-    getProfile()
-  }, [])
 
   return (
     <div className="space-y-5">
