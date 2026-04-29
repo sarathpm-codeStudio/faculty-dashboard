@@ -14,7 +14,7 @@ export const onBoardingService = {
         try {
             const { data: result, error } = await supabase.from('profiles').insert([{ ...data, id }])
             if (error) throw error
-            return result
+            return true
         } catch (error: any) {
             console.log("profile", error)
             throw error.message

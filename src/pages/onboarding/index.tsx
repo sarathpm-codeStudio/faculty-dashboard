@@ -55,16 +55,19 @@ const OnboardingPage = () => {
       // creae profile
 
 
-      await onBoardingService.createProfile({
+      const result = await onBoardingService.createProfile({
         ...identity,
         role: "FACULTY",
         date_of_birth: formatDate(identity.date_of_birth),
       }, id)
 
-      // add qualifications
-      await onBoardingService.createAcademicProfiles(qualifications, id)
-      toast.success("Profile created successfully")
-      navigate("/dashboard")
+      if (result) {
+        // add qualifications
+        await onBoardingService.createAcademicProfiles(qualifications, id)
+        toast.success("Profile created successfully")
+        navigate("/dashboard")
+      }
+
 
     } catch (error: any) {
 

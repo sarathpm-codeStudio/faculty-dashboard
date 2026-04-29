@@ -23,10 +23,13 @@ const SignupPage = () => {
                 await authService.signUp(values.email, values.password)
                 const data = await authService.signIn(values.email, values.password)
                 const user = data.user
+                // get user profile
+                const profile = await authService.getUserProfile(user?.id ?? '')
+                console.log("profile", profile)
                 login(
                     {
                         id: user?.id ?? '',
-                        name: `${user?.user_metadata?.first_name ?? ''} ${user?.user_metadata?.last_name ?? ''}`.trim() || "",
+                        name: `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || "",
                         email: user?.email ? values.email : " ",
                     },
                     data.session?.access_token ?? ''
