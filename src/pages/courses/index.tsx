@@ -13,104 +13,14 @@ import courseImg3 from "@/assets/images/cou3.png"
 import courseImg4 from "@/assets/images/cou4.png"
 import courseImg5 from "@/assets/images/cou5.png"
 import courseImg6 from "@/assets/images/cou6.png"
+import { useGetAllCourses } from "@/hooks/useCourse"
 
 
 type Course = Omit<CourseCardProps, 'onViewAnalytics' | 'onEdit' | 'onDelete'> & {
   status: 'active' | 'draft'
 }
 
-const MOCK_COURSES: Course[] = [
-  {
-    id: 1,
-    title: 'CA Inter - Costing',
-    image: courseImg,
-    duration: '6 Month',
-    students: '1.2k Students',
-    price: '₹3,500',
-    originalPrice: '₹14,999',
-    status: 'active',
-  },
-  {
-    id: 2,
-    title: 'Advanced Auditing',
-    image: courseImg2,
-    duration: '6 Month',
-    students: '1.2k Students',
-    price: '₹2,150',
-    originalPrice: '₹14,999',
-    status: 'active',
-  },
-  {
-    id: 3,
-    title: 'Direct Tax Laws',
-    image: courseImg3,
-    duration: '8 Month',
-    students: '1.2k Students',
-    price: '₹4,199',
-    originalPrice: '₹14,999',
-    status: 'active',
-  },
-  {
-    id: 4,
-    title: 'Corporate Laws',
-    image: courseImg4,
-    duration: '6 Month',
-    students: '1.2k Students',
-    price: '₹4,199',
-    originalPrice: '₹14,999',
-    status: 'active',
-  },
-  {
-    id: 5,
-    title: 'Financial Management',
-    image: courseImg5,
-    duration: '6 Month',
-    students: '1.2k Students',
-    price: '₹3,500',
-    originalPrice: '₹14,999',
-    status: 'active',
-  },
-  {
-    id: 6,
-    title: 'Advanced Auditing',
-    image: courseImg6,
-    duration: '6 Month',
-    students: '1.2k Students',
-    price: '₹2,150',
-    originalPrice: '₹14,999',
-    status: 'active',
-  },
-  {
-    id: 7,
-    title: 'Business Law Fundamentals',
-    image: courseImg,
-    duration: '4 Month',
-    students: '0 Students',
-    price: '₹2,999',
-    originalPrice: '₹9,999',
-    status: 'draft',
-  },
-  {
-    id: 8,
-    title: 'Income Tax Practitioner',
-    image: courseImg2,
-    duration: '5 Month',
-    students: '0 Students',
-    price: '₹3,799',
-    originalPrice: '₹12,999',
-    status: 'draft',
-  },
-  {
-    id: 9,
-    title: 'GST & Indirect Taxes',
-    image: courseImg3,
-    duration: '3 Month',
-    students: '0 Students',
-    price: '₹1,999',
-    originalPrice: '₹7,999',
-    status: 'draft',
-  },
-]
+
 
 type Tab = 'active' | 'drafts'
 
@@ -131,13 +41,16 @@ const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('active')
   const [isLoading, setIsLoading] = useState(true)
 
+  const { data: courses, isLoading: coursesLoading } = useGetAllCourses({ filter: activeTab === "active" ? false : true }, true)
+
   useEffect(() => {
     setIsLoading(true)
+    console.log("all courses", courses)
     const timer = setTimeout(() => setIsLoading(false), 1000)
     return () => clearTimeout(timer)
   }, [activeTab])
 
-  const filtered = MOCK_COURSES.filter(c => c.status === (activeTab === 'active' ? 'active' : 'draft'))
+
 
   const handleViewAnalytics = (id: number | string) => {
     console.log('View analytics for course', id)
@@ -162,7 +75,7 @@ const CoursesPage = () => {
       >
         <div>
           <Heading className="text-[#000b60]">
-            My Courses ({String(filtered.length).padStart(2, '0')})
+            My Courses ({String(courses?.data?.length).padStart(2, '0')})
           </Heading>
           <Paragraph className="text-[#767683]">
             Manage and monitor your curriculum performance
@@ -212,7 +125,7 @@ const CoursesPage = () => {
 
       {/* Course Grid */}
       <AnimatePresence mode="wait">
-        {isLoading ? (
+        {coursesLoading ? (
           <motion.div
             key="spinner"
             className="flex items-center justify-center min-h-[50vh] w-full"
@@ -232,7 +145,7 @@ const CoursesPage = () => {
             animate="visible"
             exit="exit"
           >
-            {filtered.map(course => (
+            {courses?.data?.map((course: any) => (
               <motion.div key={course.id} variants={cardVariants}>
                 <CourseCard
                   {...course}

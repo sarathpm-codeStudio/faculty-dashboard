@@ -1,6 +1,5 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import AppShell from '@/components/layout/AppShell'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
@@ -31,11 +30,9 @@ import BankDetailsAndTransaction from '@/pages/profile/BankDetails&Transaction'
 import UpdateBankDetails from '@/pages/profile/UpdateBankDetails'
 import FullTransactionHistory from '@/pages/profile/FullTransactionHistory'
 
-const queryClient = new QueryClient()
-
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
+    <>
       <Toaster position="top-right" richColors />
       <BrowserRouter>
         <Routes>
@@ -80,7 +77,7 @@ const App = () => {
 
         </Routes>
       </BrowserRouter>
-    </QueryClientProvider>
+    </>
   )
 }
 

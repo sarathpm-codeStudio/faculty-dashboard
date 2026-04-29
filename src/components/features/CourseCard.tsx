@@ -4,8 +4,8 @@ import { motion } from 'framer-motion'
 import { Paragraph, Subheading } from '../ui'
 
 export type CourseCardProps = {
-  id: number | string
-  image?: string
+  id: any
+  cover_image?: string
   title: string
   duration: string
   students: string
@@ -23,7 +23,7 @@ export type CourseCardProps = {
 
 const CourseCard = ({
   id,
-  image,
+  cover_image,
   title,
   duration,
   students,
@@ -59,8 +59,8 @@ const CourseCard = ({
       onClick={() => onClick?.(id)}
     >
       <div className="relative">
-        {image ? (
-          <img src={image} alt={title} className="w-full h-36 object-cover" />
+        {cover_image ? (
+          <img src={cover_image} alt={title} className="w-full h-36 object-cover" />
         ) : (
           <div className="w-full h-36 bg-gradient-to-br from-[#BCC2FF] to-[#142283]" />
         )}

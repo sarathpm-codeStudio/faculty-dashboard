@@ -8,9 +8,15 @@ import type {
 
 export const courseService = {
 
-  getAll: async (page = 1, limit = 10): Promise<CoursesResponse> => {
-    const { data } = await apiClient.get('/courses', { params: { page, limit } })
-    return data
+  getAll: async (filter: any): Promise<CoursesResponse> => {
+
+    try {
+      const { data } = await apiClient.get('/courses', { params: filter })
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
   },
 
   getById: async (id: string): Promise<Course> => {

@@ -10,10 +10,11 @@ export const courseKeys = {
 
 // ─── Queries ──────────────────────────────────────────
 
-export const useCourses = (page = 1, limit = 10) =>
+export const useGetAllCourses = (filter: any, enabled = true) =>
   useQuery({
-    queryKey: courseKeys.list(page, limit),
-    queryFn: () => courseService.getAll(page, limit),
+    queryKey: ['my-courses', filter],
+    queryFn: () => courseService.getAll(filter),
+    enabled,
   })
 
 export const useCourse = (id: string) =>
@@ -31,7 +32,7 @@ export const useCreateCourseBasicDetails = () => {
     mutationKey: ['coursesBasicDetails'],
     mutationFn: (payload: CreateCoursePayload) => courseService.createBasicDetails(payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: courseKeys.all })
+      qc.invalidateQueries({ queryKey: ['my-courses'] })
     },
   })
 }

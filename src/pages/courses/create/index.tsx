@@ -92,6 +92,7 @@ const CourseCreatePage = () => {
   const [form, setForm] = useState<CourseFormData>(emptyForm)
   const [courseId, setCourseId] = useState<string>('')
   const [isCreated, setIsCreated] = useState(false)
+  const [isDraft, setIsDraft] = useState(false)
 
 
   const next = () => setStep((s) => Math.min(s + 1, 4))
@@ -103,8 +104,9 @@ const CourseCreatePage = () => {
 
   // mutation
 
-  const { mutateAsync: createBasicDetails } = useCreateCourseBasicDetails()
-  const { mutateAsync: updateCourse } = useUpdateCourse(courseId)
+  const { mutateAsync: createBasicDetails, isPending: isCreating } = useCreateCourseBasicDetails()
+  const { mutateAsync: updateCourse, isPending: isUpdating } = useUpdateCourse(courseId)
+  const isSubmitting = isCreating || isUpdating
 
 
   const update = async (fields: Partial<CourseFormData>) => {
@@ -126,8 +128,16 @@ const CourseCreatePage = () => {
           // intro_video_url: fields?.intro_video_url || "",
         })
 
-        toast.success("Create Academic Structure")
-        next()
+        if (isDraft) {
+
+          toast.success("Course saved as draft")
+          navigate('/courses')
+        } else {
+          toast.success("Create Academic Structure")
+          next()
+        }
+
+
 
       } else {
         const result: any = await createBasicDetails({
@@ -142,8 +152,17 @@ const CourseCreatePage = () => {
         console.log("result", result)
         setCourseId(result?.data?.id)
         setIsCreated(true)
-        toast.success("Create Academic Structure")
-        next()
+
+        if (isDraft) {
+
+          toast.success("Course saved as draft")
+          navigate('/courses')
+        } else {
+          toast.success("Create Academic Structure")
+          next()
+        }
+
+
       }
 
     } catch (error: any) {
@@ -200,7 +219,7 @@ const CourseCreatePage = () => {
       </div>
 
       {/* Step content */}
-      {step === 1 && <Step1BasicDetails form={form} update={update} />}
+      {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} />}
       {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} />}
       {step === 3 && <Step3Pricing form={form} update={update} onNext={next} />}
       {step === 4 && (

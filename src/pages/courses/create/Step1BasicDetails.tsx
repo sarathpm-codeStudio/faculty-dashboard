@@ -10,7 +10,8 @@ import { toast } from 'sonner'
 interface Props {
   form: CourseFormData
   update: (fields: Partial<CourseFormData>) => void
-  // onNext: () => void
+  setIsDraft: (isDraft: boolean) => void
+  isSubmitting?: boolean
 }
 
 const categoryOptions = ['CMA', 'CA', 'CFA', 'MBA', 'CPA', 'ACCA']
@@ -95,7 +96,7 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
   )
 }
 
-const Step1BasicDetails = ({ form, update }: Props) => {
+const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false }: Props) => {
   const [coverUploading, setCoverUploading] = useState(false)
   const [imgPreview, setImgPreview] = useState<string | null>(
     form.cover_image ? URL.createObjectURL(form.cover_image) : null
@@ -104,6 +105,7 @@ const Step1BasicDetails = ({ form, update }: Props) => {
     form.intro_video_url ? URL.createObjectURL(form.intro_video_url) : ""
   )
   const [langOpen, setLangOpen] = useState(false)
+  const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>(null)
 
   const formik = useFormik({
     initialValues: form,
@@ -290,16 +292,27 @@ const Step1BasicDetails = ({ form, update }: Props) => {
           />
 
           <div className="flex flex-col gap-3 mt-auto pt-1">
-            <Button variant="white" fullWidth type="button">
-              Save as draft
+            <Button
+              variant="white"
+              onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
+              fullWidth
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting && activeBtn === 'draft'
+                ? <Loader2 size={16} className="animate-spin" />
+                : 'Save as draft'}
             </Button>
             <Button
               variant="primary"
               fullWidth
               type="submit"
-            // disabled={formik.isSubmitting}
+              disabled={isSubmitting}
+              onClick={() => setActiveBtn('next')}
             >
-              Add Content <ArrowRight size={18} />
+              {isSubmitting && activeBtn === 'next'
+                ? <Loader2 size={16} className="animate-spin" />
+                : <><span>Add Content</span><ArrowRight size={18} /></>}
             </Button>
           </div>
         </div>
