@@ -1,7 +1,7 @@
 import { Clock, ShieldCheck, CheckCircle } from 'lucide-react'
 import { VideoCamera, FileText, Image as ImageIcon, PencilSimpleLine } from '@phosphor-icons/react'
 import { Button, Heading, Paragraph, Subheading } from '@/components/ui'
-import type { CourseFormData } from './index'
+import type { CourseFormData, TreeNode, ContentNode } from './index'
 import img from '@/assets/images/cou1.png'
 import { MdVideoLibrary } from "react-icons/md";
 import { BsPencilSquare } from "react-icons/bs";
@@ -37,11 +37,18 @@ const DEMO = {
   videoDuration: '18 Hours 45 Minutes',
 }
 
+function flattenContent(nodes: TreeNode[]): ContentNode[] {
+  return nodes.flatMap(n =>
+    n.kind === 'folder' ? flattenContent(n.children) : [n]
+  )
+}
+
 const Step4Review = ({ form, onPublish, onDraft }: Props) => {
-  const videoLessons = form.modules.flatMap((m) => m.lessons.filter((l) => l.type === 'video')).length || DEMO.videoLessons
-  const documents = form.modules.flatMap((m) => m.lessons.filter((l) => l.type === 'document')).length || DEMO.documents
-  const images = form.modules.flatMap((m) => m.lessons.filter((l) => l.type === 'image')).length || DEMO.images
-  const tests = form.modules.flatMap((m) => m.lessons.filter((l) => l.type === 'test')).length || DEMO.tests
+  const allContent = flattenContent(form.tree)
+  const videoLessons = allContent.filter(c => c.kind === 'video').length || DEMO.videoLessons
+  const documents = allContent.filter(c => c.kind === 'document').length || DEMO.documents
+  const images = allContent.filter(c => c.kind === 'image').length || DEMO.images
+  const tests = allContent.filter(c => c.kind === 'test').length || DEMO.tests
   const totalAssets = videoLessons + documents + images + tests
 
   const price = parseFloat(form.price) || DEMO.price
@@ -50,7 +57,7 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
     ? Math.max(0, price - (price * discount) / 100)
     : Math.max(0, price - discount)
 
-  const courseName = form.name || DEMO.name
+  const courseName = form.title || DEMO.name
   const courseCategory = form.category || DEMO.category
   const courseDesc = form.description || DEMO.description
   const courseDuration = form.duration ? durationLabel[form.duration] : durationLabel[DEMO.duration]
@@ -75,7 +82,7 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
         {/* Hero — no card, plain white */}
         <div className="col-span-7 flex gap-4 bg-white rounded-2xl p-7 shadow-sm border border-gray-100">
           <img
-            src={form.coverImage ? URL.createObjectURL(form.coverImage) : img}
+            src={form.cover_image ? URL.createObjectURL(form.cover_image) : img}
             alt="Cover"
             className="w-42 h-42 object-cover rounded-xl shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
           />

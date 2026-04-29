@@ -6,18 +6,44 @@ import Step2AcademicStructure from './Step2AcademicStructure'
 import Step3Pricing from './Step3Pricing'
 import Step4Review from './Step4Review'
 import { Heading } from '@/components/ui'
+import { useCreateCourseBasicDetails, useUpdateCourse } from "@/hooks/useCourse"
+import { toast } from 'sonner'
+
+
+export type ContentKind = 'video' | 'test' | 'document' | 'image'
+
+export type ContentNode = {
+  id: string
+  kind: ContentKind
+  title: string
+  description: string
+  videoAccess: boolean
+  watchTimeHH: string
+  watchTimeMM: string
+  watchTimeSS: string
+}
+
+export type FolderNode = {
+  id: string
+  kind: 'folder'
+  title: string
+  children: TreeNode[]
+}
+
+export type TreeNode = FolderNode | ContentNode
 
 export type CourseFormData = {
   // Step 1
-  name: string
+  title: string
   description: string
   category: string
   level: string
   languages: string[]
-  coverImage: File | null
-  introVideo: File | null
+  cover_image: File | null
+  cover_image_url?: string | null
+  intro_video_url: any
   // Step 2
-  modules: { id: string; title: string; lessons: Lesson[] }[]
+  tree: TreeNode[]
   offlineDownload: boolean
   pdfPermissions: boolean
   // Step 3
@@ -26,17 +52,6 @@ export type CourseFormData = {
   discount: string
   discountType: string
   enableCoupons: boolean
-}
-
-export type Lesson = {
-  id: string
-  title: string
-  description: string
-  type: 'video' | 'test' | 'document' | 'image'
-  videoAccess: boolean
-  watchTimeHH: string
-  watchTimeMM: string
-  watchTimeSS: string
 }
 
 const STEPS = [
@@ -54,14 +69,14 @@ const BACK_LABELS = [
 ]
 
 const emptyForm = (): CourseFormData => ({
-  name: '',
+  title: '',
   description: '',
   category: '',
   level: '',
   languages: [],
-  coverImage: null,
-  introVideo: null,
-  modules: [],
+  cover_image: null,
+  intro_video_url: null,
+  tree: [],
   offlineDownload: false,
   pdfPermissions: false,
   duration: '',
@@ -75,15 +90,71 @@ const CourseCreatePage = () => {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<CourseFormData>(emptyForm)
+  const [courseId, setCourseId] = useState<string>('')
+  const [isCreated, setIsCreated] = useState(false)
 
-  const update = (fields: Partial<CourseFormData>) =>
-    setForm((prev) => ({ ...prev, ...fields }))
 
   const next = () => setStep((s) => Math.min(s + 1, 4))
   const back = () => {
     if (step === 1) navigate('/courses')
     else setStep((s) => s - 1)
   }
+
+
+  // mutation
+
+  const { mutateAsync: createBasicDetails } = useCreateCourseBasicDetails()
+  const { mutateAsync: updateCourse } = useUpdateCourse(courseId)
+
+
+  const update = async (fields: Partial<CourseFormData>) => {
+
+    try {
+      console.log("fields", fields)
+      setForm((prev) => ({ ...prev, ...fields }))
+      // call api for course create 
+
+      if (courseId && isCreated) {
+
+        await updateCourse({
+          title: fields?.title || "",
+          description: fields?.description || "",
+          category: fields?.category || "",
+          level: fields?.level || "",
+          languages: fields?.languages || [],
+          cover_image: fields?.cover_image_url || "",
+          // intro_video_url: fields?.intro_video_url || "",
+        })
+
+        toast.success("Create Academic Structure")
+        next()
+
+      } else {
+        const result: any = await createBasicDetails({
+          title: fields?.title || "",
+          description: fields?.description || "",
+          category: fields?.category || "",
+          level: fields?.level || "",
+          languages: fields?.languages || [],
+          cover_image: fields?.cover_image_url || "",
+          // intro_video_url: fields?.intro_video_url || "",
+        })
+        console.log("result", result)
+        setCourseId(result?.data?.id)
+        setIsCreated(true)
+        toast.success("Create Academic Structure")
+        next()
+      }
+
+    } catch (error: any) {
+
+      console.log("error", error)
+
+      toast.error(error.message || "Something went wrong")
+    }
+  }
+
+
 
   return (
     <div className="flex flex-col h-full">
@@ -129,7 +200,7 @@ const CourseCreatePage = () => {
       </div>
 
       {/* Step content */}
-      {step === 1 && <Step1BasicDetails form={form} update={update} onNext={next} />}
+      {step === 1 && <Step1BasicDetails form={form} update={update} />}
       {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} />}
       {step === 3 && <Step3Pricing form={form} update={update} onNext={next} />}
       {step === 4 && (

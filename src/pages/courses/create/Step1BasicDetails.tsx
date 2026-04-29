@@ -1,12 +1,16 @@
 import { useRef, useState } from 'react'
-import { X, ChevronDown, ArrowRight, Image, Video, Upload } from 'lucide-react'
+import { X, ChevronDown, ArrowRight, Image, Video, Upload, Loader2 } from 'lucide-react'
 import { Button, Input, Textarea, Select } from '@/components/ui'
 import type { CourseFormData } from './index'
+import { useFormik } from 'formik'
+import { courseBasicDetailsSchema } from '@/utils/validator/course.validator'
+import { storageService } from '@/services'
+import { toast } from 'sonner'
 
 interface Props {
   form: CourseFormData
   update: (fields: Partial<CourseFormData>) => void
-  onNext: () => void
+  // onNext: () => void
 }
 
 const categoryOptions = ['CMA', 'CA', 'CFA', 'MBA', 'CPA', 'ACCA']
@@ -20,11 +24,12 @@ interface UploadBoxProps {
   icon: React.ReactNode
   title: string
   hint: string
+  loading?: boolean
   onFile: (file: File) => void
   onClear: () => void
 }
 
-const UploadBox = ({ accept, preview, previewType, icon, title, hint, onFile, onClear }: UploadBoxProps) => {
+const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = false, onFile, onClear }: UploadBoxProps) => {
   const ref = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
 
@@ -71,11 +76,18 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, onFile, on
           </span>
         </div>
       )}
+      {loading && (
+        <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center gap-2">
+          <Loader2 size={22} className="text-[#000B60] animate-spin" />
+          <p className="text-xs font-semibold text-[#000B60]">Uploading…</p>
+        </div>
+      )}
       <input
         ref={ref}
         type="file"
         accept={accept}
         className="hidden"
+        disabled={loading}
         onClick={(e) => e.stopPropagation()}
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }}
       />
@@ -83,121 +95,151 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, onFile, on
   )
 }
 
-const Step1BasicDetails = ({ form, update, onNext }: Props) => {
-  const [imgPreview, setImgPreview] = useState<string | null>(null)
-  const [vidPreview, setVidPreview] = useState<string | null>(null)
+const Step1BasicDetails = ({ form, update }: Props) => {
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [imgPreview, setImgPreview] = useState<string | null>(
+    form.cover_image ? URL.createObjectURL(form.cover_image) : null
+  )
+  const [vidPreview, setVidPreview] = useState<string | null>(
+    form.intro_video_url ? URL.createObjectURL(form.intro_video_url) : ""
+  )
   const [langOpen, setLangOpen] = useState(false)
 
+  const formik = useFormik({
+    initialValues: form,
+    validationSchema: courseBasicDetailsSchema,
+    onSubmit: (values) => {
+      update(values)
+      // onNext()
+    },
+  })
+
   const toggleLang = (lang: string) => {
-    const next = form.languages.includes(lang)
-      ? form.languages.filter((l) => l !== lang)
-      : [...form.languages, lang]
-    update({ languages: next })
+    const next = formik.values.languages.includes(lang)
+      ? formik.values.languages.filter((l) => l !== lang)
+      : [...formik.values.languages, lang]
+    formik.setFieldValue('languages', next)
+    formik.setFieldTouched('languages', true, false)
   }
 
   return (
-    <div className="grid grid-cols-12 gap-6 items-stretch">
+    <form onSubmit={formik.handleSubmit} noValidate>
+      <div className="grid grid-cols-12 gap-6 items-stretch">
 
-      {/* ── Left: form card (8 cols) ─────────────────────────────── */}
-      <div className="col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-10 flex flex-col gap-5">
+        {/* ── Left: form card (8 cols) ── */}
+        <div className="col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-10 flex flex-col gap-5">
 
-        {/* Course Name */}
-        <Input
-          label="Course Name"
-          placeholder="e.g. Cost Accounting"
-          value={form.name}
-          onChange={(e) => update({ name: e.target.value })}
-          maxLength={120}
-        />
-
-        {/* Description */}
-        <div className="flex-1 flex flex-col">
-          <Textarea
-            label="Description"
-            placeholder="Provide a comprehensive summary of what students will achieve..."
-            value={form.description}
-            onChange={(e) => update({ description: e.target.value })}
-            maxLength={500}
-            className="flex-1 min-h-[90px] h-[calc(100%-32px)]"
+          <Input
+            label="Course Name"
+            name="title"
+            placeholder="e.g. Cost Accounting"
+            value={formik.values.title}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={formik.touched.title && formik.errors.title ? formik.errors.title : undefined}
+            maxLength={120}
+            showCount
           />
-        </div>
 
-        {/* Category + Level */}
-        <div className="grid grid-cols-2 gap-4">
-          <Select
-            label="Category"
-            placeholder="Select category"
-            options={categoryOptions.map((o) => ({ value: o, label: o }))}
-            value={form.category}
-            onChange={(e) => update({ category: e.target.value })}
-          />
-          <Select
-            label="Level"
-            placeholder="Select level"
-            options={levelOptions.map((o) => ({ value: o, label: o }))}
-            value={form.level}
-            onChange={(e) => update({ level: e.target.value })}
-          />
-        </div>
-
-        {/* Instruction Language */}
-        <div className="relative">
-          <p className="text-sm font-bold text-gray-700 mb-5">Instruction Language</p>
-          <div
-            className="flex flex-wrap items-center gap-2 min-h-[60px] px-3 py-2.5 bg-[#F2F4F6] border border-gray-100 rounded-xl cursor-pointer"
-            onClick={() => setLangOpen((o) => !o)}
-          >
-            {form.languages.length === 0 && (
-              <span className="text-base text-black font-medium">Select languages</span>
-            )}
-            {form.languages.map((lang) => (
-              <span
-                key={lang}
-                className="flex items-center gap-1 px-2.5 py-1 bg-[#BCC2FF] text-[#000B60] text-xs font-semibold rounded-full"
-              >
-                {lang}
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); toggleLang(lang) }}
-                >
-                  <X size={10} />
-                </button>
-              </span>
-            ))}
-            <ChevronDown
-              size={16}
-              className={`ml-auto text-gray-400 shrink-0 transition-transform ${langOpen ? 'rotate-180' : ''}`}
+          <div className="flex-1 flex flex-col">
+            <Textarea
+              label="Description"
+              name="description"
+              placeholder="Provide a comprehensive summary of what students will achieve..."
+              value={formik.values.description}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.description && formik.errors.description ? formik.errors.description : undefined}
+              maxLength={500}
+              showCount
+              className="flex-1 min-h-[90px] h-[calc(100%-32px)]"
             />
           </div>
-          {langOpen && (
-            <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-lg p-2 flex flex-wrap gap-2">
-              {languageOptions.map((lang) => {
-                const active = form.languages.includes(lang)
-                return (
+
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="Category"
+              name="category"
+              placeholder="Select category"
+              options={categoryOptions.map((o) => ({ value: o, label: o }))}
+              value={formik.values.category}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.category && formik.errors.category ? formik.errors.category : undefined}
+            />
+            <Select
+              label="Level"
+              name="level"
+              placeholder="Select level"
+              options={levelOptions.map((o) => ({ value: o, label: o }))}
+              value={formik.values.level}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.level && formik.errors.level ? formik.errors.level : undefined}
+            />
+          </div>
+
+          {/* Instruction Language */}
+          <div className="relative">
+            <p className="text-sm font-bold text-gray-700 mb-1.5">Instruction Language</p>
+            <div
+              className={`flex flex-wrap items-center gap-2 min-h-[56px] px-3 py-2.5 bg-[#F2F4F6] border rounded-xl cursor-pointer transition-colors ${formik.touched.languages && formik.errors.languages
+                ? 'border-red-400'
+                : 'border-gray-100'
+                }`}
+              onClick={() => setLangOpen((o) => !o)}
+            >
+              {formik.values.languages.length === 0 && (
+                <span className="text-base text-gray-400 font-medium">Select languages</span>
+              )}
+              {formik.values.languages.map((lang) => (
+                <span
+                  key={lang}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-[#BCC2FF] text-[#000B60] text-xs font-semibold rounded-full"
+                >
+                  {lang}
                   <button
-                    key={lang}
                     type="button"
-                    onClick={() => toggleLang(lang)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${active
-                      ? 'bg-[#000B60] text-white border-[#000B60]'
-                      : 'bg-[#F2F4F6] text-gray-600 border-gray-100 hover:border-[#000B60]'
-                      }`}
+                    onClick={(e) => { e.stopPropagation(); toggleLang(lang) }}
                   >
-                    {lang}
+                    <X size={10} />
                   </button>
-                )
-              })}
+                </span>
+              ))}
+              <ChevronDown
+                size={16}
+                className={`ml-auto text-gray-400 shrink-0 transition-transform ${langOpen ? 'rotate-180' : ''}`}
+              />
             </div>
-          )}
+            {formik.touched.languages && formik.errors.languages && (
+              <p className="text-red-500 text-xs mt-1">{formik.errors.languages as string}</p>
+            )}
+            {langOpen && (
+              <div className="absolute z-20 top-full mt-1 left-0 right-0 bg-white border border-gray-100 rounded-xl shadow-lg p-2 flex flex-wrap gap-2">
+                {languageOptions.map((lang) => {
+                  const active = formik.values.languages.includes(lang)
+                  return (
+                    <button
+                      key={lang}
+                      type="button"
+                      onClick={() => toggleLang(lang)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${active
+                        ? 'bg-[#000B60] text-white border-[#000B60]'
+                        : 'bg-[#F2F4F6] text-gray-600 border-gray-100 hover:border-[#000B60]'
+                        }`}
+                    >
+                      {lang}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* ── Right: uploads + actions (4 cols) ───────────────────── */}
-      <div className="col-span-4 flex flex-col gap-3">
+        {/* ── Right: uploads + actions (4 cols) ── */}
+        <div className="col-span-4 flex flex-col gap-3">
 
-        {/* Cover Image */}
-        <div>
-          {/* <FieldLabel>Cover Image</FieldLabel> */}
           <UploadBox
             accept="image/jpeg,image/png,image/webp"
             preview={imgPreview}
@@ -205,14 +247,31 @@ const Step1BasicDetails = ({ form, update, onNext }: Props) => {
             icon={<Image size={20} />}
             title="Cover Image"
             hint="High resolution JPEG or PNG (16:9)"
-            onFile={(f) => { update({ coverImage: f }); setImgPreview(URL.createObjectURL(f)) }}
-            onClear={() => { update({ coverImage: null }); setImgPreview(null) }}
+            loading={coverUploading}
+            onFile={async (f) => {
+              setImgPreview(URL.createObjectURL(f))
+              formik.setFieldValue('cover_image', f)
+              setCoverUploading(true)
+              try {
+                const url = await storageService.uploadCourseCover(f)
+                formik.setFieldValue('cover_image_url', url)
+                toast.success('Cover image uploaded')
+              } catch (error) {
+                console.log(" file uploading error", error)
+                toast.error('Failed to upload cover image')
+                formik.setFieldValue('cover_image', null)
+                setImgPreview(null)
+              } finally {
+                setCoverUploading(false)
+              }
+            }}
+            onClear={() => {
+              formik.setFieldValue('cover_image', null)
+              formik.setFieldValue('cover_image_url', null)
+              setImgPreview(null)
+            }}
           />
-        </div>
 
-        {/* Intro Video */}
-        <div>
-          {/* <FieldLabel>Intro Video</FieldLabel> */}
           <UploadBox
             accept="video/mp4,video/webm,video/mov"
             preview={vidPreview}
@@ -220,22 +279,32 @@ const Step1BasicDetails = ({ form, update, onNext }: Props) => {
             icon={<Video size={20} />}
             title="Intro Video"
             hint="MP4, WebM or MOV — max 200 MB"
-            onFile={(f) => { update({ introVideo: f }); setVidPreview(URL.createObjectURL(f)) }}
-            onClear={() => { update({ introVideo: null }); setVidPreview(null) }}
+            onFile={(f) => {
+              formik.setFieldValue('intro_video_url', f)
+              setVidPreview(URL.createObjectURL(f))
+            }}
+            onClear={() => {
+              formik.setFieldValue('intro_video_url', null)
+              setVidPreview(null)
+            }}
           />
-        </div>
 
-        {/* Actions — pushed to bottom */}
-        <div className="flex flex-col gap-3 mt-auto pt-1">
-          <Button variant="white" fullWidth type="button">
-            Save as draft
-          </Button>
-          <Button variant="primary" fullWidth type="button" onClick={onNext}>
-            Add Content <ArrowRight size={18} />
-          </Button>
+          <div className="flex flex-col gap-3 mt-auto pt-1">
+            <Button variant="white" fullWidth type="button">
+              Save as draft
+            </Button>
+            <Button
+              variant="primary"
+              fullWidth
+              type="submit"
+            // disabled={formik.isSubmitting}
+            >
+              Add Content <ArrowRight size={18} />
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </form>
   )
 }
 
