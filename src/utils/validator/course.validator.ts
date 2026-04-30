@@ -10,6 +10,10 @@ export const courseBasicDetailsSchema = Yup.object({
     category: Yup.string().required('Category is required'),
     level: Yup.string().required('Level is required'),
     languages: Yup.array().min(1, 'Select at least one language'),
-    cover_image: Yup.mixed().required('Cover image is required'),
+    cover_image: Yup.mixed().when('cover_image_url', {
+        is: (val: any) => !val,
+        then: (schema) => schema.required('Cover image is required'),
+        otherwise: (schema) => schema.nullable(),
+    }),
     // introVideo: Yup.mixed().required('Intro video is required'),
 })

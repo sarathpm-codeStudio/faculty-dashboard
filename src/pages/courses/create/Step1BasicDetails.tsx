@@ -6,7 +6,8 @@ import { useFormik } from 'formik'
 import { courseBasicDetailsSchema } from '@/utils/validator/course.validator'
 import { storageService } from '@/services'
 import { toast } from 'sonner'
-import { useGetCourseById } from '@/hooks'
+import { useGetCourseById, useCreateCourseIntroVideoSignUrl } from '@/hooks'
+import { courseService } from "@/services/courseService"
 
 interface Props {
   form: CourseFormData
@@ -142,6 +143,14 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   }, [courseDetails])
 
 
+
+  if (isEdit && isLoadingCourseDetails) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-24">
+        <Loader2 size={32} className="text-[#000B60] animate-spin" />
+      </div>
+    )
+  }
 
   const toggleLang = (lang: string) => {
     const next = formik.values.languages.includes(lang)
