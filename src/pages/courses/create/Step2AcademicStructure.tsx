@@ -15,7 +15,7 @@ interface Props {
   form: CourseFormData
   update: (fields: Partial<CourseFormData>) => void
   onNext: () => void,
-  courseId: string
+  // courseId: string
 }
 
 // ── Tree helpers ──────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ const CONTENT_TYPES: { kind: ContentKind; label: string }[] = [
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const Step2AcademicStructure = ({ form, update, onNext, courseId }: Props) => {
+const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
   // Drill-down navigation path
   const [navPath, setNavPath] = useState<NavCrumb[]>([])
 
@@ -367,8 +367,8 @@ const Step2AcademicStructure = ({ form, update, onNext, courseId }: Props) => {
                 type="button"
                 onClick={() => setContentKind(kind)}
                 className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-semibold transition-colors ${contentKind === kind
-                    ? 'border-[#000B60] bg-[#000B60] text-white'
-                    : 'border-gray-100 bg-[#F2F4F6] text-[#000B60]'
+                  ? 'border-[#000B60] bg-[#000B60] text-white'
+                  : 'border-gray-100 bg-[#F2F4F6] text-[#000B60]'
                   }`}
               >
                 {CONTENT_ICONS[kind]}

@@ -283,7 +283,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               setCoverUploading(true)
               try {
                 const url = await storageService.uploadCourseCover(f)
-                formik.setFieldValue('cover_image', url)
+                formik.setFieldValue('cover_image_url', url)
                 toast.success('Cover image uploaded')
               } catch (error) {
                 console.log(" file uploading error", error)

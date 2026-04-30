@@ -161,7 +161,7 @@ const CourseCreatePage = () => {
           category: fields?.category || "",
           level: fields?.level || "",
           languages: fields?.languages || [],
-          cover_image: fields?.cover_image || "",
+          cover_image: fields?.cover_image_url || "",
           // intro_video_url: fields?.intro_video_url || "",
         })
         console.log("result", result)
@@ -177,8 +177,6 @@ const CourseCreatePage = () => {
           toast.success("Create Academic Structure")
           next()
         }
-
-
       }
 
     } catch (error: any) {
@@ -236,7 +234,7 @@ const CourseCreatePage = () => {
 
       {/* Step content */}
       {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} isEdit={isEdit} courseId={courseId} />}
-      {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} courseId={courseId} />}
+      {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} />}
       {step === 3 && <Step3Pricing form={form} update={update} onNext={next} />}
       {step === 4 && (
         <Step4Review

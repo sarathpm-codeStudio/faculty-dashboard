@@ -44,7 +44,7 @@ export const useUpdateCourse = (id: string) => {
     mutationFn: (payload: UpdateCoursePayload) => courseService.update(id, payload),
     onSuccess: (updated) => {
       qc.setQueryData(courseKeys.detail(id), updated)
-      qc.invalidateQueries({ queryKey: courseKeys.all })
+      qc.invalidateQueries({ queryKey: ['my-courses'] })
     },
   })
 }
