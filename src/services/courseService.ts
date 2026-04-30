@@ -19,9 +19,15 @@ export const courseService = {
     }
   },
 
-  getById: async (id: string): Promise<Course> => {
-    const { data } = await apiClient.get(`/courses/${id}`)
-    return data
+  getById: async (id: string): Promise<any> => {
+    try {
+
+      const { data } = await apiClient.get(`/courses/${id}`)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
   },
 
   createBasicDetails: async (payload: CreateCoursePayload): Promise<Course> => {

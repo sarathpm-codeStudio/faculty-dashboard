@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, ChevronDown, ArrowRight, Image, Video, Upload, Loader2 } from 'lucide-react'
 import { Button, Input, Textarea, Select } from '@/components/ui'
 import type { CourseFormData } from './index'
@@ -6,12 +6,15 @@ import { useFormik } from 'formik'
 import { courseBasicDetailsSchema } from '@/utils/validator/course.validator'
 import { storageService } from '@/services'
 import { toast } from 'sonner'
+import { useGetCourseById } from '@/hooks'
 
 interface Props {
   form: CourseFormData
   update: (fields: Partial<CourseFormData>) => void
   setIsDraft: (isDraft: boolean) => void
   isSubmitting?: boolean
+  isEdit?: boolean
+  courseId?: any
 }
 
 const categoryOptions = ['CMA', 'CA', 'CFA', 'MBA', 'CPA', 'ACCA']
@@ -96,7 +99,7 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
   )
 }
 
-const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false }: Props) => {
+const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isEdit, courseId }: Props) => {
   const [coverUploading, setCoverUploading] = useState(false)
   const [imgPreview, setImgPreview] = useState<string | null>(
     form.cover_image ? URL.createObjectURL(form.cover_image) : null
@@ -115,6 +118,30 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false }: P
       // onNext()
     },
   })
+
+
+  // query for course details
+  const { data: courseDetails, isLoading: isLoadingCourseDetails } = useGetCourseById(courseId, isEdit)
+
+
+  useEffect(() => {
+    if (courseDetails) {
+      console.log("edit data", courseDetails)
+      formik.setValues({
+        ...form,
+        title: courseDetails?.data?.title || "",
+        description: courseDetails?.data?.description || "",
+        category: courseDetails?.data?.category || "",
+        level: courseDetails?.data?.level || "",
+        languages: courseDetails?.data?.languages || [],
+        cover_image_url: courseDetails?.data?.cover_image || null,
+        intro_video_url: courseDetails?.data?.intro_video_url || null
+
+      })
+    }
+  }, [courseDetails])
+
+
 
   const toggleLang = (lang: string) => {
     const next = formik.values.languages.includes(lang)
@@ -244,7 +271,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false }: P
 
           <UploadBox
             accept="image/jpeg,image/png,image/webp"
-            preview={imgPreview}
+            preview={isEdit ? courseDetails?.data?.cover_image : imgPreview}
             previewType="image"
             icon={<Image size={20} />}
             title="Cover Image"
@@ -256,12 +283,12 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false }: P
               setCoverUploading(true)
               try {
                 const url = await storageService.uploadCourseCover(f)
-                formik.setFieldValue('cover_image_url', url)
+                formik.setFieldValue('cover_image', url)
                 toast.success('Cover image uploaded')
               } catch (error) {
                 console.log(" file uploading error", error)
                 toast.error('Failed to upload cover image')
-                formik.setFieldValue('cover_image', null)
+                formik.setFieldValue('cover_image_url', null)
                 setImgPreview(null)
               } finally {
                 setCoverUploading(false)

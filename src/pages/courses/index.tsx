@@ -157,7 +157,7 @@ const CoursesPage = () => {
               </motion.div>
             ))}
             <motion.div variants={cardVariants}>
-              <AddCourseCard onClick={() => console.log('Add new course')} />
+              <AddCourseCard onClick={() => navigate('/courses/create')} />
             </motion.div>
           </motion.div>
         )}

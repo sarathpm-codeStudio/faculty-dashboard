@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import Step1BasicDetails from './Step1BasicDetails'
 import Step2AcademicStructure from './Step2AcademicStructure'
 import Step3Pricing from './Step3Pricing'
 import Step4Review from './Step4Review'
 import { Heading } from '@/components/ui'
-import { useCreateCourseBasicDetails, useUpdateCourse } from "@/hooks/useCourse"
+import { useCreateCourseBasicDetails, useUpdateCourse, useGetCourseById } from "@/hooks/useCourse"
 import { toast } from 'sonner'
 
 
@@ -39,7 +39,7 @@ export type CourseFormData = {
   category: string
   level: string
   languages: string[]
-  cover_image: File | null
+  cover_image: any
   cover_image_url?: string | null
   intro_video_url: any
   // Step 2
@@ -93,7 +93,20 @@ const CourseCreatePage = () => {
   const [courseId, setCourseId] = useState<string>('')
   const [isCreated, setIsCreated] = useState(false)
   const [isDraft, setIsDraft] = useState(false)
+  const [isEdit, setIsEdit] = useState(false)
 
+
+  // get course id from url
+  const { id } = useParams()
+
+
+  useEffect(() => {
+    if (id) {
+      setCourseId(id)
+      setIsEdit(true)
+      setIsCreated(true)
+    }
+  }, [id])
 
   const next = () => setStep((s) => Math.min(s + 1, 4))
   const back = () => {
@@ -109,10 +122,12 @@ const CourseCreatePage = () => {
   const isSubmitting = isCreating || isUpdating
 
 
+
+
   const update = async (fields: Partial<CourseFormData>) => {
 
     try {
-      console.log("fields", fields)
+      console.log("fields>>>>>", fields)
       setForm((prev) => ({ ...prev, ...fields }))
       // call api for course create 
 
@@ -146,7 +161,7 @@ const CourseCreatePage = () => {
           category: fields?.category || "",
           level: fields?.level || "",
           languages: fields?.languages || [],
-          cover_image: fields?.cover_image_url || "",
+          cover_image: fields?.cover_image || "",
           // intro_video_url: fields?.intro_video_url || "",
         })
         console.log("result", result)
@@ -154,10 +169,11 @@ const CourseCreatePage = () => {
         setIsCreated(true)
 
         if (isDraft) {
-
+          console.log("isDraft", isDraft)
           toast.success("Course saved as draft")
           navigate('/courses')
         } else {
+          console.log("isDraft", isDraft)
           toast.success("Create Academic Structure")
           next()
         }
@@ -219,8 +235,8 @@ const CourseCreatePage = () => {
       </div>
 
       {/* Step content */}
-      {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} />}
-      {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} />}
+      {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} isEdit={isEdit} courseId={courseId} />}
+      {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} courseId={courseId} />}
       {step === 3 && <Step3Pricing form={form} update={update} onNext={next} />}
       {step === 4 && (
         <Step4Review

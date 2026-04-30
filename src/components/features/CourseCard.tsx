@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Clock, Users, MoreVertical, BarChart2, Pencil, Trash2, Check } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Paragraph, Subheading } from '../ui'
+import { useNavigate } from 'react-router-dom'
 
 export type CourseCardProps = {
   id: any
@@ -41,6 +42,7 @@ const CourseCard = ({
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
+  const navigate = useNavigate()
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -82,7 +84,9 @@ const CourseCard = ({
         <Subheading className='text-[#000b60] font-bold'>{title}</Subheading>
 
         {description ? (
-          <Paragraph className="text-gray-400 !text-xs mb-2 line-clamp-1">{description}</Paragraph>
+          <Paragraph className="text-gray-400 !text-xs mb-2">
+            {description.length > 30 ? description.slice(0, 30) + '...' : description}
+          </Paragraph>
         ) : (
           <div className="flex items-center gap-3 text-[11px] text-gray-700 font-bold mb-3">
             <span className="flex items-center gap-1">
@@ -126,7 +130,7 @@ const CourseCard = ({
                     View Analytics
                   </button>
                   <button
-                    onClick={() => { onEdit?.(id); setMenuOpen(false) }}
+                    onClick={() => { navigate(`/courses/${id}/edit`); setMenuOpen(false) }}
                     className="w-full text-left px-4 py-2 text-sm text-[#191c1e] hover:bg-gray-50 flex items-center gap-2"
                   >
                     <Pencil size={14} />

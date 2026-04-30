@@ -17,11 +17,11 @@ export const useGetAllCourses = (filter: any, enabled = true) =>
     enabled,
   })
 
-export const useCourse = (id: string) =>
+export const useGetCourseById = (id: string, enabled = true) =>
   useQuery({
     queryKey: courseKeys.detail(id),
     queryFn: () => courseService.getById(id),
-    enabled: !!id,
+    enabled: !!id && enabled,
   })
 
 // ─── Mutations ────────────────────────────────────────

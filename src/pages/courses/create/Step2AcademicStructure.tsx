@@ -14,7 +14,8 @@ import { CaretRight } from '@phosphor-icons/react'
 interface Props {
   form: CourseFormData
   update: (fields: Partial<CourseFormData>) => void
-  onNext: () => void
+  onNext: () => void,
+  courseId: string
 }
 
 // ── Tree helpers ──────────────────────────────────────────────────────────────
@@ -40,22 +41,22 @@ function getChildrenAt(tree: TreeNode[], path: NavCrumb[]): TreeNode[] {
 type NavCrumb = { id: string; title: string }
 
 const CONTENT_ICONS: Record<ContentKind, React.ReactNode> = {
-  video:    <MdVideoLibrary size={15} />,
-  test:     <BsPencilSquare size={15} />,
+  video: <MdVideoLibrary size={15} />,
+  test: <BsPencilSquare size={15} />,
   document: <HiDocumentDuplicate size={15} />,
-  image:    <FaRegImage size={15} />,
+  image: <FaRegImage size={15} />,
 }
 
 const CONTENT_TYPES: { kind: ContentKind; label: string }[] = [
-  { kind: 'video',    label: 'Video' },
-  { kind: 'test',     label: 'Online Test' },
+  { kind: 'video', label: 'Video' },
+  { kind: 'test', label: 'Online Test' },
   { kind: 'document', label: 'Document' },
-  { kind: 'image',    label: 'Image' },
+  { kind: 'image', label: 'Image' },
 ]
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
+const Step2AcademicStructure = ({ form, update, onNext, courseId }: Props) => {
   // Drill-down navigation path
   const [navPath, setNavPath] = useState<NavCrumb[]>([])
 
@@ -365,11 +366,10 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
                 key={kind}
                 type="button"
                 onClick={() => setContentKind(kind)}
-                className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-semibold transition-colors ${
-                  contentKind === kind
+                className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-semibold transition-colors ${contentKind === kind
                     ? 'border-[#000B60] bg-[#000B60] text-white'
                     : 'border-gray-100 bg-[#F2F4F6] text-[#000B60]'
-                }`}
+                  }`}
               >
                 {CONTENT_ICONS[kind]}
                 {label}

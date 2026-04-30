@@ -3,6 +3,7 @@ import type { TreeNode } from '@/pages/courses/create'
 export type CourseStatus = 'draft' | 'published' | 'archived'
 
 export interface Course {
+
   id: string
   faculty_id: string
   title: string
@@ -10,6 +11,7 @@ export interface Course {
   category: string
   level: string
   languages: string[]
+  cover_image: File | null
   cover_image_url: string | null
   intro_video_url: string | null
   tree: TreeNode[]
@@ -23,6 +25,7 @@ export interface Course {
   status: CourseStatus
   created_at: string
   updated_at: string
+
 }
 
 export interface CreateCoursePayload {
