@@ -38,16 +38,7 @@ export const useCreateCourseBasicDetails = () => {
 }
 
 
-export const useCreateCourseIntroVideoSignUrl = () => {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationKey: ['coursesIntroVideoSignUrl'],
-    mutationFn: (courseId: string) => courseService.CreateCourseIntrovideoSignedUrl(courseId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['coursesIntroVideoSignUrl'] })
-    },
-  })
-}
+
 
 
 

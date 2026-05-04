@@ -6,7 +6,7 @@ import { useFormik } from 'formik'
 import { courseBasicDetailsSchema } from '@/utils/validator/course.validator'
 import { storageService } from '@/services'
 import { toast } from 'sonner'
-import { useGetCourseById, useCreateCourseIntroVideoSignUrl } from '@/hooks'
+import { useGetCourseById } from '@/hooks'
 import { courseService } from "@/services/courseService"
 
 interface Props {
@@ -110,6 +110,92 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   )
   const [langOpen, setLangOpen] = useState(false)
   const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>(null)
+
+  const uploaderRef = useRef<any>(null);
+
+  // video setups
+  // const [vidPreview, setVidPreview] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus]: any = useState("");
+
+  // ─── Load TPStreams SDK once ───────────────────────────
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://static.testpress.in/static/js/tpstreams-uploader.min.js';
+    script.async = true;
+    script.onload = () => initSDK();
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
+
+  // ─── Initialize SDK ───────────────────────────────────
+  const initSDK = () => {
+    const uploader = new (window as any).TpStreamsUploaderSDK(
+      import.meta.env.VITE_TPSTREAMS_AUTH_TOKEN,  // ← from .env ✅
+      import.meta.env.VITE_TPSTREAMS_ORG_ID,
+      {
+        contentProtectionType: 'drm',
+        resolutions: ['360p', '480p', '720p', '1080p'],
+        generateSubtitle: false,
+      }
+    );
+
+    // Track upload progress
+    uploader.on('uploadProgress', (data: any) => {
+      setUploadProgress(data.progress_percentage);
+    });
+
+    // Upload success
+    uploader.on('uploadSuccess', async (data: any) => {
+      console.log('Asset ID:', data.asset_id);
+      setUploadStatus('saving');
+
+      // try {
+      //   // Save asset_id to DB via Lambda
+      //   await apiClient.post('/courses/intro-video/save', {
+      //     course_id: courseId,
+      //     asset_id: data.asset_id,
+      //   });
+
+      //   formik.setFieldValue('intro_video_asset_id', data.asset_id);
+      //   setUploadStatus('done');
+
+      // } catch (err: any) {
+      //   setUploadStatus('failed');
+      // }
+    });
+
+    // Upload error
+    uploader.on('uploadError', (data: any) => {
+      console.error('Upload error:', data.error);
+      setUploadStatus('failed');
+    });
+
+    uploaderRef.current = uploader;
+  };
+
+
+  const handleVideoFile = (file: File) => {
+    if (!uploaderRef.current) {
+      alert('Uploader not ready. Please try again.');
+      return;
+    }
+
+    setVidPreview(URL.createObjectURL(file));
+    setUploadStatus('uploading');
+    setUploadProgress(0);
+
+    // Pass file to TPStreams SDK ✅
+    uploaderRef.current.selectFiles([file]);
+    uploaderRef.current.upload();
+  };
+
+
+
 
   const formik = useFormik({
     initialValues: form,
@@ -310,7 +396,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
             }}
           />
 
-          <UploadBox
+          {/* <UploadBox
             accept="video/mp4,video/webm,video/mov"
             preview={vidPreview}
             previewType="video"
@@ -325,7 +411,84 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               formik.setFieldValue('intro_video_url', null)
               setVidPreview(null)
             }}
+          /> */}
+
+
+          <UploadBox
+            accept="video/mp4,video/webm,video/mov"
+            preview={vidPreview}
+            previewType="video"
+            icon={<Video size={20} />}
+            title="Intro Video"
+            hint="MP4, WebM or MOV — max 200 MB"
+            loading={
+              uploadStatus === 'uploading' ||
+              uploadStatus === 'saving'
+            }
+            onFile={handleVideoFile}
+            onClear={() => {
+              formik.setFieldValue('intro_video_asset_id', null);
+              setVidPreview(null);
+              setUploadStatus('idle');
+              setUploadProgress(0);
+            }}
           />
+
+          {/* Progress bar */}
+          {uploadStatus === 'uploading' && (
+            <div style={{ marginTop: 8 }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: 12,
+                color: '#6B7280',
+                marginBottom: 4,
+              }}>
+                <span>Uploading video...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div style={{
+                width: '100%',
+                background: '#E5E7EB',
+                borderRadius: 8,
+                height: 6,
+              }}>
+                <div style={{
+                  width: `${uploadProgress}%`,
+                  height: 6,
+                  background: '#000B60',
+                  borderRadius: 8,
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+            </div>
+          )}
+
+          {/* Saving */}
+          {uploadStatus === 'saving' && (
+            <p style={{ fontSize: 12, color: '#6B7280', marginTop: 6 }}>
+              ⚙️ Saving video info...
+            </p>
+          )}
+
+          {/* Done */}
+          {uploadStatus === 'done' && (
+            <p style={{ fontSize: 12, color: '#10B981', marginTop: 6 }}>
+              ✅ Video uploaded! Processing in background.
+            </p>
+          )}
+
+          {/* Failed */}
+          {uploadStatus === 'failed' && (
+            <p style={{ fontSize: 12, color: '#EF4444', marginTop: 6 }}>
+              ❌ Upload failed — please try again.
+            </p>
+          )}
+
+
+
+
+
 
           <div className="flex flex-col gap-3 mt-auto pt-1">
             <Button
