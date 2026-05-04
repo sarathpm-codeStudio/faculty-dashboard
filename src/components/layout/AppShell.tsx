@@ -7,6 +7,8 @@ import PendingScreen from './PendingScreen'
 import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
 import { toast } from 'sonner'
+import GlobalUploadIndicator from '@/components/ui/GlobalUploadIndicator'
+
 
 const AppShell = () => {
     const [notifOpen, setNotifOpen] = useState(false)
@@ -44,6 +46,7 @@ const AppShell = () => {
                     {showPending ? <PendingScreen /> : <Outlet />}
                 </main>
             </div>
+            <GlobalUploadIndicator />
             <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
         </div>
     )

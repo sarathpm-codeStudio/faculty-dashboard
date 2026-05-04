@@ -8,6 +8,8 @@ import Step4Review from './Step4Review'
 import { Heading } from '@/components/ui'
 import { useCreateCourseBasicDetails, useUpdateCourse, useGetCourseById } from "@/hooks/useCourse"
 import { toast } from 'sonner'
+import { generateUniqueId } from '@/utils/helper/numberGenarator'
+import { useRef } from 'react'
 
 
 export type ContentKind = 'video' | 'test' | 'document' | 'image'
@@ -34,6 +36,7 @@ export type TreeNode = FolderNode | ContentNode
 
 export type CourseFormData = {
   // Step 1
+  unique_Id: string
   title: string
   description: string
   category: string
@@ -69,6 +72,7 @@ const BACK_LABELS = [
 ]
 
 const emptyForm = (): CourseFormData => ({
+  unique_Id: generateUniqueId(),
   title: '',
   description: '',
   category: '',
@@ -134,6 +138,7 @@ const CourseCreatePage = () => {
       if (courseId && isCreated) {
 
         await updateCourse({
+          unique_id: fields?.unique_Id || "",
           title: fields?.title || "",
           description: fields?.description || "",
           category: fields?.category || "",
@@ -155,7 +160,11 @@ const CourseCreatePage = () => {
 
 
       } else {
+
+        console.log("fields?.unique_Id", fields?.unique_Id)
+
         const result: any = await createBasicDetails({
+          unique_id: fields?.unique_Id || "",
           title: fields?.title || "",
           description: fields?.description || "",
           category: fields?.category || "",

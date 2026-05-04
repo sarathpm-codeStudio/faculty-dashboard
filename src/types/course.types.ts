@@ -29,6 +29,7 @@ export interface Course {
 }
 
 export interface CreateCoursePayload {
+  unique_id: string
   title: string
   description: string
   category: string

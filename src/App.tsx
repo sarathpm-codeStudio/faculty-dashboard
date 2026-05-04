@@ -29,8 +29,15 @@ import ProfilePage from '@/pages/profile'
 import BankDetailsAndTransaction from '@/pages/profile/BankDetails&Transaction'
 import UpdateBankDetails from '@/pages/profile/UpdateBankDetails'
 import FullTransactionHistory from '@/pages/profile/FullTransactionHistory'
+import { useEffect } from 'react'
+import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 
 const App = () => {
+
+  useEffect(() => {
+    tpstreamsUploadService.init()
+  }, [])
+
   return (
     <>
       <Toaster position="top-right" richColors />
