@@ -17,6 +17,8 @@ interface Props {
   isSubmitting?: boolean
   isEdit?: boolean
   courseId?: any
+  vidPreviewUrl?: string | null
+  onVidPreviewChange?: (url: string | null) => void
 }
 
 const categoryOptions = ['CMA', 'CA', 'CFA', 'MBA', 'CPA', 'ACCA']
@@ -60,7 +62,7 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
           {previewType === 'image' ? (
             <img src={preview} alt="" className="w-full h-full object-cover" />
           ) : (
-            <video src={preview} className="w-full h-full object-cover" />
+            <video src={preview} className="w-full h-full object-cover" controls onClick={(e) => e.stopPropagation()} />
           )}
           <button
             type="button"
@@ -69,6 +71,13 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
           >
             <X size={12} />
           </button>
+          {previewType === 'video' && (
+            <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-black/50 text-white text-[10px] font-semibold rounded-full">
+                <Upload size={9} /> Click to change video
+              </span>
+            </div>
+          )}
         </>
       ) : (
         <div className="flex flex-col items-center gap-1.5 px-4 text-center select-none">
@@ -101,20 +110,18 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
   )
 }
 
-const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isEdit, courseId }: Props) => {
+const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isEdit, courseId, vidPreviewUrl, onVidPreviewChange }: Props) => {
   const [coverUploading, setCoverUploading] = useState(false)
   const [imgPreview, setImgPreview] = useState<string | null>(
     form.cover_image ? URL.createObjectURL(form.cover_image) : null
   )
-  const [vidPreview, setVidPreview] = useState<string | null>(
-    form.intro_video_url ? URL.createObjectURL(form.intro_video_url) : ""
-  )
+  const [vidPreview, setVidPreview] = useState<string | null>(vidPreviewUrl ?? null)
   const [langOpen, setLangOpen] = useState(false)
   const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>(null)
 
   // ─── Video upload states ──────────────────────────────
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [uploadStatus, setUploadStatus] = useState('idle')
+  const [uploadStatus, setUploadStatus] = useState(vidPreviewUrl ? 'done' : 'idle')
 
   // ✅ NO useEffect for SDK — already initialized in App.tsx
   // ✅ NO uploaderRef — managed by global service
@@ -122,7 +129,9 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
 
   // ─── Handle video file selected ──────────────────────
   const handleVideoFile = (file: File) => {
-    setVidPreview(URL.createObjectURL(file))
+    const previewUrl = URL.createObjectURL(file)
+    setVidPreview(previewUrl)
+    onVidPreviewChange?.(previewUrl)
     setUploadStatus('uploading')
     setUploadProgress(0)
 
@@ -357,6 +366,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
             onClear={() => {
               formik.setFieldValue('intro_video_asset_id', null)
               setVidPreview(null)
+              onVidPreviewChange?.(null)
               setUploadStatus('idle')
               setUploadProgress(0)
             }}

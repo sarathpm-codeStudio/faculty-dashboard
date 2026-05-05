@@ -98,6 +98,7 @@ const CourseCreatePage = () => {
   const [isCreated, setIsCreated] = useState(false)
   const [isDraft, setIsDraft] = useState(false)
   const [isEdit, setIsEdit] = useState(false)
+  const [vidPreviewUrl, setVidPreviewUrl] = useState<string | null>(null)
 
 
   // get course id from url
@@ -242,7 +243,7 @@ const CourseCreatePage = () => {
       </div>
 
       {/* Step content */}
-      {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} isEdit={isEdit} courseId={courseId} />}
+      {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} isEdit={isEdit} courseId={courseId} vidPreviewUrl={vidPreviewUrl} onVidPreviewChange={setVidPreviewUrl} />}
       {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} />}
       {step === 3 && <Step3Pricing form={form} update={update} onNext={next} />}
       {step === 4 && (
