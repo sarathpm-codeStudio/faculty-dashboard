@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft } from '@phosphor-icons/react'
-import { ArrowRight, Download, FileText as FilePdfIcon } from 'lucide-react'
+import { ArrowRight, Download, FileText as FilePdfIcon, Loader2, Upload, Video, X } from 'lucide-react'
+import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import { Button, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
 import type { CourseFormData, TreeNode, FolderNode, ContentNode, ContentKind } from './index'
 import { IoAddCircleOutline } from 'react-icons/io5'
@@ -10,7 +11,7 @@ import { BsPencilSquare } from 'react-icons/bs'
 import { HiDocumentDuplicate } from 'react-icons/hi'
 import { FaRegImage } from 'react-icons/fa6'
 import { CaretRight } from '@phosphor-icons/react'
-import { useCreateFolder, useGetAllContent } from '@/hooks/useCourse'
+import { useCreateFolder, useGetAllContent, useCreateMaterial } from '@/hooks/useCourse'
 import { toast } from 'sonner'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
 
@@ -58,6 +59,96 @@ const CONTENT_TYPES: { kind: ContentKind; label: string }[] = [
   { kind: 'image', label: 'Image' },
 ]
 
+// ── Upload box (mirrors Step1 intro-video uploader) ──────────────────────────
+
+interface UploadBoxProps {
+  accept: string
+  preview: string | null
+  icon: React.ReactNode
+  title: string
+  hint: string
+  loading?: boolean
+  onFile: (file: File) => void
+  onClear: () => void
+}
+
+const UploadBox = ({ accept, preview, icon, title, hint, loading = false, onFile, onClear }: UploadBoxProps) => {
+  const ref = useRef<HTMLInputElement>(null)
+  const [drag, setDrag] = useState(false)
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDrag(false)
+    const file = e.dataTransfer.files[0]
+    if (file) onFile(file)
+  }
+
+  return (
+    <div
+      onClick={() => ref.current?.click()}
+      onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
+      onDragLeave={() => setDrag(false)}
+      onDrop={handleDrop}
+      className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden h-[200px]
+        ${drag ? 'border-[#000B60] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#000B60]/40'}`}
+    >
+      {preview ? (
+        <>
+          {preview.includes('tpstreams.com') || preview.includes('/embed/') ? (
+            <iframe
+              src={preview}
+              className="absolute inset-0 w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <video src={preview} className="w-full h-full object-cover" controls onClick={(e) => e.stopPropagation()} />
+          )}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onClear() }}
+            className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md"
+          >
+            <X size={12} />
+          </button>
+          <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-black/50 text-white text-[10px] font-semibold rounded-full">
+              <Upload size={9} /> Click to change video
+            </span>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col items-center gap-1.5 px-4 text-center select-none">
+          <div className="w-9 h-9 rounded-xl bg-white shadow flex items-center justify-center text-[#000B60]">
+            {icon}
+          </div>
+          <p className="text-xs font-semibold text-gray-600">{title}</p>
+          <p className="text-[10px] text-gray-400 leading-snug">{hint}</p>
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-[#000B60]">
+            <Upload size={10} /> Click to upload or drag and drop
+          </span>
+        </div>
+      )}
+      {loading && (
+        <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center gap-2">
+          <Loader2 size={22} className="text-[#000B60] animate-spin" />
+          <p className="text-xs font-semibold text-[#000B60]">Uploading…</p>
+        </div>
+      )}
+      <input
+        ref={ref}
+        type="file"
+        accept={accept}
+        className="hidden"
+        disabled={loading}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }}
+      />
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
@@ -65,6 +156,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
   // mutation
   const { mutateAsync: createFolder } = useCreateFolder(courseId)
+  const { mutateAsync: createMaterial } = useCreateMaterial(courseId)
 
   // Drill-down navigation path
   const [navPath, setNavPath] = useState<NavCrumb[]>([])
@@ -82,6 +174,13 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [hh, setHh] = useState('00')
   const [mm, setMm] = useState('00')
   const [ss, setSs] = useState('00')
+
+  // Content video upload state (mirrors Step1 intro video flow)
+  const [contentUniqueId, setContentUniqueId] = useState<string>('')
+  const [contentVidPreview, setContentVidPreview] = useState<string | null>(null)
+  const [contentAssetId, setContentAssetId] = useState<string | null>(null)
+  const [contentUploadStatus, setContentUploadStatus] = useState<'idle' | 'uploading' | 'saving' | 'done' | 'failed'>('idle')
+  const [contentUploadProgress, setContentUploadProgress] = useState(0)
 
   // Current parent ID for insert operations (last crumb's id, or null for root)
   const currentParentId = navPath.length > 0 ? navPath[navPath.length - 1].id : null
@@ -137,28 +236,79 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   }
 
   // ── Content modal ──
-  const openContentModal = () => {
-
-    // genarate random id for content
-    const unique_Id = generateUniqueId()
-    setContentTitle(''); setContentDesc(''); setContentKind('video')
-    setVideoAccess(true); setHh('00'); setMm('00'); setSs('00')
+  const openContentModal = (kind: ContentKind) => {
+    setContentUniqueId(generateUniqueId())
+    setContentTitle('')
+    setContentDesc('')
+    setContentKind(kind)
+    setVideoAccess(true)
+    setHh('00'); setMm('00'); setSs('00')
+    setContentVidPreview(null)
+    setContentAssetId(null)
+    setContentUploadStatus('idle')
+    setContentUploadProgress(0)
     setShowContentModal(true)
   }
 
-  const handleSaveContent = () => {
-    const node: ContentNode = {
-      id: crypto.randomUUID(),
-      kind: contentKind,
-      title: contentTitle || 'Untitled',
-      description: contentDesc,
-      videoAccess,
-      watchTimeHH: hh,
-      watchTimeMM: mm,
-      watchTimeSS: ss,
+  const handleContentVideoFile = (file: File) => {
+    const previewUrl = URL.createObjectURL(file)
+    setContentVidPreview(previewUrl)
+    setContentUploadStatus('uploading')
+    setContentUploadProgress(0)
+
+    tpstreamsUploadService.upload(file, contentUniqueId, 'module', {
+      onProgress: (percentage) => setContentUploadProgress(percentage),
+      onStatus: (status) => setContentUploadStatus(status as any),
+      onSuccess: (assetId) => {
+        setContentAssetId(assetId)
+        setContentUploadStatus('done')
+        toast.success('Video uploaded successfully')
+      },
+      onError: () => {
+        setContentUploadStatus('failed')
+        toast.error('Video upload failed')
+      },
+    })
+  }
+
+  const MATERIAL_TYPE_MAP: Record<ContentKind, 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES'> = {
+    video: 'VIDEO',
+    document: 'PDF',
+    image: 'IMAGE',
+    test: 'NOTES',
+  }
+
+  const handleSaveContent = async () => {
+    const title = contentTitle.trim() || 'Untitled'
+    const type = MATERIAL_TYPE_MAP[contentKind]
+
+    // if (contentKind === 'video' && !contentAssetId) {
+    //   toast.error('Please wait for the video to finish uploading')
+    //   return
+    // }
+
+    try {
+      const payload: any = {
+        title,
+        type,
+        unique_id: contentUniqueId,
+      }
+      if (currentParentId) payload.parent_id = currentParentId
+
+      // if (contentKind === 'video' && contentAssetId) {
+      //   payload.video_asset_id = contentAssetId
+      // }
+
+      const { data, error } = await createMaterial(payload)
+
+      if (error) throw error
+      if (data) toast.success('Material created successfully')
+
+      setShowContentModal(false)
+    } catch (err: any) {
+      console.error('Failed to create material', err)
+      toast.error(err?.message || 'Failed to create material')
     }
-    update({ tree: insertNode(form.tree, currentParentId, node) })
-    setShowContentModal(false)
   }
 
   const toggle = (field: 'offlineDownload' | 'pdfPermissions') =>
@@ -314,7 +464,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               <button
                 key={kind}
                 type="button"
-                onClick={openContentModal}
+                onClick={() => openContentModal(kind)}
                 className="flex flex-col items-center gap-2 px-3 py-4 bg-white rounded-xl border border-gray-100 text-xs font-semibold text-[#000B60] hover:border-[#000B60] transition-colors"
               >
                 <span className="text-[#000B60]">{CONTENT_ICONS[kind]}</span>
@@ -386,11 +536,17 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       <Modal
         open={showContentModal}
         onClose={() => setShowContentModal(false)}
-        title="Add Content"
+        title={`Add ${CONTENT_TYPES.find(t => t.kind === contentKind)?.label ?? 'Content'}`}
         footer={
           <>
             <Button variant="white" onClick={() => setShowContentModal(false)}>Cancel</Button>
-            <Button variant="primary" onClick={handleSaveContent}>Save & Close</Button>
+            <Button
+              variant="primary"
+              onClick={handleSaveContent}
+            // disabled={contentKind === 'video' && contentUploadStatus === 'uploading'}
+            >
+              Save & Close
+            </Button>
           </>
         }
       >
@@ -400,79 +556,56 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           </p>
         )}
 
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-bold text-gray-700">Content Type</label>
-          <div className="grid grid-cols-4 gap-2">
-            {CONTENT_TYPES.map(({ kind, label }) => (
-              <button
-                key={kind}
-                type="button"
-                onClick={() => setContentKind(kind)}
-                className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border text-xs font-semibold transition-colors ${contentKind === kind
-                  ? 'border-[#000B60] bg-[#000B60] text-white'
-                  : 'border-gray-100 bg-[#F2F4F6] text-[#000B60]'
-                  }`}
-              >
-                {CONTENT_ICONS[kind]}
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <Input
           label="Title"
           placeholder="e.g. Introduction to Business Law"
           value={contentTitle}
           onChange={e => setContentTitle(e.target.value)}
         />
-        <Textarea
-          label="Description"
-          placeholder="Brief description of this content..."
-          value={contentDesc}
-          onChange={e => setContentDesc(e.target.value)}
-          rows={3}
-        />
 
         {contentKind === 'video' && (
-          <>
-            <div className="p-3 bg-[#F2F4F6] rounded-xl flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">Video Access</p>
-                <p className="text-xs text-gray-400 mt-0.5">Lock prevents student viewing until unlocked</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setVideoAccess(v => !v)}
-                className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${videoAccess ? 'bg-[#000B60]' : 'bg-gray-200'}`}
-              >
-                <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${videoAccess ? 'left-5' : 'left-0.5'}`} />
-              </button>
-            </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-gray-700">Video</label>
+            <UploadBox
+              accept="video/mp4,video/webm,video/mov"
+              preview={contentVidPreview}
+              icon={<Video size={20} />}
+              title="Upload Video"
+              hint="MP4, WebM or MOV — max 200 MB"
+              loading={contentUploadStatus === 'uploading' || contentUploadStatus === 'saving'}
+              onFile={handleContentVideoFile}
+              onClear={() => {
+                setContentVidPreview(null)
+                setContentAssetId(null)
+                setContentUploadStatus('idle')
+                setContentUploadProgress(0)
+              }}
+            />
 
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-gray-700">Video Duration</label>
-              <div className="flex items-center gap-2">
-                {[
-                  { val: hh, set: setHh, ph: 'HH' },
-                  { val: mm, set: setMm, ph: 'MM' },
-                  { val: ss, set: setSs, ph: 'SS' },
-                ].map(({ val, set, ph }, i) => (
-                  <>
-                    <input
-                      key={ph}
-                      className="w-14 text-center px-2 py-2 bg-[#F2F4F6] border border-gray-100 rounded-lg text-sm font-mono outline-none"
-                      placeholder={ph}
-                      value={val}
-                      onChange={e => set(e.target.value)}
-                      maxLength={2}
-                    />
-                    {i < 2 && <span className="text-gray-400">:</span>}
-                  </>
-                ))}
+            {contentUploadStatus === 'uploading' && (
+              <div className="mt-1">
+                <div className="flex justify-between text-xs text-gray-500 mb-1">
+                  <span>Uploading video...</span>
+                  <span>{contentUploadProgress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-lg h-1.5">
+                  <div
+                    className="h-1.5 rounded-lg bg-[#000B60] transition-all"
+                    style={{ width: `${contentUploadProgress}%` }}
+                  />
+                </div>
               </div>
-            </div>
-          </>
+            )}
+            {contentUploadStatus === 'saving' && (
+              <p className="text-xs text-gray-500">⚙️ Saving video info...</p>
+            )}
+            {contentUploadStatus === 'done' && (
+              <p className="text-xs text-emerald-500">✅ Video uploaded! Processing in background.</p>
+            )}
+            {contentUploadStatus === 'failed' && (
+              <p className="text-xs text-red-500">❌ Upload failed — please try again.</p>
+            )}
+          </div>
         )}
       </Modal>
     </div>

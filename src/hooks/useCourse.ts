@@ -99,6 +99,17 @@ export const useCreateFolder = (courseId: string) => {
   })
 }
 
+export const useCreateMaterial = (courseId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['coursesMaterial'],
+    mutationFn: (payload: any) => courseService.createMaterial(courseId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['courses', courseId] })
+    },
+  })
+}
+
 
 export const useGetAllContent = (courseId: string, parentId?: string) => {
   return useQuery({

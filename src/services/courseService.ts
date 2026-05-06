@@ -76,6 +76,16 @@ export const courseService = {
     }
   },
 
+  createMaterial: async (courseId: string, payload: any): Promise<any> => {
+    try {
+      const { data } = await apiClient.post(`/courses/${courseId}/materials`, payload)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
   getAllContent: async (courseId: string, parentId?: string): Promise<any> => {
     try {
       const { data } = await apiClient.get(`/courses/${courseId}/content`, { params: { parentId } })
