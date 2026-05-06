@@ -94,10 +94,23 @@ export const useCreateFolder = (courseId: string) => {
     mutationKey: ['coursesFolder'],
     mutationFn: (payload: any) => courseService.createFolder(courseId, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['courses', courseId] })
+      qc.invalidateQueries({ queryKey: ['content', courseId] })
     },
   })
 }
+
+
+export const useUpdateFolder = (courseId: string, folderId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['coursesFolder', folderId],
+    mutationFn: (payload: any) => courseService.updateFolder(courseId, folderId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['content', courseId] })
+    },
+  })
+}
+
 
 export const useCreateMaterial = (courseId: string) => {
   const qc = useQueryClient()
@@ -105,7 +118,7 @@ export const useCreateMaterial = (courseId: string) => {
     mutationKey: ['coursesMaterial'],
     mutationFn: (payload: any) => courseService.createMaterial(courseId, payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['courses', courseId] })
+      qc.invalidateQueries({ queryKey: ['content', courseId] })
     },
   })
 }
@@ -113,7 +126,7 @@ export const useCreateMaterial = (courseId: string) => {
 
 export const useGetAllContent = (courseId: string, parentId?: string) => {
   return useQuery({
-    queryKey: ['courses', courseId, 'content', courseId, parentId],
+    queryKey: ['content', courseId, parentId],
     queryFn: () => courseService.getAllContent(courseId, parentId),
     enabled: !!courseId,
   })

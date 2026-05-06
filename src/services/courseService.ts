@@ -76,6 +76,16 @@ export const courseService = {
     }
   },
 
+  updateFolder: async (courseId: string, folderId: string, payload: any): Promise<any> => {
+    try {
+      const { data } = await apiClient.patch(`/courses/${courseId}/folders/${folderId}`, payload)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
   createMaterial: async (courseId: string, payload: any): Promise<any> => {
     try {
       const { data } = await apiClient.post(`/courses/${courseId}/materials`, payload)

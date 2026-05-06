@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft } from '@phosphor-icons/react'
-import { ArrowRight, Download, FileText as FilePdfIcon, Image as LucideImage, Link as LinkIcon, Loader2, StickyNote, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
+import { ArrowRight, Download, FileText as FilePdfIcon, Image as LucideImage, Link as LinkIcon, Loader2, MoreVertical, Pencil, StickyNote, Trash2, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import { storageService } from '@/services'
 import { Button, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
@@ -12,7 +12,8 @@ import { BsPencilSquare } from 'react-icons/bs'
 import { HiDocumentDuplicate } from 'react-icons/hi'
 import { FaRegImage } from 'react-icons/fa6'
 import { CaretRight } from '@phosphor-icons/react'
-import { useCreateFolder, useGetAllContent, useCreateMaterial } from '@/hooks/useCourse'
+import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder } from '@/hooks/useCourse'
+import { VideoPlayer } from '@/components/features'
 import { toast } from 'sonner'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
 
@@ -63,11 +64,11 @@ const CONTENT_TYPES: { kind: ContentKind; label: string }[] = [
 type MaterialDbType = 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES' | 'LINK'
 
 const MATERIAL_TYPE_META: Record<MaterialDbType, { label: string; icon: React.ReactNode; iconBg: string; iconColor: string }> = {
-  VIDEO: { label: 'Video',    icon: <VideoIcon size={16} />,    iconBg: 'bg-[#E8EBFF]', iconColor: 'text-[#000B60]' },
-  PDF:   { label: 'Document', icon: <FilePdfIcon size={16} />,  iconBg: 'bg-[#FEE7E7]', iconColor: 'text-[#D63B3B]' },
-  IMAGE: { label: 'Image',    icon: <LucideImage size={16} />,  iconBg: 'bg-[#E5F6EA]', iconColor: 'text-[#1F9D55]' },
-  NOTES: { label: 'Notes',    icon: <StickyNote size={16} />,   iconBg: 'bg-[#FFF6DC]', iconColor: 'text-[#B7791F]' },
-  LINK:  { label: 'Link',     icon: <LinkIcon size={16} />,     iconBg: 'bg-[#E0F1FB]', iconColor: 'text-[#1A7EBE]' },
+  VIDEO: { label: 'Video', icon: <VideoIcon size={16} />, iconBg: 'bg-[#E8EBFF]', iconColor: 'text-[#000B60]' },
+  PDF: { label: 'Document', icon: <FilePdfIcon size={16} />, iconBg: 'bg-[#FEE7E7]', iconColor: 'text-[#D63B3B]' },
+  IMAGE: { label: 'Image', icon: <LucideImage size={16} />, iconBg: 'bg-[#E5F6EA]', iconColor: 'text-[#1F9D55]' },
+  NOTES: { label: 'Notes', icon: <StickyNote size={16} />, iconBg: 'bg-[#FFF6DC]', iconColor: 'text-[#B7791F]' },
+  LINK: { label: 'Link', icon: <LinkIcon size={16} />, iconBg: 'bg-[#E0F1FB]', iconColor: 'text-[#1A7EBE]' },
 }
 
 // ── Upload box (mirrors Step1 intro-video uploader) ──────────────────────────
@@ -190,6 +191,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   // mutation
   const { mutateAsync: createFolder } = useCreateFolder(courseId)
   const { mutateAsync: createMaterial } = useCreateMaterial(courseId)
+  const { mutateAsync: updateFolder } = useUpdateFolder(courseId)
 
   // Drill-down navigation path
   const [navPath, setNavPath] = useState<NavCrumb[]>([])
@@ -219,6 +221,34 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [contentFileUrl, setContentFileUrl] = useState<string | null>(null)
   const [contentFileName, setContentFileName] = useState<string | null>(null)
   const [contentFileUploading, setContentFileUploading] = useState(false)
+
+  // Material preview modal
+  const [previewItem, setPreviewItem] = useState<any | null>(null)
+
+  // Row action menu (Edit / Delete)
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!menuOpenId) return
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpenId(null)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpenId])
+
+  const handleEditItem = (item: any) => {
+    setMenuOpenId(null)
+    toast.info(`Edit ${item.item_type === 'folder' ? 'folder' : 'material'}: ${item.title}`)
+  }
+
+  const handleDeleteItem = (item: any) => {
+    setMenuOpenId(null)
+    toast.info(`Delete ${item.item_type === 'folder' ? 'folder' : 'material'}: ${item.title}`)
+  }
 
   // Current parent ID for insert operations (last crumb's id, or null for root)
   const currentParentId = navPath.length > 0 ? navPath[navPath.length - 1].id : null
@@ -384,9 +414,9 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     update({ [field]: !form[field] })
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-12 gap-6 flex-1 min-h-0">
       {/* ── Left: Drill-down tree (8 cols) ── */}
-      <div className="col-span-8 flex flex-col gap-4">
+      <div className="col-span-8 flex flex-col gap-4 min-h-0">
 
         {/* Header row */}
         <div className="flex items-center justify-between">
@@ -455,78 +485,139 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           </div>
         )}
 
-        {/* Loading state */}
-        {contentLoading && (
-          <div className="flex items-center justify-center py-16">
-            <Spinner size={32} label="" />
-          </div>
-        )}
+        {/* Scrollable module section */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+        >
 
-        {/* Empty state */}
-        {!contentLoading && currentItems.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-gray-200 rounded-xl text-gray-400">
-            <FolderSimple size={40} className="mb-2 text-gray-300" />
-            <p className="text-sm">
-              {navPath.length === 0
-                ? 'No content yet. Add a folder or use the content panel.'
-                : 'This folder is empty. Add a folder or content using the panel.'}
-            </p>
-          </div>
-        )}
+          {/* Loading state */}
+          {contentLoading && (
+            <div className="flex items-center justify-center py-16">
+              <Spinner size={32} label="" />
+            </div>
+          )}
 
-        {/* Flat item list for current level */}
-        <div className="flex flex-col gap-3">
-          {currentItems?.map(node => {
-            if (node.item_type === 'folder') {
+          {/* Empty state */}
+          {!contentLoading && currentItems.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-gray-200 rounded-xl text-gray-400">
+              <FolderSimple size={40} className="mb-2 text-gray-300" />
+              <p className="text-sm">
+                {navPath.length === 0
+                  ? 'No content yet. Add a folder or use the content panel.'
+                  : 'This folder is empty. Add a folder or content using the panel.'}
+              </p>
+            </div>
+          )}
+
+          {/* Flat item list for current level */}
+          <div className="flex flex-col gap-3">
+            {currentItems?.map(node => {
+              if (node.item_type === 'folder') {
+                return (
+                  <div
+                    key={node.id}
+                    className="flex items-center justify-between px-4 py-3 bg-[#F2F4F6] rounded-xl cursor-pointer hover:bg-gray-200 transition-colors"
+                    onClick={() => drillInto({ id: node.id, kind: 'folder', title: node.title, children: [] })}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-9 w-9 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
+                        <FaFolder size={17} className="text-[#000B60]" />
+                      </div>
+                      <div>
+                        <Paragraph className="text-black font-bold leading-tight">{node.title}</Paragraph>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-gray-400">
+                      <div className="relative" ref={menuOpenId === node.id ? menuRef : undefined}>
+                        <button
+                          type="button"
+                          className="p-1 rounded-md text-[#000B60] hover:bg-[#000B60]/10"
+                          onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === node.id ? null : node.id) }}
+                        >
+                          <MoreVertical size={20} />
+                        </button>
+                        {menuOpenId === node.id && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => handleEditItem(node)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-[#F2F4F6]"
+                            >
+                              <Pencil size={14} className="text-[#000B60]" /> Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteItem(node)}
+                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <CaretRight size={16} />
+                    </div>
+                  </div>
+                )
+              }
+
+              // Material node (from course_materials)
+              const dbType = (node.type as MaterialDbType) || 'PDF'
+              const meta = MATERIAL_TYPE_META[dbType] ?? MATERIAL_TYPE_META.PDF
               return (
                 <div
                   key={node.id}
-                  className="flex items-center justify-between px-4 py-3 bg-[#F2F4F6] rounded-xl cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => drillInto({ id: node.id, kind: 'folder', title: node.title, children: [] })}
+                  onClick={() => setPreviewItem(node)}
+                  className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#000B60]/30 cursor-pointer transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="h-9 w-9 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
-                      <FaFolder size={17} className="text-[#000B60]" />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
+                      {meta.icon}
                     </div>
-                    <div>
-                      <Paragraph className="text-black font-bold leading-tight">{node.title}</Paragraph>
+                    <div className="min-w-0">
+                      <Paragraph className="text-black font-bold leading-tight truncate">{node.title}</Paragraph>
+                      <p className="text-xs text-gray-500 mt-0.5">{meta.label}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 text-gray-400">
-                    <span className="p-1 cursor-grab" onClick={e => e.stopPropagation()}>
-                      <DotsSixVertical size={22} />
-                    </span>
-                    <CaretRight size={16} />
+                    <div className="relative" ref={menuOpenId === node.id ? menuRef : undefined}>
+                      <button
+                        type="button"
+                        className="p-1 rounded-md text-[#000B60] hover:bg-[#000B60]/10"
+                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === node.id ? null : node.id) }}
+                      >
+                        <MoreVertical size={20} />
+                      </button>
+                      {menuOpenId === node.id && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleEditItem(node)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-[#F2F4F6]"
+                          >
+                            <Pencil size={14} className="text-[#000B60]" /> Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteItem(node)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )
-            }
-
-            // Material node (from course_materials)
-            const dbType = (node.type as MaterialDbType) || 'PDF'
-            const meta = MATERIAL_TYPE_META[dbType] ?? MATERIAL_TYPE_META.PDF
-            return (
-              <div
-                key={node.id}
-                className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#000B60]/30 transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
-                    {meta.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <Paragraph className="text-black font-bold leading-tight truncate">{node.title}</Paragraph>
-                    <p className="text-xs text-gray-500 mt-0.5">{meta.label}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 text-gray-400">
-                  <span className="p-1 cursor-grab" onClick={e => e.stopPropagation()}>
-                    <DotsSixVertical size={22} />
-                  </span>
-                </div>
-              </div>
-            )
-          })}
+            })}
+          </div>
         </div>
       </div>
 
@@ -732,6 +823,93 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           </div>
         )}
       </Modal>
+
+      {/* ── Material Preview Modal ── */}
+      {previewItem && (() => {
+        const dbType = (previewItem.type as MaterialDbType) || 'PDF'
+        const meta = MATERIAL_TYPE_META[dbType] ?? MATERIAL_TYPE_META.PDF
+        const fileUrl: string | undefined = previewItem.file_url
+        const assetId: string | undefined = previewItem.video_asset_id
+        const orgId = import.meta.env.VITE_TPSTREAMS_ORG_ID
+        const accessToken = import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN
+        const videoEmbed = assetId
+          ? `https://app.tpstreams.com/embed/${orgId}/${assetId}/?access_token=${accessToken}`
+          : null
+
+        return (
+          <Modal
+            open={!!previewItem}
+            onClose={() => setPreviewItem(null)}
+            title={previewItem.title || meta.label}
+            maxWidth="max-w-4xl"
+            footer={
+              <>
+                {fileUrl && (
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#000B60] hover:underline"
+                  >
+                    <Download size={14} /> Open in new tab
+                  </a>
+                )}
+                <Button variant="primary" onClick={() => setPreviewItem(null)}>Close</Button>
+              </>
+            }
+          >
+            <div className="flex items-center gap-3 -mt-1 mb-2">
+              <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
+                {meta.icon}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-gray-700 truncate">{previewItem.title}</p>
+                <p className="text-xs text-gray-400">{meta.label}</p>
+              </div>
+            </div>
+            <div className="bg-[#F8F9FB] rounded-xl overflow-hidden flex items-center justify-center" style={{ minHeight: 480 }}>
+              {dbType === 'IMAGE' && fileUrl && (
+                <img src={fileUrl} alt={previewItem.title} className="max-h-[70vh] w-auto object-contain" />
+              )}
+
+              {dbType === 'PDF' && fileUrl && (
+                <iframe
+                  src={fileUrl}
+                  title={previewItem.title}
+                  className="w-full h-[70vh] border-0 bg-white"
+                />
+              )}
+
+              {dbType === 'VIDEO' && videoEmbed && (
+                <div className="w-full">
+                  <VideoPlayer src={videoEmbed} />
+                </div>
+              )}
+
+              {dbType === 'LINK' && fileUrl && (
+                <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
+                  <LinkIcon size={32} className="text-[#1A7EBE]" />
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold text-[#000B60] hover:underline break-all"
+                  >
+                    {fileUrl}
+                  </a>
+                </div>
+              )}
+
+              {(dbType === 'NOTES' || (!fileUrl && !videoEmbed)) && (
+                <div className="flex flex-col items-center gap-2 py-12 px-6 text-center">
+                  <StickyNote size={28} className="text-gray-300" />
+                  <p className="text-sm text-gray-500">No preview available for this material.</p>
+                </div>
+              )}
+            </div>
+          </Modal>
+        )
+      })()}
     </div>
   )
 }
