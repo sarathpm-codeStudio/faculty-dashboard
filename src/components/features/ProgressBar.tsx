@@ -24,8 +24,13 @@ const ProgressBar = ({ label, value, status, barColor = '#1a237e' }: ProgressBar
       </div>
     </div>
     {status && (
-      <div className="shrink-0 rounded-[2px] px-2 py-1" style={{ backgroundColor: barColor }}>
-        <span className="text-[10px] font-bold text-white">{status}</span>
+      <div
+        className="shrink-0 rounded-[3px] px-2 py-[3px] leading-none"
+        style={{ backgroundColor: barColor }}
+      >
+        <span className="text-[10px] font-bold uppercase tracking-wide text-white">
+          {status}
+        </span>
       </div>
     )}
   </div>

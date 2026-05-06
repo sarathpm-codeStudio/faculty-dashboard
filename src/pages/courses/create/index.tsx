@@ -45,6 +45,7 @@ export type CourseFormData = {
   cover_image: any
   cover_image_url?: string | null
   intro_video_url: any
+  intro_video_asset_id?: string | null
   // Step 2
   tree: TreeNode[]
   offlineDownload: boolean

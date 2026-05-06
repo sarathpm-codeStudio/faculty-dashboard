@@ -61,6 +61,14 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
         <>
           {previewType === 'image' ? (
             <img src={preview} alt="" className="w-full h-full object-cover" />
+          ) : preview.includes('tpstreams.com') || preview.includes('/embed/') ? (
+            <iframe
+              src={preview}
+              className="absolute inset-0 w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+              onClick={(e) => e.stopPropagation()}
+            />
           ) : (
             <video src={preview} className="w-full h-full object-cover" controls onClick={(e) => e.stopPropagation()} />
           )}
@@ -169,6 +177,15 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   useEffect(() => {
     if (courseDetails) {
       console.log("edit data", courseDetails)
+      const assetId = courseDetails?.data?.video_asset_id
+      if (assetId) {
+        const orgId = import.meta.env.VITE_TPSTREAMS_ORG_ID
+        const accessToken = import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN
+        const embedUrl = `https://app.tpstreams.com/embed/${orgId}/${assetId}/?access_token=${accessToken}`
+        setVidPreview(embedUrl)
+        onVidPreviewChange?.(embedUrl)
+        setUploadStatus('done')
+      }
       formik.setValues({
         ...form,
         title: courseDetails?.data?.title || "",
@@ -178,8 +195,11 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
         level: courseDetails?.data?.level || "",
         languages: courseDetails?.data?.languages || [],
         cover_image_url: courseDetails?.data?.cover_image || null,
-        intro_video_url: courseDetails?.data?.intro_video_url || null
+        intro_video_url: courseDetails?.data?.intro_video_url || null,
       })
+      if (assetId) {
+        formik.setFieldValue('intro_video_asset_id', assetId)
+      }
     }
   }, [courseDetails])
 

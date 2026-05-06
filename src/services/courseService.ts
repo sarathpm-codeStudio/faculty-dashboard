@@ -42,10 +42,6 @@ export const courseService = {
   },
 
 
-
-
-
-
   update: async (id: string, payload: UpdateCoursePayload): Promise<Course> => {
     try {
       const { data } = await apiClient.patch(`/courses/${id}`, payload)

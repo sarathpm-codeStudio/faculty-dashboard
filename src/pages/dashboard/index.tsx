@@ -4,6 +4,8 @@ import { MdOutlineMenuBook } from "react-icons/md";
 import { BsChatSquareTextFill } from "react-icons/bs";
 import { HiMiniCurrencyDollar } from "react-icons/hi2";
 import { MdVideoSettings } from "react-icons/md";
+import { useVideoUploadProgress } from '@/hooks/video'
+import { useAuthStore } from '@/store/authStore'
 import {
   StatCard,
   SectionCard,
@@ -31,6 +33,13 @@ const activity = [
 
 
 const DashboardPage = () => {
+
+
+  const facultyId: any = useAuthStore(state => state.user?.id)
+  const { uploads } = useVideoUploadProgress(facultyId)
+
+  console.log("uploads", uploads)
+
 
   return (
     <div className="space-y-5">
@@ -121,7 +130,21 @@ const DashboardPage = () => {
                 </div>
                 <p className="text-sm font-bold text-[#1a237e]">Content Transcoding Status</p>
               </div>
-              <ProgressBar label="LECTURE_04_INTRO.MP4" value={78} status="Processing" />
+              <div className='space-y-2'>
+
+                {
+                  uploads?.map((item: any, i: number) => (
+                    <ProgressBar
+                      key={item.unique_id ?? i}
+                      label={item.file_name ?? item.fileName ?? item.unique_id}
+                      value={item?.transcoding_progress ?? 0}
+                      status={item?.uploading_status === "uploaded" ? "waiting to transcode" : item?.uploading_status}
+                    />
+                  ))
+                }
+
+              </div>
+
             </div>
           </SectionCard>
         </div>

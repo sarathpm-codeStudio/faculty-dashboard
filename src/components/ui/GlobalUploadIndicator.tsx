@@ -1,46 +1,33 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useUploadStore } from '@/store/uploadStore'
 
 const GlobalUploadIndicator = () => {
     const uploads = useUploadStore((state) => state.uploads)
     const active = Object.values(uploads)
 
-    const [pos, setPos] = useState({ x: window.innerWidth - 312, y: window.innerHeight - 200 })
-    const dragging = useRef(false)
-    const offset = useRef({ x: 0, y: 0 })
+    const [mounted, setMounted] = useState(false)
+    const [visible, setVisible] = useState(false)
 
     useEffect(() => {
-        const onMove = (e: MouseEvent) => {
-            if (!dragging.current) return
-            const x = Math.min(Math.max(0, e.clientX - offset.current.x), window.innerWidth - 288)
-            const y = Math.min(Math.max(0, e.clientY - offset.current.y), window.innerHeight - 60)
-            setPos({ x, y })
+        if (active.length > 0) {
+            setMounted(true)
+            const id = requestAnimationFrame(() => setVisible(true))
+            return () => cancelAnimationFrame(id)
+        } else if (mounted) {
+            setVisible(false)
+            const t = setTimeout(() => setMounted(false), 300)
+            return () => clearTimeout(t)
         }
-        const onUp = () => { dragging.current = false }
-        window.addEventListener('mousemove', onMove)
-        window.addEventListener('mouseup', onUp)
-        return () => {
-            window.removeEventListener('mousemove', onMove)
-            window.removeEventListener('mouseup', onUp)
-        }
-    }, [])
+    }, [active.length, mounted])
 
-    if (active.length === 0) return null
+    if (!mounted) return null
 
     return (
         <div
-            style={{ left: pos.x, top: pos.y }}
-            className="fixed z-[9999] bg-gray-900 text-white rounded-2xl w-72 shadow-2xl select-none"
+            className={`fixed z-[9999] bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white rounded-2xl w-72 shadow-2xl select-none transition-all duration-300 ease-out
+                ${visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
         >
-            {/* Drag handle */}
-            <div
-                className="px-4 pt-4 pb-2 cursor-grab active:cursor-grabbing"
-                onMouseDown={(e) => {
-                    dragging.current = true
-                    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y }
-                    e.preventDefault()
-                }}
-            >
+            <div className="px-4 pt-4 pb-2">
                 <p className="text-sm font-semibold">
                     🎬 Uploading {active.length} video{active.length > 1 ? 's' : ''}
                 </p>
