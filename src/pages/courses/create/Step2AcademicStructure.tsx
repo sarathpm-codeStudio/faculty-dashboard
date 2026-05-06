@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft } from '@phosphor-icons/react'
-import { ArrowRight, Download, FileText as FilePdfIcon, Loader2, Upload, Video, X } from 'lucide-react'
+import { ArrowRight, Download, FileText as FilePdfIcon, Image as LucideImage, Link as LinkIcon, Loader2, StickyNote, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
+import { storageService } from '@/services'
 import { Button, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
 import type { CourseFormData, TreeNode, FolderNode, ContentNode, ContentKind } from './index'
 import { IoAddCircleOutline } from 'react-icons/io5'
@@ -59,11 +60,23 @@ const CONTENT_TYPES: { kind: ContentKind; label: string }[] = [
   { kind: 'image', label: 'Image' },
 ]
 
+type MaterialDbType = 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES' | 'LINK'
+
+const MATERIAL_TYPE_META: Record<MaterialDbType, { label: string; icon: React.ReactNode; iconBg: string; iconColor: string }> = {
+  VIDEO: { label: 'Video',    icon: <VideoIcon size={16} />,    iconBg: 'bg-[#E8EBFF]', iconColor: 'text-[#000B60]' },
+  PDF:   { label: 'Document', icon: <FilePdfIcon size={16} />,  iconBg: 'bg-[#FEE7E7]', iconColor: 'text-[#D63B3B]' },
+  IMAGE: { label: 'Image',    icon: <LucideImage size={16} />,  iconBg: 'bg-[#E5F6EA]', iconColor: 'text-[#1F9D55]' },
+  NOTES: { label: 'Notes',    icon: <StickyNote size={16} />,   iconBg: 'bg-[#FFF6DC]', iconColor: 'text-[#B7791F]' },
+  LINK:  { label: 'Link',     icon: <LinkIcon size={16} />,     iconBg: 'bg-[#E0F1FB]', iconColor: 'text-[#1A7EBE]' },
+}
+
 // ── Upload box (mirrors Step1 intro-video uploader) ──────────────────────────
 
 interface UploadBoxProps {
   accept: string
   preview: string | null
+  previewType?: 'video' | 'image' | 'document'
+  fileName?: string | null
   icon: React.ReactNode
   title: string
   hint: string
@@ -72,7 +85,7 @@ interface UploadBoxProps {
   onClear: () => void
 }
 
-const UploadBox = ({ accept, preview, icon, title, hint, loading = false, onFile, onClear }: UploadBoxProps) => {
+const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, title, hint, loading = false, onFile, onClear }: UploadBoxProps) => {
   const ref = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
 
@@ -94,7 +107,25 @@ const UploadBox = ({ accept, preview, icon, title, hint, loading = false, onFile
     >
       {preview ? (
         <>
-          {preview.includes('tpstreams.com') || preview.includes('/embed/') ? (
+          {previewType === 'image' ? (
+            <img src={preview} alt="" className="w-full h-full object-cover" />
+          ) : previewType === 'document' ? (
+            <div className="flex flex-col items-center gap-2 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-xl bg-[#FEE7E7] text-[#D63B3B] flex items-center justify-center">
+                <FilePdfIcon size={22} />
+              </div>
+              <p className="text-xs font-semibold text-gray-700 truncate max-w-[200px]">{fileName ?? 'Document uploaded'}</p>
+              <a
+                href={preview}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] font-semibold text-[#000B60] underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                View file
+              </a>
+            </div>
+          ) : preview.includes('tpstreams.com') || preview.includes('/embed/') ? (
             <iframe
               src={preview}
               className="absolute inset-0 w-full h-full border-0"
@@ -112,11 +143,13 @@ const UploadBox = ({ accept, preview, icon, title, hint, loading = false, onFile
           >
             <X size={12} />
           </button>
-          <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-black/50 text-white text-[10px] font-semibold rounded-full">
-              <Upload size={9} /> Click to change video
-            </span>
-          </div>
+          {previewType === 'video' && (
+            <div className="absolute bottom-2 left-2 right-2 pointer-events-none">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-black/50 text-white text-[10px] font-semibold rounded-full">
+                <Upload size={9} /> Click to change video
+              </span>
+            </div>
+          )}
         </>
       ) : (
         <div className="flex flex-col items-center gap-1.5 px-4 text-center select-none">
@@ -181,6 +214,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [contentAssetId, setContentAssetId] = useState<string | null>(null)
   const [contentUploadStatus, setContentUploadStatus] = useState<'idle' | 'uploading' | 'saving' | 'done' | 'failed'>('idle')
   const [contentUploadProgress, setContentUploadProgress] = useState(0)
+
+  // Content file upload state (image / document — Supabase, mirrors Step1 cover image)
+  const [contentFileUrl, setContentFileUrl] = useState<string | null>(null)
+  const [contentFileName, setContentFileName] = useState<string | null>(null)
+  const [contentFileUploading, setContentFileUploading] = useState(false)
 
   // Current parent ID for insert operations (last crumb's id, or null for root)
   const currentParentId = navPath.length > 0 ? navPath[navPath.length - 1].id : null
@@ -247,7 +285,26 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentAssetId(null)
     setContentUploadStatus('idle')
     setContentUploadProgress(0)
+    setContentFileUrl(null)
+    setContentFileName(null)
+    setContentFileUploading(false)
     setShowContentModal(true)
+  }
+
+  const handleContentFileUpload = async (file: File) => {
+    setContentFileUploading(true)
+    setContentFileName(file.name)
+    try {
+      const url = await storageService.uploadCourseCover(file)
+      setContentFileUrl(url)
+      toast.success('File uploaded')
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to upload file')
+      setContentFileUrl(null)
+      setContentFileName(null)
+    } finally {
+      setContentFileUploading(false)
+    }
   }
 
   const handleContentVideoFile = (file: File) => {
@@ -287,6 +344,15 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     //   return
     // }
 
+    if ((contentKind === 'image' || contentKind === 'document') && !contentFileUrl) {
+      toast.error('Please upload a file first')
+      return
+    }
+    if ((contentKind === 'image' || contentKind === 'document') && contentFileUploading) {
+      toast.error('Please wait for the file upload to finish')
+      return
+    }
+
     try {
       const payload: any = {
         title,
@@ -295,9 +361,12 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       }
       if (currentParentId) payload.parent_id = currentParentId
 
-      // if (contentKind === 'video' && contentAssetId) {
-      //   payload.video_asset_id = contentAssetId
-      // }
+      if (contentKind === 'video' && contentAssetId) {
+        payload.video_asset_id = contentAssetId
+      }
+      if ((contentKind === 'image' || contentKind === 'document') && contentFileUrl) {
+        payload.file_url = contentFileUrl
+      }
 
       const { data, error } = await createMaterial(payload)
 
@@ -434,12 +503,26 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
             }
 
             // Material node (from course_materials)
-            const kind: ContentKind = (node.kind as ContentKind) || 'document'
+            const dbType = (node.type as MaterialDbType) || 'PDF'
+            const meta = MATERIAL_TYPE_META[dbType] ?? MATERIAL_TYPE_META.PDF
             return (
-              <div key={node.id} className="flex items-center gap-3 px-4 py-2.5 bg-white border border-gray-100 rounded-lg">
-                <span className="text-[#000B60] shrink-0">{CONTENT_ICONS[kind]}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-700 truncate">{node.title}</p>
+              <div
+                key={node.id}
+                className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#000B60]/30 transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
+                    {meta.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <Paragraph className="text-black font-bold leading-tight truncate">{node.title}</Paragraph>
+                    <p className="text-xs text-gray-500 mt-0.5">{meta.label}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-gray-400">
+                  <span className="p-1 cursor-grab" onClick={e => e.stopPropagation()}>
+                    <DotsSixVertical size={22} />
+                  </span>
                 </div>
               </div>
             )
@@ -605,6 +688,47 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
             {contentUploadStatus === 'failed' && (
               <p className="text-xs text-red-500">❌ Upload failed — please try again.</p>
             )}
+          </div>
+        )}
+
+        {contentKind === 'image' && (
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-gray-700">Image</label>
+            <UploadBox
+              accept="image/jpeg,image/png,image/webp"
+              preview={contentFileUrl}
+              previewType="image"
+              icon={<LucideImage size={20} />}
+              title="Upload Image"
+              hint="JPEG, PNG or WebP"
+              loading={contentFileUploading}
+              onFile={handleContentFileUpload}
+              onClear={() => {
+                setContentFileUrl(null)
+                setContentFileName(null)
+              }}
+            />
+          </div>
+        )}
+
+        {contentKind === 'document' && (
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-bold text-gray-700">Document</label>
+            <UploadBox
+              accept="application/pdf"
+              preview={contentFileUrl}
+              previewType="document"
+              fileName={contentFileName}
+              icon={<FilePdfIcon size={20} />}
+              title="Upload Document"
+              hint="PDF only"
+              loading={contentFileUploading}
+              onFile={handleContentFileUpload}
+              onClear={() => {
+                setContentFileUrl(null)
+                setContentFileName(null)
+              }}
+            />
           </div>
         )}
       </Modal>
