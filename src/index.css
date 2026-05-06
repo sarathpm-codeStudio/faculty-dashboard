@@ -56,6 +56,36 @@ body {
   animation: slideInLeft 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
 }
 
+@keyframes indeterminateLoader {
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 30%;
+    width: 50%;
+  }
+  100% {
+    left: 100%;
+    width: 40%;
+  }
+}
+
+.loader-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.loader-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, transparent, var(--loader-color, #000B60), transparent);
+  animation: indeterminateLoader 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 .scrollbar-hide {
   scrollbar-width: none;
   -ms-overflow-style: none;

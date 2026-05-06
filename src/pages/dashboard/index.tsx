@@ -133,14 +133,17 @@ const DashboardPage = () => {
               <div className='space-y-2'>
 
                 {
-                  uploads?.map((item: any, i: number) => (
-                    <ProgressBar
-                      key={item.unique_id ?? i}
-                      label={item.file_name ?? item.fileName ?? item.unique_id}
-                      value={item?.transcoding_progress ?? 0}
-                      status={item?.uploading_status === "uploaded" ? "waiting to transcode" : item?.uploading_status}
-                    />
-                  ))
+                  uploads && uploads?.length < 1 ?
+                    <Paragraph className='text-[#767683] !text-[12px] text-center'>No Transcoding found</Paragraph>
+                    :
+                    uploads?.map((item: any, i: number) => (
+                      <ProgressBar
+                        key={item.unique_id ?? i}
+                        label={item.file_name ?? item.fileName ?? item.unique_id}
+                        value={item?.transcoding_progress ?? 0}
+                        status={item?.uploading_status === "uploaded" ? "waiting to transcode" : item?.uploading_status}
+                      />
+                    ))
                 }
 
               </div>
