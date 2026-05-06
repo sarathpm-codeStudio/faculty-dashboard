@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft } from '@phosphor-icons/react'
 import { ArrowRight, Download, FileText as FilePdfIcon } from 'lucide-react'
-import { Button, Input, Modal, Paragraph, Subheading, Textarea } from '@/components/ui'
+import { Button, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
 import type { CourseFormData, TreeNode, FolderNode, ContentNode, ContentKind } from './index'
 import { IoAddCircleOutline } from 'react-icons/io5'
 import { FaFolder } from 'react-icons/fa'
@@ -10,12 +10,16 @@ import { BsPencilSquare } from 'react-icons/bs'
 import { HiDocumentDuplicate } from 'react-icons/hi'
 import { FaRegImage } from 'react-icons/fa6'
 import { CaretRight } from '@phosphor-icons/react'
+import { useCreateFolder, useGetAllContent } from '@/hooks/useCourse'
+import { toast } from 'sonner'
+import { generateUniqueId } from '@/utils/helper/numberGenarator'
+
 
 interface Props {
   form: CourseFormData
   update: (fields: Partial<CourseFormData>) => void
   onNext: () => void,
-  // courseId: string
+  courseId: string
 }
 
 // ── Tree helpers ──────────────────────────────────────────────────────────────
@@ -56,7 +60,12 @@ const CONTENT_TYPES: { kind: ContentKind; label: string }[] = [
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
+const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
+
+
+  // mutation
+  const { mutateAsync: createFolder } = useCreateFolder(courseId)
+
   // Drill-down navigation path
   const [navPath, setNavPath] = useState<NavCrumb[]>([])
 
@@ -76,7 +85,13 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
 
   // Current parent ID for insert operations (last crumb's id, or null for root)
   const currentParentId = navPath.length > 0 ? navPath[navPath.length - 1].id : null
-  const currentItems = getChildrenAt(form.tree, navPath)
+
+  // Fetch folders + materials for the current level
+  const { data: content, isLoading: contentLoading } = useGetAllContent(
+    courseId,
+    currentParentId ?? undefined,
+  )
+  const currentItems: any[] = content?.data ?? []
 
   // ── Navigation ──
   const drillInto = (folder: FolderNode) =>
@@ -89,17 +104,43 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
   // ── Folder modal ──
   const openFolderModal = () => { setFolderName(''); setShowFolderModal(true) }
 
-  const handleCreateFolder = () => {
+  const handleCreateFolder = async () => {
     const name = folderName.trim()
     if (!name) return
-    const folder: FolderNode = { id: crypto.randomUUID(), kind: 'folder', title: name, children: [] }
-    update({ tree: insertNode(form.tree, currentParentId, folder) })
-    setShowFolderModal(false)
-    setFolderName('')
+
+    try {
+      const payload: { title: string; parent_id?: string } = { title: name }
+      if (currentParentId) payload.parent_id = currentParentId
+
+      const { data, error } = await createFolder(payload)
+
+      if (data) {
+        console.log(data)
+        toast.success('Folder created successfully')
+      }
+
+      if (error) throw error
+
+      // const folder: FolderNode = {
+      //   id: created.id,
+      //   kind: 'folder',
+      //   title: created.title,
+      //   children: [],
+      // }
+      // update({ tree: insertNode(form.tree, currentParentId, folder) })
+
+      setShowFolderModal(false)
+      setFolderName('')
+    } catch (err) {
+      console.error('Failed to create folder', err)
+    }
   }
 
   // ── Content modal ──
   const openContentModal = () => {
+
+    // genarate random id for content
+    const unique_Id = generateUniqueId()
     setContentTitle(''); setContentDesc(''); setContentKind('video')
     setVideoAccess(true); setHh('00'); setMm('00'); setSs('00')
     setShowContentModal(true)
@@ -195,8 +236,15 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
           </div>
         )}
 
+        {/* Loading state */}
+        {contentLoading && (
+          <div className="flex items-center justify-center py-16">
+            <Spinner size={32} label="" />
+          </div>
+        )}
+
         {/* Empty state */}
-        {currentItems.length === 0 && (
+        {!contentLoading && currentItems.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-gray-200 rounded-xl text-gray-400">
             <FolderSimple size={40} className="mb-2 text-gray-300" />
             <p className="text-sm">
@@ -209,13 +257,13 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
 
         {/* Flat item list for current level */}
         <div className="flex flex-col gap-3">
-          {currentItems.map(node => {
-            if (node.kind === 'folder') {
+          {currentItems?.map(node => {
+            if (node.item_type === 'folder') {
               return (
                 <div
                   key={node.id}
                   className="flex items-center justify-between px-4 py-3 bg-[#F2F4F6] rounded-xl cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => drillInto(node)}
+                  onClick={() => drillInto({ id: node.id, kind: 'folder', title: node.title, children: [] })}
                 >
                   <div className="flex items-center gap-2">
                     <div className="h-9 w-9 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
@@ -223,10 +271,6 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
                     </div>
                     <div>
                       <Paragraph className="text-black font-bold leading-tight">{node.title}</Paragraph>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {node.children.length} item{node.children.length !== 1 ? 's' : ''}
-                        {node.children.length === 0 ? ' • Empty' : ''}
-                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 text-gray-400">
@@ -239,15 +283,13 @@ const Step2AcademicStructure = ({ form, update, onNext }: Props) => {
               )
             }
 
-            // Content node
+            // Material node (from course_materials)
+            const kind: ContentKind = (node.kind as ContentKind) || 'document'
             return (
               <div key={node.id} className="flex items-center gap-3 px-4 py-2.5 bg-white border border-gray-100 rounded-lg">
-                <span className="text-[#000B60] shrink-0">{CONTENT_ICONS[node.kind]}</span>
+                <span className="text-[#000B60] shrink-0">{CONTENT_ICONS[kind]}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-700 truncate">{node.title}</p>
-                  {node.kind === 'video' && (node.watchTimeHH !== '00' || node.watchTimeMM !== '00') && (
-                    <p className="text-xs text-gray-400">{node.watchTimeHH}:{node.watchTimeMM}:{node.watchTimeSS}</p>
-                  )}
                 </div>
               </div>
             )

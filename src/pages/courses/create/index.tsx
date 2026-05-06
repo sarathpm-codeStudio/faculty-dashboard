@@ -245,7 +245,7 @@ const CourseCreatePage = () => {
 
       {/* Step content */}
       {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} isEdit={isEdit} courseId={courseId} vidPreviewUrl={vidPreviewUrl} onVidPreviewChange={setVidPreviewUrl} />}
-      {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} />}
+      {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} courseId={courseId} />}
       {step === 3 && <Step3Pricing form={form} update={update} onNext={next} />}
       {step === 4 && (
         <Step4Review

@@ -86,3 +86,25 @@ export const useSaveDraft = () => {
     },
   })
 }
+
+
+export const useCreateFolder = (courseId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['coursesFolder'],
+    mutationFn: (payload: any) => courseService.createFolder(courseId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['courses', courseId] })
+    },
+  })
+}
+
+
+export const useGetAllContent = (courseId: string, parentId?: string) => {
+  return useQuery({
+    queryKey: ['courses', courseId, 'content', courseId, parentId],
+    queryFn: () => courseService.getAllContent(courseId, parentId),
+    enabled: !!courseId,
+  })
+}
+
