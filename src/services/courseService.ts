@@ -96,6 +96,16 @@ export const courseService = {
     }
   },
 
+  updateMaterial: async (courseId: string, materialId: string, payload: any): Promise<any> => {
+    try {
+      const { data } = await apiClient.patch(`/courses/${courseId}/materials/${materialId}`, payload)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
   getAllContent: async (courseId: string, parentId?: string): Promise<any> => {
     try {
       const { data } = await apiClient.get(`/courses/${courseId}/content`, { params: { parentId } })

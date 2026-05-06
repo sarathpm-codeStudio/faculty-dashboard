@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft } from '@phosphor-icons/react'
-import { ArrowRight, Download, FileText as FilePdfIcon, Image as LucideImage, Link as LinkIcon, Loader2, MoreVertical, Pencil, StickyNote, Trash2, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
+import { ArrowRight, ChevronRight, Download, FileText as FilePdfIcon, Home, Image as LucideImage, Link as LinkIcon, Loader2, MoreVertical, Pencil, StickyNote, Trash2, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import { storageService } from '@/services'
 import { Button, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
@@ -12,7 +13,7 @@ import { BsPencilSquare } from 'react-icons/bs'
 import { HiDocumentDuplicate } from 'react-icons/hi'
 import { FaRegImage } from 'react-icons/fa6'
 import { CaretRight } from '@phosphor-icons/react'
-import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder } from '@/hooks/useCourse'
+import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder, useUpdateMaterial } from '@/hooks/useCourse'
 import { VideoPlayer } from '@/components/features'
 import { toast } from 'sonner'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
@@ -60,6 +61,18 @@ const CONTENT_TYPES: { kind: ContentKind; label: string }[] = [
   { kind: 'document', label: 'Document' },
   { kind: 'image', label: 'Image' },
 ]
+
+const listVariants: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+  exit: { opacity: 0, transition: { duration: 0.15 } },
+}
+
+const rowVariants: Variants = {
+  hidden: { opacity: 0, y: 24, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.38, ease: [0.25, 0.1, 0.25, 1] } },
+  exit: { opacity: 0, y: -10, transition: { duration: 0.18 } },
+}
 
 type MaterialDbType = 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES' | 'LINK'
 
@@ -189,16 +202,19 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
 
   // mutation
-  const { mutateAsync: createFolder } = useCreateFolder(courseId)
-  const { mutateAsync: createMaterial } = useCreateMaterial(courseId)
-  const { mutateAsync: updateFolder } = useUpdateFolder(courseId)
+  const { mutateAsync: createFolder, isPending: isCreatingFolder } = useCreateFolder(courseId)
+  const { mutateAsync: createMaterial, isPending: isCreatingMaterial } = useCreateMaterial(courseId)
+  const { mutateAsync: updateFolder, isPending: isUpdatingFolder } = useUpdateFolder(courseId)
+  const { mutateAsync: updateMaterial, isPending: isUpdatingMaterial } = useUpdateMaterial(courseId)
+  const isFolderSaving = isCreatingFolder || isUpdatingFolder
 
   // Drill-down navigation path
   const [navPath, setNavPath] = useState<NavCrumb[]>([])
 
-  // Folder modal
+  // Folder modal (create + edit)
   const [showFolderModal, setShowFolderModal] = useState(false)
   const [folderName, setFolderName] = useState('')
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
 
   // Content modal
   const [showContentModal, setShowContentModal] = useState(false)
@@ -242,7 +258,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
   const handleEditItem = (item: any) => {
     setMenuOpenId(null)
-    toast.info(`Edit ${item.item_type === 'folder' ? 'folder' : 'material'}: ${item.title}`)
+    if (item.item_type === 'folder') {
+      openEditFolderModal(item)
+      return
+    }
+    toast.info(`Edit material: ${item.title}`)
   }
 
   const handleDeleteItem = (item: any) => {
@@ -269,37 +289,48 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const jumpTo = (idx: number) => setNavPath(prev => prev.slice(0, idx + 1))
 
   // ── Folder modal ──
-  const openFolderModal = () => { setFolderName(''); setShowFolderModal(true) }
+  const openFolderModal = () => {
+    setEditingFolderId(null)
+    setFolderName('')
+    setShowFolderModal(true)
+  }
 
-  const handleCreateFolder = async () => {
+  const openEditFolderModal = (folder: any) => {
+    setEditingFolderId(folder.id)
+    setFolderName(folder.title ?? '')
+    setShowFolderModal(true)
+  }
+
+  const closeFolderModal = () => {
+    setShowFolderModal(false)
+    setFolderName('')
+    setEditingFolderId(null)
+  }
+
+  const handleSubmitFolder = async () => {
     const name = folderName.trim()
     if (!name) return
 
     try {
-      const payload: { title: string; parent_id?: string } = { title: name }
-      if (currentParentId) payload.parent_id = currentParentId
+      if (editingFolderId) {
+        const { data, error } = await updateFolder({
+          folderId: editingFolderId,
+          payload: { title: name },
+        })
+        if (error) throw error
+        if (data) toast.success('Folder updated')
+      } else {
+        const payload: { title: string; parent_id?: string } = { title: name }
+        if (currentParentId) payload.parent_id = currentParentId
 
-      const { data, error } = await createFolder(payload)
-
-      if (data) {
-        console.log(data)
-        toast.success('Folder created successfully')
+        const { data, error } = await createFolder(payload)
+        if (error) throw error
+        if (data) toast.success('Folder created successfully')
       }
-
-      if (error) throw error
-
-      // const folder: FolderNode = {
-      //   id: created.id,
-      //   kind: 'folder',
-      //   title: created.title,
-      //   children: [],
-      // }
-      // update({ tree: insertNode(form.tree, currentParentId, folder) })
-
-      setShowFolderModal(false)
-      setFolderName('')
-    } catch (err) {
-      console.error('Failed to create folder', err)
+      closeFolderModal()
+    } catch (err: any) {
+      console.error('Failed to save folder', err)
+      toast.error(err?.message || 'Failed to save folder')
     }
   }
 
@@ -432,37 +463,45 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
         {/* Breadcrumb + back */}
         {navPath.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3 px-3 py-2 bg-[#F2F4F6] rounded-xl">
             <button
               type="button"
               onClick={goBack}
-              className="flex items-center gap-1 text-sm font-semibold text-[#000B60] hover:underline"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[#000B60] text-xs font-bold shadow-sm hover:bg-[#000B60] hover:text-white transition-colors shrink-0"
             >
-              <PhArrowLeft size={15} />
+              <PhArrowLeft size={14} weight="bold" />
               Back
             </button>
-            <span className="text-gray-300">|</span>
+
+            <div className="h-6 w-px bg-gray-200" />
+
             {/* Breadcrumb trail */}
-            <div className="flex items-center gap-1 text-xs text-gray-400 flex-wrap">
+            <div className="flex items-center gap-1.5 text-xs flex-wrap min-w-0">
               <button
                 type="button"
-                className="hover:text-[#000B60] font-medium"
                 onClick={() => setNavPath([])}
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-gray-500 font-semibold hover:text-[#000B60] hover:bg-white transition-colors"
               >
+                <Home size={12} />
                 Root
               </button>
-              {navPath.map((crumb, idx) => (
-                <span key={crumb.id} className="flex items-center gap-1">
-                  <CaretRight size={11} />
-                  <button
-                    type="button"
-                    className={`hover:text-[#000B60] font-medium ${idx === navPath.length - 1 ? 'text-[#000B60] font-bold' : ''}`}
-                    onClick={() => jumpTo(idx)}
-                  >
-                    {crumb.title}
-                  </button>
-                </span>
-              ))}
+              {navPath.map((crumb, idx) => {
+                const isLast = idx === navPath.length - 1
+                return (
+                  <span key={crumb.id} className="flex items-center gap-1 min-w-0">
+                    <ChevronRight size={12} className="text-gray-300 shrink-0" />
+                    <button
+                      type="button"
+                      onClick={() => jumpTo(idx)}
+                      className={`px-2 py-1 rounded-md font-semibold truncate max-w-[180px] transition-colors ${isLast
+                        ? 'text-[#000B60] bg-white shadow-sm cursor-default'
+                        : 'text-gray-500 hover:text-[#000B60] hover:bg-white'}`}
+                    >
+                      {crumb.title}
+                    </button>
+                  </span>
+                )
+              })}
             </div>
           </div>
         )}
@@ -510,21 +549,88 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           )}
 
           {/* Flat item list for current level */}
-          <div className="flex flex-col gap-3">
-            {currentItems?.map(node => {
-              if (node.item_type === 'folder') {
-                return (
-                  <div
-                    key={node.id}
-                    className="flex items-center justify-between px-4 py-3 bg-[#F2F4F6] rounded-xl cursor-pointer hover:bg-gray-200 transition-colors"
-                    onClick={() => drillInto({ id: node.id, kind: 'folder', title: node.title, children: [] })}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="h-9 w-9 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
-                        <FaFolder size={17} className="text-[#000B60]" />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${currentParentId ?? 'root'}-${contentLoading ? 'loading' : 'loaded'}`}
+              className="flex flex-col gap-3"
+              variants={listVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              {currentItems?.map(node => {
+                if (node.item_type === 'folder') {
+                  return (
+                    <motion.div
+                      key={node.id}
+                      variants={rowVariants}
+                      layout
+                      className="flex items-center justify-between px-4 py-3 bg-[#F2F4F6] rounded-xl cursor-pointer hover:bg-gray-200 transition-colors"
+                      onClick={() => drillInto({ id: node.id, kind: 'folder', title: node.title, children: [] })}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="h-9 w-9 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
+                          <FaFolder size={17} className="text-[#000B60]" />
+                        </div>
+                        <div>
+                          <Paragraph className="text-black font-bold leading-tight">{node.title}</Paragraph>
+                        </div>
                       </div>
-                      <div>
-                        <Paragraph className="text-black font-bold leading-tight">{node.title}</Paragraph>
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <div className="relative" ref={menuOpenId === node.id ? menuRef : undefined}>
+                          <button
+                            type="button"
+                            className="p-1 rounded-md text-[#000B60] hover:bg-[#000B60]/10"
+                            onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === node.id ? null : node.id) }}
+                          >
+                            <MoreVertical size={20} />
+                          </button>
+                          {menuOpenId === node.id && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => handleEditItem(node)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-[#F2F4F6]"
+                              >
+                                <Pencil size={14} className="text-[#000B60]" /> Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteItem(node)}
+                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                <Trash2 size={14} /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <CaretRight size={16} />
+                      </div>
+                    </motion.div>
+                  )
+                }
+
+                // Material node (from course_materials)
+                const dbType = (node.type as MaterialDbType) || 'PDF'
+                const meta = MATERIAL_TYPE_META[dbType] ?? MATERIAL_TYPE_META.PDF
+                return (
+                  <motion.div
+                    key={node.id}
+                    variants={rowVariants}
+                    layout
+                    onClick={() => setPreviewItem(node)}
+                    className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#000B60]/30 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
+                        {meta.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <Paragraph className="text-black font-bold leading-tight truncate">{node.title}</Paragraph>
+                        <p className="text-xs text-gray-500 mt-0.5">{meta.label}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
@@ -558,66 +664,12 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                           </div>
                         )}
                       </div>
-                      <CaretRight size={16} />
                     </div>
-                  </div>
+                  </motion.div>
                 )
-              }
-
-              // Material node (from course_materials)
-              const dbType = (node.type as MaterialDbType) || 'PDF'
-              const meta = MATERIAL_TYPE_META[dbType] ?? MATERIAL_TYPE_META.PDF
-              return (
-                <div
-                  key={node.id}
-                  onClick={() => setPreviewItem(node)}
-                  className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#000B60]/30 cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
-                      {meta.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <Paragraph className="text-black font-bold leading-tight truncate">{node.title}</Paragraph>
-                      <p className="text-xs text-gray-500 mt-0.5">{meta.label}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 text-gray-400">
-                    <div className="relative" ref={menuOpenId === node.id ? menuRef : undefined}>
-                      <button
-                        type="button"
-                        className="p-1 rounded-md text-[#000B60] hover:bg-[#000B60]/10"
-                        onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === node.id ? null : node.id) }}
-                      >
-                        <MoreVertical size={20} />
-                      </button>
-                      {menuOpenId === node.id && (
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          className="absolute right-0 top-full mt-1 w-36 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => handleEditItem(node)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-[#F2F4F6]"
-                          >
-                            <Pencil size={14} className="text-[#000B60]" /> Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteItem(node)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 size={14} /> Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+              })}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
 
@@ -676,22 +728,28 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         </Button>
       </div>
 
-      {/* ── Add Folder Modal ── */}
+      {/* ── Folder Modal (create + edit) ── */}
       <Modal
         open={showFolderModal}
-        onClose={() => setShowFolderModal(false)}
-        title={navPath.length > 0 ? 'New Sub-folder' : 'New Folder'}
+        onClose={closeFolderModal}
+        title={editingFolderId ? 'Edit Folder' : (navPath.length > 0 ? 'New Sub-folder' : 'New Folder')}
         maxWidth="max-w-sm"
         footer={
           <>
-            <Button variant="white" onClick={() => setShowFolderModal(false)}>Cancel</Button>
-            <Button variant="primary" onClick={handleCreateFolder} disabled={!folderName.trim()}>
-              Create Folder
+            <Button variant="white" onClick={closeFolderModal} disabled={isFolderSaving}>Cancel</Button>
+            <Button
+              variant="primary"
+              onClick={handleSubmitFolder}
+              disabled={!folderName.trim() || isFolderSaving}
+            >
+              {isFolderSaving
+                ? <Loader2 size={16} className="animate-spin" />
+                : (editingFolderId ? 'Save Changes' : 'Create Folder')}
             </Button>
           </>
         }
       >
-        {navPath.length > 0 && (
+        {!editingFolderId && navPath.length > 0 && (
           <p className="text-xs text-gray-500">
             Inside: <span className="font-semibold text-[#000B60]">{navPath[navPath.length - 1].title}</span>
           </p>
@@ -701,7 +759,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           placeholder="e.g. Module 1: Introduction"
           value={folderName}
           onChange={e => setFolderName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleCreateFolder()}
+          onKeyDown={e => e.key === 'Enter' && handleSubmitFolder()}
           autoFocus
         />
       </Modal>
@@ -713,13 +771,15 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         title={`Add ${CONTENT_TYPES.find(t => t.kind === contentKind)?.label ?? 'Content'}`}
         footer={
           <>
-            <Button variant="white" onClick={() => setShowContentModal(false)}>Cancel</Button>
+            <Button variant="white" onClick={() => setShowContentModal(false)} disabled={isCreatingMaterial}>Cancel</Button>
             <Button
               variant="primary"
               onClick={handleSaveContent}
-            // disabled={contentKind === 'video' && contentUploadStatus === 'uploading'}
+              disabled={isCreatingMaterial || (contentKind === 'video' && contentUploadStatus === 'uploading') || contentFileUploading}
             >
-              Save & Close
+              {isCreatingMaterial
+                ? <Loader2 size={16} className="animate-spin" />
+                : 'Save & Close'}
             </Button>
           </>
         }
