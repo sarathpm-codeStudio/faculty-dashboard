@@ -92,6 +92,7 @@ const EnrollmentChart = () => {
       <div className="h-[340px]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
+            key={period}
             data={currentData}
             margin={{ top: 10, right: 16, left: 0, bottom: period === 'week' ? 28 : 8 }}
           >
@@ -184,6 +185,10 @@ const EnrollmentChart = () => {
                 stroke: '#6366f1',
                 strokeWidth: 3,
               }}
+              isAnimationActive
+              animationBegin={0}
+              animationDuration={1800}
+              animationEasing="ease-out"
             />
           </AreaChart>
         </ResponsiveContainer>

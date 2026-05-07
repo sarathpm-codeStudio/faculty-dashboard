@@ -18,10 +18,10 @@ interface Props {
 }
 
 const durationOptions = [
-  { value: '1_month', label: '1 Month' },
-  { value: '3_month', label: '3 Months' },
-  { value: '6_month', label: '6 Months' },
-  { value: '1_year', label: '1 Year' },
+  { value: '1 month', label: '1 Month' },
+  { value: '3 month', label: '3 Months' },
+  { value: '6 month', label: '6 Months' },
+  { value: '1 year', label: '1 Year' },
   { value: 'lifetime', label: 'Lifetime' },
 ]
 
@@ -74,7 +74,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
 
 
   // mutation for add course pricing
-  const { mutate: addCoursePricing } = useAddCoursePricing(courseId)
+  const { mutateAsync: addCoursePricing } = useAddCoursePricing(courseId)
 
   useEffect(() => {
     if (!courseDetails?.data) return

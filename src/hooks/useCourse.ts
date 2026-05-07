@@ -77,16 +77,7 @@ export const useDeleteCourse = () => {
   })
 }
 
-export const usePublishCourse = () => {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => courseService.publish(id),
-    onSuccess: (updated) => {
-      qc.setQueryData(courseKeys.detail(updated.id), updated)
-      qc.invalidateQueries({ queryKey: courseKeys.all })
-    },
-  })
-}
+
 
 export const useSaveDraft = () => {
   const qc = useQueryClient()
@@ -180,6 +171,25 @@ export const useGetAllContent = (courseId: string, parentId?: string) => {
     queryKey: ['content', courseId, parentId],
     queryFn: () => courseService.getAllContent(courseId, parentId),
     enabled: !!courseId,
+  })
+}
+
+export const useGetCoursePreview = (courseId: string) => {
+  return useQuery({
+    queryKey: ['course-preview', courseId],
+    queryFn: () => courseService.getCoursePreview(courseId),
+    enabled: !!courseId,
+  })
+}
+
+export const usePublishCourse = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['coursesPublish'],
+    mutationFn: (courseId: string) => courseService.publishCourse(courseId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-courses'] })
+    },
   })
 }
 

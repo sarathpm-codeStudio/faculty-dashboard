@@ -22,12 +22,15 @@ const ProgressBar = ({ label, status, barColor = '#000B60' }: ProgressBarProps) 
             className="loader-bar h-1 w-full rounded-full bg-[#e0e3e5]"
             style={{ ['--loader-color' as string]: barColor }}
           />
-        ) : (
+        ) : status === "waiting to transcode" ? (
           <div
             className="h-1 w-full rounded-full bg-[#e0e3e5]"
             style={{ ['--loader-color' as string]: barColor }}
           />
-        )
+        ) :
+          (
+            <div />
+          )
       }
     </div>
     {status && (

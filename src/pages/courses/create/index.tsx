@@ -257,8 +257,10 @@ const CourseCreatePage = () => {
       {step === 4 && (
         <Step4Review
           form={form}
-          onPublish={() => navigate('/courses')}
+          // onPublish={() => navigate('/courses')}
           onDraft={() => navigate('/courses')}
+          courseId={courseId}
+
         />
       )}
     </div>

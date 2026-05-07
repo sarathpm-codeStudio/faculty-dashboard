@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowLeft, Share2, Trash2, Pencil, Clock,
@@ -9,6 +9,7 @@ import { Button, Heading, Paragraph, Spinner, Subheading, StarRating } from '@/c
 import { ReviewCard, VideoPlayer } from '@/components/features'
 import man from '@/assets/images/man.jpg'
 import coverImge from "@/assets/images/cou1.png"
+import { useGetCourseById } from '@/hooks/useCourse'
 
 const MOCK_STATS = [
     { icon: <Clock size={15} className="text-[#00A6BF]" />, label: '6 Months Duration' },
@@ -48,14 +49,19 @@ const fadeUp = (delay = 0) => ({
 
 const CourseDetailPage = () => {
     const navigate = useNavigate()
-    const [loading, setLoading] = useState(true)
+    const { id }: any = useParams()
 
-    useEffect(() => {
-        const t = setTimeout(() => setLoading(false), 800)
-        return () => clearTimeout(t)
-    }, [])
 
-    if (loading) {
+
+    // query
+
+    const { data: course, isLoading, error } = useGetCourseById(id)
+
+
+
+
+
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gray-50">
                 <Spinner label="Loading course..." />
@@ -84,7 +90,7 @@ const CourseDetailPage = () => {
                 {...fadeUp(0.05)}
             >
                 <div>
-                    <Heading className="text-[#000B60]">CA Inter – Costing</Heading>
+                    <Heading className="text-[#000B60]">{course?.data?.title}</Heading>
                     <Paragraph className="text-[#767683] mt-1 max-w-lg ">
                         Comprehensive module covering advanced management accounting
                         and cost control techniques.
@@ -140,8 +146,8 @@ const CourseDetailPage = () => {
                     >
                         {/* Video player — full-bleed top of card */}
                         <VideoPlayer
-                            src="https://app.tpstreams.com/embed/8bg4u9/ed3bUZqud8f/?access_token=722e9ac8-9bad-40f0-98f3-92dabafdd10a"
-                            poster={coverImge}
+                            src={`https://app.tpstreams.com/embed/${import.meta.env.VITE_TPSTREAMS_ORG_ID}/${course?.data?.video_asset_id}/?access_token=${import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN}`}
+                            poster={course?.data?.cover_image}
                         />
 
                         {/* About this Course — below video, same card */}
@@ -150,26 +156,13 @@ const CourseDetailPage = () => {
                                 <Subheading className="font-bold text-[#000b60]">About this Course</Subheading>
                                 <div className="text-right shrink-0">
                                     <Paragraph className="!text-[12px] uppercase tracking-widest text-gray-500 ">Category</Paragraph>
-                                    <Paragraph className="text-sm font-bold text-[#000B60] mt-0.5">CMA: Foundation</Paragraph>
+                                    <Paragraph className="text-sm font-bold text-[#000B60] mt-0.5">{course?.data?.category} : {course?.data?.level}</Paragraph>
                                 </div>
                             </div>
                             <Paragraph className="text-[#767683] leading-relaxed text-sm">
-                                This course provides an in-depth exploration of Cost Accounting principles
-                                specifically tailored for the CA Intermediate examination. Students will master
-                                material costs, labor costs, overheads, and process costing. The curriculum is
-                                designed by senior industry experts to ensure conceptual clarity and practical
-                                application.
-
-                                This course provides an in-depth exploration of Cost Accounting principles
-                                specifically tailored for the CA Intermediate examination. Students will master
-                                material costs, labor costs, overheads, and process costing. The curriculum is
-                                designed by senior industry experts to ensure conceptual clarity and practical
-                                application.
-                                This course provides an in-depth exploration of Cost Accounting principles
-                                specifically tailored for the CA Intermediate examination. Students will master
-                                material costs, labor costs, overheads, and process costing. The curriculum is
-                                designed by senior industry experts to ensure conceptual clarity and practical
-                                application. dddd
+                                {
+                                    course?.data?.description
+                                }
                             </Paragraph>
                         </div>
                     </motion.div>

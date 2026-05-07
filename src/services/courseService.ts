@@ -147,5 +147,25 @@ export const courseService = {
     }
   },
 
+  getCoursePreview: async (courseId: string): Promise<any> => {
+    try {
+      const { data } = await apiClient.get(`/courses/${courseId}/preview`)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
+  publishCourse: async (courseId: string): Promise<any> => {
+    try {
+      const { data } = await apiClient.patch(`/courses/${courseId}/publish`)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
 
 }

@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { Clock, ShieldCheck, CheckCircle } from 'lucide-react'
 import { VideoCamera, FileText, Image as ImageIcon, PencilSimpleLine } from '@phosphor-icons/react'
-import { Button, Heading, Paragraph, Subheading } from '@/components/ui'
+import { Button, Heading, Paragraph, Subheading, Spinner, ConfirmDeleteModal } from '@/components/ui'
 import type { CourseFormData, TreeNode, ContentNode } from './index'
 import img from '@/assets/images/cou1.png'
 import { MdVideoLibrary } from "react-icons/md";
@@ -8,11 +9,14 @@ import { BsPencilSquare } from "react-icons/bs";
 import { HiDocumentDuplicate } from "react-icons/hi";
 import { FaRegImage } from "react-icons/fa6";
 import { MdRocketLaunch } from "react-icons/md";
+import { useGetCoursePreview, usePublishCourse } from '@/hooks/useCourse'
+import { toast } from 'sonner'
+import { useNavigate } from 'react-router-dom'
 
 interface Props {
   form: CourseFormData
-  onPublish: () => void
   onDraft: () => void
+  courseId: string
 }
 
 const durationLabel: Record<string, string> = {
@@ -43,7 +47,7 @@ function flattenContent(nodes: TreeNode[]): ContentNode[] {
   )
 }
 
-const Step4Review = ({ form, onPublish, onDraft }: Props) => {
+const Step4Review = ({ form, onDraft, courseId }: Props) => {
   const allContent = flattenContent(form.tree)
   const videoLessons = allContent.filter(c => c.kind === 'video').length || DEMO.videoLessons
   const documents = allContent.filter(c => c.kind === 'document').length || DEMO.documents
@@ -62,6 +66,21 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
   const courseDesc = form.description || DEMO.description
   const courseDuration = form.duration ? durationLabel[form.duration] : durationLabel[DEMO.duration]
 
+  const navigate = useNavigate()
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [resultOpen, setResultOpen] = useState(false)
+  const [resultMessage, setResultMessage] = useState('')
+  const [resultTitle, setResultTitle] = useState('Publish Course')
+
+  // mutation
+  const { mutateAsync: publishCourse, isPending: isPublishing } = usePublishCourse()
+
+  // query
+  const { data: coursePreview, isLoading } = useGetCoursePreview(courseId)
+
+  console.log("cour", coursePreview)
+
   const features = (form.offlineDownload || form.pdfPermissions || form.enableCoupons)
     ? [
       form.offlineDownload && { label: 'Offline Download Permission', sub: '' },
@@ -73,6 +92,39 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
       { label: 'PDF Permission', sub: 'Private peer-to-peer discussions' },
     ]
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Spinner />
+      </div>
+    )
+  }
+
+
+
+  const onPublish = async () => {
+    try {
+      const res = await publishCourse(courseId)
+      const status = res?.data?.status
+      const message = res?.data?.message || ''
+
+      if (status === 'pending') {
+        setResultTitle('Publish Pending')
+      } else if (status === 'published') {
+        setResultTitle('Course Published')
+      } else {
+        setResultTitle('Publish Failed')
+      }
+      setResultMessage(message)
+      setResultOpen(true)
+    } catch (error) {
+      toast.error('Failed to publish course')
+    }
+  }
+
+
+
+
   return (
     <div className="flex flex-col gap-5">
 
@@ -82,9 +134,10 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
         {/* Hero — no card, plain white */}
         <div className="col-span-7 flex gap-4 bg-white rounded-2xl p-7 shadow-sm border border-gray-100">
           <img
-            src={form.cover_image ? URL.createObjectURL(form.cover_image) : img}
+            // src={form.cover_image ? URL.createObjectURL(form.cover_image) : img}
+            src={coursePreview?.data?.cover_image}
             alt="Cover"
-            className="w-42 h-42 object-cover rounded-xl shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
+            className="w-44 h-44 object-contain bg-gray-50 rounded-xl shrink-0 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
           />
           <div className="flex flex-col gap-1.5 flex-1 pt-1">
             <div className="flex items-center justify-between">
@@ -92,12 +145,12 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
                 className="inline-block px-2 py-1 rounded text-xs bg-[#A8EDFF] font-bold text-[#000B60]"
               // style={{ background: 'linear-gradient(to right, #000B60, #142283)' }}
               >
-                {courseCategory.toUpperCase()}
+                {coursePreview?.data?.category.toUpperCase()}
               </span>
-              <span className="text-xs text-gray-400">{videoLessons} Hours</span>
+              <span className="text-xs text-gray-400">{coursePreview?.data?.video_duration?.formatted}</span>
             </div>
-            <Heading className="font-bold text-[#000B60]"> {courseName} </Heading>
-            <Paragraph className="text-gray-500 leading-relaxed line-clamp-4"> {courseDesc} </Paragraph>
+            <Heading className="font-bold text-[#000B60]"> {coursePreview?.data?.title} </Heading>
+            <Paragraph className="text-gray-500 leading-relaxed line-clamp-4"> {coursePreview?.data?.description} </Paragraph>
           </div>
         </div>
 
@@ -105,10 +158,10 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
         <div className="col-span-5 bg-[#F2F4F6] rounded-2xl p-5 flex flex-col gap-3 shadow-sm border border-gray-100">
           <Paragraph className="font-bold uppercase tracking-widest text-black"> Content Inventory </Paragraph>
           {[
-            { icon: <MdVideoLibrary size={20} />, label: 'Video Lessons', count: videoLessons, blue: false },
-            { icon: <HiDocumentDuplicate size={20} />, label: 'PDF Resources', count: documents, blue: false },
-            { icon: <FaRegImage size={20} />, label: 'Images', count: images, blue: true },
-            { icon: <BsPencilSquare size={20} />, label: 'Test', count: tests, blue: false },
+            { icon: <MdVideoLibrary size={20} />, label: 'Video Lessons', count: coursePreview?.data?.content_inventory?.video_lessons, blue: false },
+            { icon: <HiDocumentDuplicate size={20} />, label: 'PDF Resources', count: coursePreview?.data?.content_inventory?.pdf_resources, blue: false },
+            { icon: <FaRegImage size={20} />, label: 'Images', count: coursePreview?.data?.content_inventory?.images, blue: true },
+            { icon: <BsPencilSquare size={20} />, label: 'Test', count: coursePreview?.data?.content_inventory?.tests, blue: false },
           ].map(({ icon, label, count, blue }) => (
             <div key={label} className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2 text-gray-500">
@@ -122,7 +175,7 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
           ))}
           <div className="border-t border-gray-300 pt-2 flex justify-between text-sm">
             <span className="font-semibold text-gray-700">Total Contents</span>
-            <span className="font-bold text-[#000B60]">{totalAssets} Assets</span>
+            <span className="font-bold text-[#000B60]">{coursePreview?.data?.content_inventory?.total_contents} Assets</span>
           </div>
         </div>
       </div>
@@ -134,7 +187,7 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
         <div className="col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100">
           <Paragraph className="font-bold uppercase tracking-widest text-black"> Pricing &amp; Access </Paragraph>
           <div className="flex items-baseline gap-1.5">
-            <Heading className="text-[#000B60] font-bold"> ₹{studentPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 })} </Heading>
+            <Heading className="text-[#000B60] font-bold"> ₹{coursePreview?.data?.final_price} </Heading>
             <Paragraph className="text-xs text-gray-400">/ per enrollment</Paragraph>
           </div>
           <div className="flex flex-col gap-2">
@@ -142,14 +195,14 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
               <Clock size={16} className="text-[#000B60] shrink-0" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total Video Duration</p>
-                <p className="text-sm font-bold text-[#000B60]">{DEMO.videoDuration}</p>
+                <p className="text-sm font-bold text-[#000B60]">{coursePreview?.data?.video_duration?.formatted}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-[#F2F4F6] rounded-xl px-4 py-3">
               <ShieldCheck size={16} className="text-[#000B60] shrink-0" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Duration</p>
-                <p className="text-sm font-bold text-[#000B60]">{courseDuration}</p>
+                <p className="text-sm font-bold text-[#000B60]">{coursePreview?.data?.duration}</p>
               </div>
             </div>
           </div>
@@ -175,8 +228,45 @@ const Step4Review = ({ form, onPublish, onDraft }: Props) => {
       {/* ── Footer actions ── */}
       <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-100">
         <Button variant="white" onClick={onDraft}>Save as draft</Button>
-        <Button variant="primary" onClick={onPublish}>Publish Course <MdRocketLaunch size={25} /></Button>
+        <Button variant="primary" onClick={() => setConfirmOpen(true)} disabled={isPublishing}>
+          {isPublishing ? (
+            <>
+              <Spinner size={20} color="#ffffff" label="" /> Publishing...
+            </>
+          ) : (
+            <>Publish Course <MdRocketLaunch size={25} /></>
+          )}
+        </Button>
       </div>
+
+      <ConfirmDeleteModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          onPublish()
+        }}
+        variant="primary"
+        title="Publish Course"
+        message={`Are you sure you want to publish "${coursePreview?.data?.title || courseName}"? Once published, it will be visible to students.`}
+        confirmText="Publish"
+        cancelText="Cancel"
+        loading={isPublishing}
+      />
+
+      <ConfirmDeleteModal
+        open={resultOpen}
+        onClose={() => setResultOpen(false)}
+        onConfirm={() => {
+          setResultOpen(false)
+          navigate(`/courses`)
+        }}
+        variant="primary"
+        title={resultTitle}
+        message={resultMessage}
+        confirmText="OK"
+        hideCancel
+      />
     </div>
   )
 }
