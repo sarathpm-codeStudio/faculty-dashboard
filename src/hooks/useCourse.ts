@@ -113,6 +113,19 @@ export const useUpdateFolder = (courseId: string) => {
 }
 
 
+export const useDeleteFolder = (courseId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['coursesFolderDelete', courseId],
+    mutationFn: (folderId: string) => courseService.deleteFolder(courseId, folderId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['content', courseId] })
+    },
+  })
+}
+
+
+
 export const useCreateMaterial = (courseId: string) => {
   const qc = useQueryClient()
   return useMutation({
@@ -131,6 +144,18 @@ export const useUpdateMaterial = (courseId: string) => {
     mutationKey: ['coursesMaterialUpdate', courseId],
     mutationFn: ({ materialId, payload }: { materialId: string; payload: any }) =>
       courseService.updateMaterial(courseId, materialId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['content', courseId] })
+    },
+  })
+}
+
+
+export const useDeleteMaterial = (courseId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['coursesMaterialDelete', courseId],
+    mutationFn: (materialId: string) => courseService.deleteMaterial(courseId, materialId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['content', courseId] })
     },

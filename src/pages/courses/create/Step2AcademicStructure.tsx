@@ -4,7 +4,7 @@ import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft } from '@phosph
 import { ArrowRight, ChevronRight, Download, FileText as FilePdfIcon, Home, Image as LucideImage, Link as LinkIcon, Loader2, MoreVertical, Pencil, StickyNote, Trash2, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import { storageService } from '@/services'
-import { Button, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
+import { Button, ConfirmDeleteModal, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
 import type { CourseFormData, TreeNode, FolderNode, ContentNode, ContentKind } from './index'
 import { IoAddCircleOutline } from 'react-icons/io5'
 import { FaFolder } from 'react-icons/fa'
@@ -13,7 +13,7 @@ import { BsPencilSquare } from 'react-icons/bs'
 import { HiDocumentDuplicate } from 'react-icons/hi'
 import { FaRegImage } from 'react-icons/fa6'
 import { CaretRight } from '@phosphor-icons/react'
-import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder, useUpdateMaterial } from '@/hooks/useCourse'
+import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder, useUpdateMaterial, useDeleteFolder, useDeleteMaterial } from '@/hooks/useCourse'
 import { VideoPlayer } from '@/components/features'
 import { toast } from 'sonner'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
@@ -206,6 +206,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const { mutateAsync: createMaterial, isPending: isCreatingMaterial } = useCreateMaterial(courseId)
   const { mutateAsync: updateFolder, isPending: isUpdatingFolder } = useUpdateFolder(courseId)
   const { mutateAsync: updateMaterial, isPending: isUpdatingMaterial } = useUpdateMaterial(courseId)
+  const { mutateAsync: deleteFolder, isPending: isDeletingFolder } = useDeleteFolder(courseId)
+  const { mutateAsync: deleteMaterial, isPending: isDeletingMaterial } = useDeleteMaterial(courseId)
   const isFolderSaving = isCreatingFolder || isUpdatingFolder
   const isMaterialSaving = isCreatingMaterial || isUpdatingMaterial
 
@@ -247,6 +249,10 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
+  // Delete confirmation modal
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null)
+  const isDeleting = isDeletingFolder || isDeletingMaterial
+
   useEffect(() => {
     if (!menuOpenId) return
     const handler = (e: MouseEvent) => {
@@ -269,7 +275,23 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
   const handleDeleteItem = (item: any) => {
     setMenuOpenId(null)
-    toast.info(`Delete ${item.item_type === 'folder' ? 'folder' : 'material'}: ${item.title}`)
+    setDeleteTarget(item)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return
+    const isFolder = deleteTarget.item_type === 'folder'
+    try {
+      if (isFolder) {
+        await deleteFolder(deleteTarget.id)
+      } else {
+        await deleteMaterial(deleteTarget.id)
+      }
+      toast.success(`${isFolder ? 'Folder' : 'Material'} "${deleteTarget.title}" deleted`)
+      setDeleteTarget(null)
+    } catch (err) {
+      toast.error(`Failed to delete ${isFolder ? 'folder' : 'material'}`)
+    }
   }
 
   // Current parent ID for insert operations (last crumb's id, or null for root)
@@ -505,8 +527,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     }
   }
 
-  const toggle = (field: 'offlineDownload' | 'pdfPermissions') =>
-    update({ [field]: !form[field] })
+  // const toggle = (field: 'offlineDownload' | 'pdfPermissions') =>
+  //   update({ [field]: !form[field] })
 
   return (
     <div className="grid grid-cols-12 gap-6 flex-1 min-h-0">
@@ -795,7 +817,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               </div>
               <button
                 type="button"
-                onClick={() => toggle(key)}
+                // onClick={() => toggle(key)}
                 className={`w-10 h-5 rounded-full transition-colors relative ${form[key] ? 'bg-[#000B60]' : 'bg-gray-200'}`}
               >
                 <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form[key] ? 'left-5' : 'left-0.5'}`} />
@@ -817,9 +839,12 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         maxWidth="max-w-sm"
         footer={
           <>
-            <Button variant="white" onClick={closeFolderModal} disabled={isFolderSaving}>Cancel</Button>
+            <Button variant="white" className='!h-10'
+              onClick={closeFolderModal} disabled={isFolderSaving}>Cancel</Button>
             <Button
               variant="primary"
+              className='!h-10'
+
               onClick={handleSubmitFolder}
               disabled={!folderName.trim() || isFolderSaving}
             >
@@ -852,15 +877,18 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         title={`${editingMaterialId ? 'Edit' : 'Add'} ${CONTENT_TYPES.find(t => t.kind === contentKind)?.label ?? 'Content'}`}
         footer={
           <>
-            <Button variant="white" onClick={() => {
-              setShowContentModal(false);
-              setEditingMaterialId(null)
-            }}
+            <Button variant="white" className='!h-10'
+              onClick={() => {
+                setShowContentModal(false);
+                setEditingMaterialId(null)
+              }}
               disabled={isMaterialSaving}>
               Cancel
             </Button>
             <Button
               variant="primary"
+              className='!h-10'
+
               onClick={handleSaveContent}
             // disabled={isMaterialSaving || (contentKind === 'video' && contentUploadStatus === 'uploading') || contentFileUploading}
             >
@@ -1001,7 +1029,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                     <Download size={14} /> Open in new tab
                   </a>
                 )}
-                <Button variant="primary" onClick={() => setPreviewItem(null)}>Close</Button>
+                <Button variant="primary" className='!h-10'
+                  onClick={() => setPreviewItem(null)}>Close</Button>
               </>
             }
           >
@@ -1057,6 +1086,15 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           </Modal>
         )
       })()}
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        loading={isDeleting}
+        title={`Delete ${deleteTarget?.item_type === 'folder' ? 'Folder' : 'Material'}`}
+        itemName={deleteTarget?.title}
+      />
     </div>
   )
 }

@@ -86,6 +86,17 @@ export const courseService = {
     }
   },
 
+  deleteFolder: async (courseId: string, folderId: string): Promise<void> => {
+
+    try {
+      const { data } = await apiClient.delete(`/courses/${courseId}/folders/${folderId}`)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
   createMaterial: async (courseId: string, payload: any): Promise<any> => {
     try {
       const { data } = await apiClient.post(`/courses/${courseId}/materials`, payload)
@@ -99,6 +110,16 @@ export const courseService = {
   updateMaterial: async (courseId: string, materialId: string, payload: any): Promise<any> => {
     try {
       const { data } = await apiClient.patch(`/courses/${courseId}/materials/${materialId}`, payload)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
+  deleteMaterial: async (courseId: string, materialId: string): Promise<void> => {
+    try {
+      const { data } = await apiClient.delete(`/courses/${courseId}/materials/${materialId}`)
       return data
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || 'Something went wrong'

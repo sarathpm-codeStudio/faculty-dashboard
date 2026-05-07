@@ -49,7 +49,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
             placeholder="Select duration"
             options={durationOptions}
             value={form.duration}
-            onChange={(e) => update({ duration: e.target.value })}
+          // onChange={(e) => update({ duration: e.target.value })}
           />
 
           <Input
@@ -58,7 +58,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
             min={0}
             placeholder="0"
             value={form.price}
-            onChange={(e) => update({ price: e.target.value })}
+            // onChange={(e) => update({ price: e.target.value })}
             leftIcon={<span className="font-semibold text-gray-500">₹</span>}
           />
 
@@ -67,7 +67,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
               label="Discount Type"
               options={discountTypeOptions}
               value={form.discountType}
-              onChange={(e) => update({ discountType: e.target.value })}
+            // onChange={(e) => update({ discountType: e.target.value })}
             />
             <Input
               label="Discount"
@@ -76,7 +76,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
               max={form.discountType === 'percentage' ? 100 : undefined}
               placeholder="0"
               value={form.discount}
-              onChange={(e) => update({ discount: e.target.value })}
+            // onChange={(e) => update({ discount: e.target.value })}
             />
           </div>
 
@@ -96,7 +96,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
           <div className="flex items-center gap-2 shrink-0 mt-0.5">
             <button
               type="button"
-              onClick={() => update({ enableCoupons: !form.enableCoupons })}
+              // onClick={() => update({ enableCoupons: !form.enableCoupons })}
               className={`w-10 h-5 rounded-full transition-colors relative ${form.enableCoupons ? 'bg-[#000B60]' : 'bg-gray-200'}`}
             >
               <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form.enableCoupons ? 'left-5' : 'left-0.5'}`} />
