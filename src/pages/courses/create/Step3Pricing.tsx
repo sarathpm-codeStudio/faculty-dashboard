@@ -1,13 +1,19 @@
-import { useMemo } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { useEffect, useMemo } from 'react'
+import { ArrowRight, Loader2 } from 'lucide-react'
+import { useFormik } from 'formik'
 import { Input, Select, Button, Subheading, Paragraph } from '@/components/ui'
 import type { CourseFormData } from './index'
 import { RiCoupon2Fill } from "react-icons/ri";
+import { useGetCourseById } from '@/hooks'
+import { coursePricingSchema } from '@/utils/validator/course.validator'
+import { useAddCoursePricing } from "@/hooks/useCourse"
+import { toast } from 'sonner'
+
 
 interface Props {
   form: CourseFormData
-  update: (fields: Partial<CourseFormData>) => void
   onNext: () => void
+  courseId: string
 }
 
 const durationOptions = [
@@ -23,21 +29,94 @@ const discountTypeOptions = [
   { value: 'flat', label: 'Flat Amount' },
 ]
 
-const Step3Pricing = ({ form, update, onNext }: Props) => {
-  const price = parseFloat(form.price) || 0
-  const discount = parseFloat(form.discount) || 0
+type PricingValues = {
+  duration: string
+  price: string
+  discount: string
+  discountType: string
+  enableCoupons: boolean
+}
+
+const Step3Pricing = ({ form, onNext, courseId }: Props) => {
+  const formik = useFormik<PricingValues>({
+    initialValues: {
+      duration: form.duration ?? '',
+      price: form.price ?? '',
+      discount: form.discount ?? '',
+      discountType: form.discountType ?? '',
+      enableCoupons: form.enableCoupons ?? false,
+    },
+    validationSchema: coursePricingSchema,
+    enableReinitialize: false,
+    onSubmit: async (values) => {
+      try {
+        const payload = {
+          duration: values.duration,
+          price: Number(values.price) || 0,
+          discount: values.discount ? Number(values.discount) : 0,
+          discount_type: values.discountType,
+          final_price: Number(studentPrice) || 0,
+          enableCoupons: values.enableCoupons,
+        }
+        await addCoursePricing(payload)
+        toast.success('Course pricing added successfully')
+        onNext()
+      } catch (error: any) {
+        toast.error(error.message)
+      }
+    },
+  })
+
+
+
+  const { values, errors, touched, setFieldValue, handleChange, handleBlur, handleSubmit } = formik
+
+
+  // mutation for add course pricing
+  const { mutate: addCoursePricing } = useAddCoursePricing(courseId)
+
+  // query for existing course details (prefill on edit)
+  const { data: courseDetails, isLoading: isLoadingCourseDetails, isFetching: isFetchingCourseDetails } =
+    useGetCourseById(courseId, !!courseId)
+
+  useEffect(() => {
+    if (!courseDetails?.data) return
+    const d = courseDetails.data
+    formik.setValues({
+      duration: d.duration ?? '',
+      price: d.price != null ? String(d.price) : '',
+      discount: d.discount != null ? String(d.discount) : '',
+      discountType: d.discount_type ?? '',
+      enableCoupons: d.enable_coupons ?? d.enableCoupons ?? false,
+    })
+  }, [courseDetails])
+
+  const price = parseFloat(values.price) || 0
+  const discount = parseFloat(values.discount) || 0
+  const discountType = values.discountType
+  const enableCoupons = values.enableCoupons
 
   const studentPrice = useMemo(() => {
-    if (form.discountType === 'percentage') {
+    if (discountType === 'percentage') {
       return Math.max(0, price - (price * discount) / 100)
     }
     return Math.max(0, price - discount)
-  }, [price, discount, form.discountType])
+  }, [price, discount, discountType])
 
   const saved = price - studentPrice
 
+  if (courseId && (isLoadingCourseDetails || isFetchingCourseDetails || !courseDetails?.data)) {
+    return (
+      <div className="flex flex-1 items-center justify-center py-24">
+        <Loader2 size={32} className="text-[#000B60] animate-spin" />
+      </div>
+    )
+  }
+
+
+
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <form onSubmit={handleSubmit} className="grid grid-cols-12 gap-6">
 
       {/* ── Left column (8 cols) ─────────────────────────── */}
       <div className="col-span-8 flex flex-col gap-4">
@@ -48,8 +127,11 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
             label="Course Duration"
             placeholder="Select duration"
             options={durationOptions}
-            value={form.duration}
-          // onChange={(e) => update({ duration: e.target.value })}
+            name="duration"
+            value={values.duration}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={touched.duration && errors.duration ? errors.duration : undefined}
           />
 
           <Input
@@ -57,26 +139,36 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
             type="number"
             min={0}
             placeholder="0"
-            value={form.price}
-            // onChange={(e) => update({ price: e.target.value })}
+            name="price"
+            value={values.price}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            error={touched.price && errors.price ? errors.price : undefined}
             leftIcon={<span className="font-semibold text-gray-500">₹</span>}
           />
 
           <div className="grid grid-cols-2 gap-4">
             <Select
               label="Discount Type"
+              placeholder="Select discount type"
               options={discountTypeOptions}
-              value={form.discountType}
-            // onChange={(e) => update({ discountType: e.target.value })}
+              name="discountType"
+              value={values.discountType}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.discountType && errors.discountType ? errors.discountType : undefined}
             />
             <Input
               label="Discount"
               type="number"
               min={0}
-              max={form.discountType === 'percentage' ? 100 : undefined}
+              max={discountType === 'percentage' ? 100 : undefined}
               placeholder="0"
-              value={form.discount}
-            // onChange={(e) => update({ discount: e.target.value })}
+              name="discount"
+              value={values.discount}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.discount && errors.discount ? errors.discount : undefined}
             />
           </div>
 
@@ -96,10 +188,10 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
           <div className="flex items-center gap-2 shrink-0 mt-0.5">
             <button
               type="button"
-              // onClick={() => update({ enableCoupons: !form.enableCoupons })}
-              className={`w-10 h-5 rounded-full transition-colors relative ${form.enableCoupons ? 'bg-[#000B60]' : 'bg-gray-200'}`}
+              onClick={() => setFieldValue('enableCoupons', !enableCoupons)}
+              className={`w-10 h-5 rounded-full transition-colors relative ${enableCoupons ? 'bg-[#000B60]' : 'bg-gray-200'}`}
             >
-              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form.enableCoupons ? 'left-5' : 'left-0.5'}`} />
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableCoupons ? 'left-5' : 'left-0.5'}`} />
             </button>
             <Paragraph className='text-xs font-semibold text-gray-600'>Enable Coupons</Paragraph>
           </div>
@@ -118,7 +210,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
           <p className="text-xs font-semibold uppercase tracking-widest opacity-70 mb-2">Students Price</p>
           <p className="text-4xl font-bold tracking-tight">₹{studentPrice.toFixed(2)}</p>
           <p className="text-xs opacity-60 mt-2 leading-relaxed">
-            Calculated based on a {discount}{form.discountType === 'percentage' ? '%' : '₹'} discount applied to the ₹{price.toFixed(2)}.
+            Calculated based on a {discount}{discountType === 'percentage' ? '%' : '₹'} discount applied to the ₹{price.toFixed(2)}.
           </p>
           {discount > 0 && (
             <p className="text-xs opacity-60 mt-2 leading-relaxed">
@@ -136,7 +228,7 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
           <div className="flex justify-between text-sm">
             <Paragraph className='text-xs font-semibold text-gray-600'>Discount</Paragraph>
             <span className="font-semibold text-gray-700">
-              {discount}{form.discountType === 'percentage' ? '%' : '₹'}
+              {discount}{discountType === 'percentage' ? '%' : '₹'}
             </span>
           </div>
           <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
@@ -165,11 +257,11 @@ const Step3Pricing = ({ form, update, onNext }: Props) => {
         </div>
 
         {/* Preview CTA */}
-        <Button variant="primary" fullWidth onClick={onNext}>
+        <Button type="submit" variant="primary" fullWidth>
           Preview <ArrowRight size={18} />
         </Button>
       </div>
-    </div>
+    </form>
   )
 }
 

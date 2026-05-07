@@ -17,3 +17,22 @@ export const courseBasicDetailsSchema = Yup.object({
     }),
     // introVideo: Yup.mixed().required('Intro video is required'),
 })
+
+
+
+export const coursePricingSchema = Yup.object({
+    duration: Yup.string().required('Duration is required'),
+    price: Yup.string()
+        .required('Price is required')
+        .test('is-number', 'Price must be a valid number', (v) => v !== undefined && v !== '' && !isNaN(Number(v)))
+        .test('is-positive', 'Price must be greater than 0', (v) => Number(v) > 0),
+    discount: Yup.string()
+        .test('is-number', 'Discount must be a valid number', (v) => !v || !isNaN(Number(v)))
+        .test('non-negative', 'Discount cannot be negative', (v) => !v || Number(v) >= 0)
+        .when('discountType', {
+            is: 'percentage',
+            then: (schema) => schema.test('max-percent', 'Discount cannot exceed 100%', (v) => !v || Number(v) <= 100),
+        }),
+    discountType: Yup.string().optional(),
+    enableCoupons: Yup.boolean().optional(),
+})

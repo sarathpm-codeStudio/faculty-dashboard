@@ -52,6 +52,16 @@ export const courseService = {
     }
   },
 
+  addCoursePricing: async (courseId: string, payload: any): Promise<any> => {
+    try {
+      const { data } = await apiClient.patch(`/courses/${courseId}/pricing`, payload)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
   delete: async (id: string): Promise<void> => {
     await apiClient.delete(`/courses/${id}`)
   },

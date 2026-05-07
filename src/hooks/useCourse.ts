@@ -55,6 +55,18 @@ export const useUpdateCourse = (id: string) => {
   })
 }
 
+export const useAddCoursePricing = (id: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['coursesPricing', id],
+    mutationFn: (payload: any) => courseService.addCoursePricing(id, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: courseKeys.detail(id) })
+      qc.invalidateQueries({ queryKey: ['my-courses'] })
+    },
+  })
+}
+
 export const useDeleteCourse = () => {
   const qc = useQueryClient()
   return useMutation({
