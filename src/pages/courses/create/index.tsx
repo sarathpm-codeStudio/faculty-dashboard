@@ -127,6 +127,13 @@ const CourseCreatePage = () => {
   const { mutateAsync: updateCourse, isPending: isUpdating } = useUpdateCourse(courseId)
   const isSubmitting = isCreating || isUpdating
 
+  // single source of truth for course details (used by Step1 + Step3)
+  const {
+    data: courseDetails,
+    isLoading: isLoadingCourseDetails,
+    isFetching: isFetchingCourseDetails,
+  } = useGetCourseById(courseId, !!courseId)
+
 
 
 
@@ -244,9 +251,9 @@ const CourseCreatePage = () => {
       </div>
 
       {/* Step content */}
-      {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} isEdit={isEdit} courseId={courseId} vidPreviewUrl={vidPreviewUrl} onVidPreviewChange={setVidPreviewUrl} />}
+      {step === 1 && <Step1BasicDetails form={form} update={update} setIsDraft={setIsDraft} isSubmitting={isSubmitting} isEdit={isEdit} courseId={courseId} vidPreviewUrl={vidPreviewUrl} onVidPreviewChange={setVidPreviewUrl} courseDetails={courseDetails} isLoadingCourseDetails={isLoadingCourseDetails} />}
       {step === 2 && <Step2AcademicStructure form={form} update={update} onNext={next} courseId={courseId} />}
-      {step === 3 && <Step3Pricing form={form} onNext={next} courseId={courseId} />}
+      {step === 3 && <Step3Pricing form={form} onNext={next} courseId={courseId} courseDetails={courseDetails} isLoadingCourseDetails={isLoadingCourseDetails || isFetchingCourseDetails} />}
       {step === 4 && (
         <Step4Review
           form={form}

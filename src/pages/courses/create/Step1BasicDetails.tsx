@@ -6,7 +6,6 @@ import { useFormik } from 'formik'
 import { courseBasicDetailsSchema } from '@/utils/validator/course.validator'
 import { storageService } from '@/services'
 import { toast } from 'sonner'
-import { useGetCourseById } from '@/hooks'
 import { courseService } from "@/services/courseService"
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService' // ← ADD THIS
 
@@ -19,6 +18,8 @@ interface Props {
   courseId?: any
   vidPreviewUrl?: string | null
   onVidPreviewChange?: (url: string | null) => void
+  courseDetails?: any
+  isLoadingCourseDetails?: boolean
 }
 
 const categoryOptions = ['CMA', 'CA', 'CFA', 'MBA', 'CPA', 'ACCA']
@@ -118,7 +119,7 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
   )
 }
 
-const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isEdit, courseId, vidPreviewUrl, onVidPreviewChange }: Props) => {
+const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isEdit, courseId, vidPreviewUrl, onVidPreviewChange, courseDetails, isLoadingCourseDetails }: Props) => {
   const [coverUploading, setCoverUploading] = useState(false)
   const [imgPreview, setImgPreview] = useState<string | null>(
     form.cover_image ? URL.createObjectURL(form.cover_image) : null
@@ -170,9 +171,6 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
       update(values)
     },
   })
-
-  // query for course details
-  const { data: courseDetails, isLoading: isLoadingCourseDetails } = useGetCourseById(courseId, isEdit)
 
   useEffect(() => {
     if (courseDetails) {

@@ -4,7 +4,6 @@ import { useFormik } from 'formik'
 import { Input, Select, Button, Subheading, Paragraph } from '@/components/ui'
 import type { CourseFormData } from './index'
 import { RiCoupon2Fill } from "react-icons/ri";
-import { useGetCourseById } from '@/hooks'
 import { coursePricingSchema } from '@/utils/validator/course.validator'
 import { useAddCoursePricing } from "@/hooks/useCourse"
 import { toast } from 'sonner'
@@ -14,6 +13,8 @@ interface Props {
   form: CourseFormData
   onNext: () => void
   courseId: string
+  courseDetails?: any
+  isLoadingCourseDetails?: boolean
 }
 
 const durationOptions = [
@@ -37,7 +38,7 @@ type PricingValues = {
   enableCoupons: boolean
 }
 
-const Step3Pricing = ({ form, onNext, courseId }: Props) => {
+const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDetails }: Props) => {
   const formik = useFormik<PricingValues>({
     initialValues: {
       duration: form.duration ?? '',
@@ -75,10 +76,6 @@ const Step3Pricing = ({ form, onNext, courseId }: Props) => {
   // mutation for add course pricing
   const { mutate: addCoursePricing } = useAddCoursePricing(courseId)
 
-  // query for existing course details (prefill on edit)
-  const { data: courseDetails, isLoading: isLoadingCourseDetails, isFetching: isFetchingCourseDetails } =
-    useGetCourseById(courseId, !!courseId)
-
   useEffect(() => {
     if (!courseDetails?.data) return
     const d = courseDetails.data
@@ -105,7 +102,7 @@ const Step3Pricing = ({ form, onNext, courseId }: Props) => {
 
   const saved = price - studentPrice
 
-  if (courseId && (isLoadingCourseDetails || isFetchingCourseDetails || !courseDetails?.data)) {
+  if (courseId && (isLoadingCourseDetails || !courseDetails?.data)) {
     return (
       <div className="flex flex-1 items-center justify-center py-24">
         <Loader2 size={32} className="text-[#000B60] animate-spin" />
