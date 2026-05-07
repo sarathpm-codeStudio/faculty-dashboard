@@ -207,6 +207,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const { mutateAsync: updateFolder, isPending: isUpdatingFolder } = useUpdateFolder(courseId)
   const { mutateAsync: updateMaterial, isPending: isUpdatingMaterial } = useUpdateMaterial(courseId)
   const isFolderSaving = isCreatingFolder || isUpdatingFolder
+  const isMaterialSaving = isCreatingMaterial || isUpdatingMaterial
 
   // Drill-down navigation path
   const [navPath, setNavPath] = useState<NavCrumb[]>([])
@@ -218,6 +219,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
   // Content modal
   const [showContentModal, setShowContentModal] = useState(false)
+  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null)
   const [contentTitle, setContentTitle] = useState('')
   const [contentDesc, setContentDesc] = useState('')
   const [contentKind, setContentKind] = useState<ContentKind>('video')
@@ -262,7 +264,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       openEditFolderModal(item)
       return
     }
-    toast.info(`Edit material: ${item.title}`)
+    openEditMaterialModal(item)
   }
 
   const handleDeleteItem = (item: any) => {
@@ -336,6 +338,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
   // ── Content modal ──
   const openContentModal = (kind: ContentKind) => {
+    setEditingMaterialId(null)
     setContentUniqueId(generateUniqueId())
     setContentTitle('')
     setContentDesc('')
@@ -349,6 +352,50 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentFileUrl(null)
     setContentFileName(null)
     setContentFileUploading(false)
+    setShowContentModal(true)
+  }
+
+  const DB_TO_CONTENT_KIND: Record<MaterialDbType, ContentKind> = {
+    VIDEO: 'video',
+    PDF: 'document',
+    IMAGE: 'image',
+    NOTES: 'test',
+    LINK: 'document',
+  }
+
+  const openEditMaterialModal = (material: any) => {
+    const dbType = (material.type as MaterialDbType) || 'PDF'
+    const kind = DB_TO_CONTENT_KIND[dbType] ?? 'document'
+
+    setEditingMaterialId(material.id)
+    setContentUniqueId(material.unique_id || generateUniqueId())
+    setContentTitle(material.title ?? '')
+    setContentDesc(material.description ?? '')
+    setContentKind(kind)
+    setVideoAccess(true)
+    setHh('00'); setMm('00'); setSs('00')
+
+    // Video preview from existing asset
+    const assetId: string | undefined = material.video_asset_id
+    if (assetId) {
+      const orgId = import.meta.env.VITE_TPSTREAMS_ORG_ID
+      const accessToken = import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN
+      setContentVidPreview(`https://app.tpstreams.com/embed/${orgId}/${assetId}/?access_token=${accessToken}`)
+      setContentAssetId(assetId)
+      setContentUploadStatus('done')
+    } else {
+      setContentVidPreview(null)
+      setContentAssetId(null)
+      setContentUploadStatus('idle')
+    }
+    setContentUploadProgress(0)
+
+    // File preview for image / document
+    const fileUrl: string | null = material.file_url ?? null
+    setContentFileUrl(fileUrl)
+    setContentFileName(fileUrl ? fileUrl.split('/').pop() ?? null : null)
+    setContentFileUploading(false)
+
     setShowContentModal(true)
   }
 
@@ -415,29 +462,46 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     }
 
     try {
-      const payload: any = {
-        title,
-        type,
-        unique_id: contentUniqueId,
-      }
-      if (currentParentId) payload.parent_id = currentParentId
+      if (editingMaterialId) {
+        const payload: any = { title, type }
+        if (contentKind === 'video' && contentAssetId) {
+          payload.video_asset_id = contentAssetId
+        }
+        if ((contentKind === 'image' || contentKind === 'document') && contentFileUrl) {
+          payload.file_url = contentFileUrl
+        }
 
-      if (contentKind === 'video' && contentAssetId) {
-        payload.video_asset_id = contentAssetId
-      }
-      if ((contentKind === 'image' || contentKind === 'document') && contentFileUrl) {
-        payload.file_url = contentFileUrl
-      }
+        const { data, error } = await updateMaterial({
+          materialId: editingMaterialId,
+          payload,
+        })
+        if (error) throw error
+        if (data) toast.success('Material updated')
+      } else {
+        const payload: any = {
+          title,
+          type,
+          unique_id: contentUniqueId,
+        }
+        if (currentParentId) payload.parent_id = currentParentId
 
-      const { data, error } = await createMaterial(payload)
+        if (contentKind === 'video' && contentAssetId) {
+          payload.video_asset_id = contentAssetId
+        }
+        if ((contentKind === 'image' || contentKind === 'document') && contentFileUrl) {
+          payload.file_url = contentFileUrl
+        }
 
-      if (error) throw error
-      if (data) toast.success('Material created successfully')
+        const { data, error } = await createMaterial(payload)
+        if (error) throw error
+        if (data) toast.success('Material created successfully')
+      }
 
       setShowContentModal(false)
+      setEditingMaterialId(null)
     } catch (err: any) {
-      console.error('Failed to create material', err)
-      toast.error(err?.message || 'Failed to create material')
+      console.error('Failed to save material', err)
+      toast.error(err?.message || 'Failed to save material')
     }
   }
 
@@ -630,7 +694,24 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                       </div>
                       <div className="min-w-0">
                         <Paragraph className="text-black font-bold leading-tight truncate">{node.title}</Paragraph>
-                        <p className="text-xs text-gray-500 mt-0.5">{meta.label}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{meta.label}
+
+                          {
+                            node?.type === "VIDEO" && (
+                              <span className="text-xs text-gray-500 mt-0.5 ml-1">
+                                {
+                                  node?.video_uploading_status === "uploaded" ? "waiting for transcoding" :
+                                    node?.video_uploading_status === "TRANSCODING" ? "transcoding" :
+                                      node?.video_uploading_status === "COMPLETED" ? "ready to play" :
+                                        node?.video_uploading_status === "FAILED" ? "failed" :
+                                          "Error..."
+
+                                }
+                              </span>
+                            )
+                          }
+
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 text-gray-400">
@@ -767,19 +848,25 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       {/* ── Add Content Modal ── */}
       <Modal
         open={showContentModal}
-        onClose={() => setShowContentModal(false)}
-        title={`Add ${CONTENT_TYPES.find(t => t.kind === contentKind)?.label ?? 'Content'}`}
+        onClose={() => { setShowContentModal(false); setEditingMaterialId(null) }}
+        title={`${editingMaterialId ? 'Edit' : 'Add'} ${CONTENT_TYPES.find(t => t.kind === contentKind)?.label ?? 'Content'}`}
         footer={
           <>
-            <Button variant="white" onClick={() => setShowContentModal(false)} disabled={isCreatingMaterial}>Cancel</Button>
+            <Button variant="white" onClick={() => {
+              setShowContentModal(false);
+              setEditingMaterialId(null)
+            }}
+              disabled={isMaterialSaving}>
+              Cancel
+            </Button>
             <Button
               variant="primary"
               onClick={handleSaveContent}
-              disabled={isCreatingMaterial || (contentKind === 'video' && contentUploadStatus === 'uploading') || contentFileUploading}
+            // disabled={isMaterialSaving || (contentKind === 'video' && contentUploadStatus === 'uploading') || contentFileUploading}
             >
-              {isCreatingMaterial
+              {isMaterialSaving
                 ? <Loader2 size={16} className="animate-spin" />
-                : 'Save & Close'}
+                : (editingMaterialId ? 'Save Changes' : 'Save & Close')}
             </Button>
           </>
         }
