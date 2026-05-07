@@ -62,7 +62,7 @@ const CourseCard = ({
     >
       <div className="relative">
         {cover_image ? (
-          <img src={cover_image} alt={title} className="w-full h-36 object-cover" />
+          <img src={cover_image} alt={title} className="w-full h-36 object-fill" />
         ) : (
           <div className="w-full h-36 bg-gradient-to-br from-[#BCC2FF] to-[#142283]" />
         )}
