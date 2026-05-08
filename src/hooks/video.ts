@@ -214,6 +214,8 @@ export const useVideoUploadProgress = (facultyId: string) => {
 
             if (error) throw error
 
+
+
             const withProgress = (data ?? []).map(u => ({
                 ...u,
                 transcoding_progress: u.transcoding_progress ?? 0,
