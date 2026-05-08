@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
 import { toast } from 'sonner'
 import GlobalUploadIndicator from '@/components/ui/GlobalUploadIndicator'
-import { useVideoUploadProgress } from '@/hooks/video'
+// import { useVideoUploadProgress } from '@/hooks/video'
 
 
 const AppShell = () => {
@@ -37,7 +37,7 @@ const AppShell = () => {
     }, [user?.id])
 
     const showPending = isPending && !pathname.startsWith('/account')
-    useVideoUploadProgress(user?.id)
+    // useVideoUploadProgress(user?.id)
 
 
     return (

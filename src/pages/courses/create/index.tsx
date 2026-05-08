@@ -10,6 +10,8 @@ import { useCreateCourseBasicDetails, useUpdateCourse, useGetCourseById } from "
 import { toast } from 'sonner'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
 import { useRef } from 'react'
+import { useAuthStore } from '@/store/authStore'
+import { useVideoUploadProgress } from '@/hooks/video'
 
 
 export type ContentKind = 'video' | 'test' | 'document' | 'image'
@@ -104,6 +106,9 @@ const CourseCreatePage = () => {
 
   // get course id from url
   const { id } = useParams()
+
+  const facultyId: any = useAuthStore(state => state.user?.id)
+  const { uploads } = useVideoUploadProgress(facultyId)
 
 
   useEffect(() => {
