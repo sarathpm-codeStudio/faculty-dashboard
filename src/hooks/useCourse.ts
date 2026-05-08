@@ -170,7 +170,7 @@ export const useGetAllContent = (courseId: string, parentId?: string) => {
   return useQuery({
     queryKey: ['content', courseId, parentId],
     queryFn: () => courseService.getAllContent(courseId, parentId),
-    enabled: !!courseId,
+    enabled: true,
   })
 }
 

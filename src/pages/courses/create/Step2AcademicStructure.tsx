@@ -726,7 +726,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                                     node?.video_uploading_status === "TRANSCODING" ? "transcoding" :
                                       node?.video_uploading_status === "COMPLETED" ? "ready to play" :
                                         node?.video_uploading_status === "FAILED" ? "failed" :
-                                          "Error..."
+                                          "..."
 
                                 }
                               </span>

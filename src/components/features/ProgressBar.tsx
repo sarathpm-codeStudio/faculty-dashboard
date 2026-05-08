@@ -5,14 +5,18 @@ type ProgressBarProps = {
   status?: string
   barColor?: string
   value?: number
+  data?: any
 }
 
-const ProgressBar = ({ label, status, barColor = '#000B60' }: ProgressBarProps) => (
+const ProgressBar = ({ label, status, barColor = '#000B60', data }: ProgressBarProps) => (
   <div className="flex items-center gap-5">
     <div className="min-w-0 flex-1 space-y-1.5">
       {label && (
         <span className="text-[13px] font-bold uppercase tracking-wide text-[#767683]">
-          {label}
+          {
+            data?.type === "intro" ? `Intro Video of course ${data?.details?.course_title}`
+              : `${data?.details?.material_title} video of course ${data?.details?.course_title}`
+          }
         </span>
       )}
 

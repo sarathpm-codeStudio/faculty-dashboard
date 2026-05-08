@@ -34,11 +34,12 @@ interface UploadBoxProps {
   title: string
   hint: string
   loading?: boolean
+  videoBlockedMessage?: string | null
   onFile: (file: File) => void
   onClear: () => void
 }
 
-const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = false, onFile, onClear }: UploadBoxProps) => {
+const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = false, videoBlockedMessage = null, onFile, onClear }: UploadBoxProps) => {
   const ref = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
 
@@ -62,6 +63,14 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
         <>
           {previewType === 'image' ? (
             <img src={preview} alt="" className="w-full h-full object-cover" />
+          ) : previewType === 'video' && videoBlockedMessage ? (
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#F8F9FB] px-4 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Loader2 size={22} className="text-[#000B60] animate-spin" />
+              <p className="text-xs font-semibold text-[#000B60]">{videoBlockedMessage}</p>
+            </div>
           ) : preview.includes('tpstreams.com') || preview.includes('/embed/') ? (
             <iframe
               src={preview}
@@ -70,8 +79,10 @@ const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = 
               allowFullScreen
               onClick={(e) => e.stopPropagation()}
             />
+
           ) : (
             <video src={preview} className="w-full h-full object-cover" controls onClick={(e) => e.stopPropagation()} />
+
           )}
           <button
             type="button"
@@ -125,6 +136,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
     form.cover_image ? URL.createObjectURL(form.cover_image) : null
   )
   const [vidPreview, setVidPreview] = useState<string | null>(vidPreviewUrl ?? null)
+  const [videoTranscodeStatus, setVideoTranscodeStatus] = useState<string | null>(null)
   const [langOpen, setLangOpen] = useState(false)
   const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>(null)
 
@@ -176,6 +188,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
     if (courseDetails) {
       console.log("edit data", courseDetails)
       const assetId = courseDetails?.data?.video_asset_id
+      const transcodeStatus = courseDetails?.data?.video_uploading_status
       if (assetId) {
         const orgId = import.meta.env.VITE_TPSTREAMS_ORG_ID
         const accessToken = import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN
@@ -183,6 +196,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
         setVidPreview(embedUrl)
         onVidPreviewChange?.(embedUrl)
         setUploadStatus('done')
+        setVideoTranscodeStatus(transcodeStatus || null)
       }
       formik.setValues({
         ...form,
@@ -216,6 +230,15 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
     formik.setFieldValue('languages', next)
     formik.setFieldTouched('languages', true, false)
   }
+
+  const getVideoBlockedMessage = () => {
+    if (!videoTranscodeStatus) return null
+    const status = String(videoTranscodeStatus).toUpperCase()
+    if (status === 'COMPLETED') return null
+    if (status === 'UPLOADED') return 'Waiting for transcoding'
+    return `Can't play video — status: ${status}`
+  }
+  const videoBlockedMessage = getVideoBlockedMessage()
 
   return (
     <form onSubmit={formik.handleSubmit} noValidate>
@@ -380,6 +403,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               uploadStatus === 'uploading' ||
               uploadStatus === 'saving'
             }
+            videoBlockedMessage={videoBlockedMessage}
             onFile={handleVideoFile}
             onClear={() => {
               formik.setFieldValue('intro_video_asset_id', null)
@@ -387,6 +411,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               onVidPreviewChange?.(null)
               setUploadStatus('idle')
               setUploadProgress(0)
+              setVideoTranscodeStatus(null)
             }}
           />
 

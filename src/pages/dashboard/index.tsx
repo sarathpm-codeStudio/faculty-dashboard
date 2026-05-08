@@ -142,6 +142,7 @@ const DashboardPage = () => {
                         label={item.file_name ?? item.fileName ?? item.unique_id}
                         value={item?.transcoding_progress ?? 0}
                         status={item?.uploading_status === "uploaded" ? "waiting to transcode" : item?.uploading_status}
+                        data={item}
                       />
                     ))
                 }
