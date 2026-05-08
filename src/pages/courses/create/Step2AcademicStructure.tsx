@@ -95,11 +95,12 @@ interface UploadBoxProps {
   title: string
   hint: string
   loading?: boolean
+  videoBlockedMessage?: string | null
   onFile: (file: File) => void
   onClear: () => void
 }
 
-const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, title, hint, loading = false, onFile, onClear }: UploadBoxProps) => {
+const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, title, hint, loading = false, videoBlockedMessage = null, onFile, onClear }: UploadBoxProps) => {
   const ref = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
 
@@ -138,6 +139,14 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
               >
                 View file
               </a>
+            </div>
+          ) : previewType === 'video' && videoBlockedMessage ? (
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#F8F9FB] px-4 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Loader2 size={22} className="text-[#000B60] animate-spin" />
+              <p className="text-xs font-semibold text-[#000B60]">{videoBlockedMessage}</p>
             </div>
           ) : preview.includes('tpstreams.com') || preview.includes('/embed/') ? (
             <iframe
@@ -236,6 +245,17 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [contentAssetId, setContentAssetId] = useState<string | null>(null)
   const [contentUploadStatus, setContentUploadStatus] = useState<'idle' | 'uploading' | 'saving' | 'done' | 'failed'>('idle')
   const [contentUploadProgress, setContentUploadProgress] = useState(0)
+  const [videoTranscodeStatus, setVideoTranscodeStatus] = useState<string | null>(null)
+
+  const getVideoBlockedMessage = (status: string | null | undefined) => {
+    if (!status) return null
+    const s = String(status).toUpperCase()
+    if (s === 'COMPLETED') return null
+    if (s === 'UPLOADED') return 'Waiting for transcoding'
+    if (s === 'TRANSCODING') return 'Transcoding…'
+    if (s === 'FAILED') return "Can't play video — status: FAILED"
+    return `Can't play video — status: ${s}`
+  }
 
   // Content file upload state (image / document — Supabase, mirrors Step1 cover image)
   const [contentFileUrl, setContentFileUrl] = useState<string | null>(null)
@@ -371,6 +391,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentAssetId(null)
     setContentUploadStatus('idle')
     setContentUploadProgress(0)
+    setVideoTranscodeStatus(null)
     setContentFileUrl(null)
     setContentFileName(null)
     setContentFileUploading(false)
@@ -405,10 +426,12 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       setContentVidPreview(`https://app.tpstreams.com/embed/${orgId}/${assetId}/?access_token=${accessToken}`)
       setContentAssetId(assetId)
       setContentUploadStatus('done')
+      setVideoTranscodeStatus(material.video_uploading_status || null)
     } else {
       setContentVidPreview(null)
       setContentAssetId(null)
       setContentUploadStatus('idle')
+      setVideoTranscodeStatus(null)
     }
     setContentUploadProgress(0)
 
@@ -442,6 +465,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentVidPreview(previewUrl)
     setContentUploadStatus('uploading')
     setContentUploadProgress(0)
+    setVideoTranscodeStatus(null)
 
     tpstreamsUploadService.upload(file, contentUniqueId, 'module', {
       onProgress: (percentage) => setContentUploadProgress(percentage),
@@ -726,7 +750,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                                     node?.video_uploading_status === "TRANSCODING" ? "transcoding" :
                                       node?.video_uploading_status === "COMPLETED" ? "ready to play" :
                                         node?.video_uploading_status === "FAILED" ? "failed" :
-                                          "..."
+                                          "Uploading..."
 
                                 }
                               </span>
@@ -922,12 +946,14 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               title="Upload Video"
               hint="MP4, WebM or MOV — max 200 MB"
               loading={contentUploadStatus === 'uploading' || contentUploadStatus === 'saving'}
+              videoBlockedMessage={getVideoBlockedMessage(videoTranscodeStatus)}
               onFile={handleContentVideoFile}
               onClear={() => {
                 setContentVidPreview(null)
                 setContentAssetId(null)
                 setContentUploadStatus('idle')
                 setContentUploadProgress(0)
+                setVideoTranscodeStatus(null)
               }}
             />
 
@@ -1056,11 +1082,22 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                 />
               )}
 
-              {dbType === 'VIDEO' && videoEmbed && (
-                <div className="w-full">
-                  <VideoPlayer src={videoEmbed} />
-                </div>
-              )}
+              {dbType === 'VIDEO' && videoEmbed && (() => {
+                const blocked = getVideoBlockedMessage(previewItem.video_uploading_status)
+                if (blocked) {
+                  return (
+                    <div className="flex flex-col items-center gap-2 py-12 px-6 text-center">
+                      <Loader2 size={22} className="text-[#000B60] animate-spin" />
+                      <p className="text-sm font-semibold text-[#000B60]">{blocked}</p>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="w-full">
+                    <VideoPlayer src={videoEmbed} />
+                  </div>
+                )
+              })()}
 
               {dbType === 'LINK' && fileUrl && (
                 <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
