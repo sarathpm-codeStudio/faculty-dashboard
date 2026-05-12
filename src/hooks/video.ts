@@ -756,11 +756,14 @@ export const useVideoUploadProgress = (facultyId: any) => {
             const introUniqueIds = introItems.map((u: any) => u.unique_id)
             const moduleUniqueIds = moduleItems.map((u: any) => u.unique_id)
 
+            console.log('introUniqueIds', introUniqueIds)
+
+
             const { data: courses } = introUniqueIds.length > 0
                 ? await supabase
                     .from('courses')
-                    .select('id, title, cover_image, intro_video_unique_id')
-                    .in('intro_video_unique_id', introUniqueIds)
+                    .select('id, title, cover_image')
+                    .in('unique_id', introUniqueIds)
                 : { data: [] }
 
             const { data: materials } = moduleUniqueIds.length > 0
@@ -783,12 +786,16 @@ export const useVideoUploadProgress = (facultyId: any) => {
             const materialMap: Record<string, any> = {}
 
             courses?.forEach((c: any) => {
+                console.log('c>>>>>>>>>>>>>>>>>>>>', c)
                 courseMap[c.intro_video_unique_id] = c
             })
 
             materials?.forEach((m: any) => {
                 materialMap[m.unique_id] = m
             })
+
+            console.log('courseMap', courseMap)
+            console.log('materialMap', materialMap)
 
             const withProgress = data.map((u: any) => ({
                 ...u,

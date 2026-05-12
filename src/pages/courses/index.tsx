@@ -75,7 +75,7 @@ const CoursesPage = () => {
       >
         <div>
           <Heading className="text-[#000b60]">
-            My Courses ({String(courses?.data?.length).padStart(2, '0')})
+            My Courses ({String(courses?.data?.length ?? 0).padStart(2, '0')})
           </Heading>
           <Paragraph className="text-[#767683]">
             Manage and monitor your curriculum performance
