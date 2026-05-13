@@ -41,6 +41,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
                 <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-6">
                     <div className="flex flex-col gap-5">
 
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
                                 label="First Name"

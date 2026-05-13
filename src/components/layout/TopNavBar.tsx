@@ -1,7 +1,7 @@
 
 
 import { useState, useRef, useEffect } from 'react'
-import { Bell, Search, LogOut, ChevronDown } from 'lucide-react'
+import { Bell, Search, LogOut, ChevronDown, UserCircle2 } from 'lucide-react'
 import manAvatar from '@/assets/images/man.jpg'
 import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
@@ -85,6 +85,7 @@ const TopNavBar = ({ onNotifClick }: Props) => {
                         <ChevronDown size={14} className={`text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                         <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
                             <img src={manAvatar} alt="avatar" className="w-full h-full object-cover" />
+                            {/* <UserCircle2 size={36} className="text-gray-300" /> */}
                         </div>
                     </button>
 

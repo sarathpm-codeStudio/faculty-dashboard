@@ -36,6 +36,7 @@ const DashboardPage = () => {
 
 
   const facultyId: any = useAuthStore(state => state.user?.id)
+  const { user } = useAuthStore()
   const { uploads } = useVideoUploadProgress(facultyId)
 
   console.log("uploads", uploads)
@@ -46,7 +47,7 @@ const DashboardPage = () => {
       {/* ── Greeting + Filter ── */}
       <div className="flex items-end justify-between">
         <div>
-          <Heading className='text-[#000b60]'>Hi, Salsabeel</Heading>
+          <Heading className='text-[#000b60]'>Hi, {user?.name}</Heading>
           <Paragraph className='text-[#454652] font-semibold' > Welcome back! Here's what's happening with your courses. </Paragraph>
           {/* <p className="mt-2 text-base font-medium text-[#454652]"> */}
 

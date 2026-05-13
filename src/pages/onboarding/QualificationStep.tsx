@@ -26,6 +26,7 @@ interface QualificationForm {
 }
 
 const qualificationTypes = [
+    { value: '', label: 'Select Qualification Type' },
     { value: 'Degree', label: 'Degree' },
     { value: 'Professional Course', label: 'Professional Course' },
     { value: 'PhD', label: 'PhD' },
@@ -35,7 +36,7 @@ const qualificationTypes = [
 ]
 
 const emptyForm = (): QualificationForm => ({
-    type: 'Degree',
+    type: '',
     fieldOfStudy: '',
     graduationYear: '',
     teachingExperience: '',
