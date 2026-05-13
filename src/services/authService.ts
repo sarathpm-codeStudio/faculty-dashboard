@@ -11,10 +11,15 @@ export const authService = {
                 email,
                 password,
             })
-            if (error) throw error
+            if (error) {
+                console.log("error", error)
+                throw error
+            }
+            console.log("data", data)
             return data
         } catch (error: any) {
-            throw error.message
+            console.log("error", error)
+            throw error
         }
     },
 
@@ -25,10 +30,15 @@ export const authService = {
                 email,
                 password,
             })
-            if (error) throw error
+            if (error) {
+                console.log("error", error)
+                throw error
+            }
+            console.log("data", data)
             return data
         } catch (error: any) {
-            throw error.message
+            console.log("error>>>>", error)
+            throw error
         }
     },
 
@@ -38,7 +48,7 @@ export const authService = {
             const { error } = await supabase.auth.signOut()
             if (error) throw error
         } catch (error: any) {
-            throw error.message
+            throw error
         }
     },
 

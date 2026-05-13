@@ -15,6 +15,7 @@ const AppShell = () => {
     const [notifOpen, setNotifOpen] = useState(false)
     const { user, isPending, setIsPending, setNoProfile } = useAuthStore()
     const { pathname } = useLocation()
+    const setProfile = useAuthStore((state) => state.setProfile)
 
     useEffect(() => {
         const getProfile = async () => {
@@ -27,6 +28,11 @@ const AppShell = () => {
                     setIsPending(true)
                     return
                 }
+                setProfile({
+                    id: profile.id,
+                    name: `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || "",
+                    email: user?.email ? user.email : " ",
+                })
                 setNoProfile(false)
                 setIsPending(profile?.account_verified === 'PENDING')
             } catch (error: any) {

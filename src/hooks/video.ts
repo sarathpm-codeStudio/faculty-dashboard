@@ -762,7 +762,7 @@ export const useVideoUploadProgress = (facultyId: any) => {
             const { data: courses } = introUniqueIds.length > 0
                 ? await supabase
                     .from('courses')
-                    .select('id, title, cover_image')
+                    .select('id, title, cover_image,unique_id')
                     .in('unique_id', introUniqueIds)
                 : { data: [] }
 
@@ -787,7 +787,7 @@ export const useVideoUploadProgress = (facultyId: any) => {
 
             courses?.forEach((c: any) => {
                 console.log('c>>>>>>>>>>>>>>>>>>>>', c)
-                courseMap[c.intro_video_unique_id] = c
+                courseMap[c.unique_id] = c
             })
 
             materials?.forEach((m: any) => {

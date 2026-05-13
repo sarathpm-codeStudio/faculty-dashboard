@@ -19,6 +19,7 @@ interface AuthState {
     logout: () => void
     setIsPending: (value: boolean) => void
     setNoProfile: (value: boolean) => void
+    setProfile: (profile: User) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -33,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
             logout: () => set({ isAuthenticated: false, user: null, token: null, isPending: false, noProfile: false }),
             setIsPending: (value) => set({ isPending: value }),
             setNoProfile: (value) => set({ noProfile: value }),
+            setProfile: (profile) => set({ user: profile }),
         }),
         { name: 'auth-storage' }
     )

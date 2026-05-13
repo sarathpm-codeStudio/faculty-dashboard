@@ -55,6 +55,7 @@ const LoginPage = () => {
                 toast.success('Signed in successfully')
                 navigate('/dashboard')
             } catch (err: unknown) {
+                console.log("err", err)
                 const message = err instanceof Error ? err.message : 'Sign in failed. Please try again.'
                 toast.error(message)
             } finally {

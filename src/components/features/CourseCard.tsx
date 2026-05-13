@@ -11,6 +11,7 @@ export type CourseCardProps = {
   duration: string
   students: string
   price: string
+  final_price: string
   originalPrice: string
   category?: string
   description?: string
@@ -30,6 +31,7 @@ const CourseCard = ({
   students,
   price,
   originalPrice,
+  final_price,
   category,
   description,
   selectable = false,
@@ -55,7 +57,7 @@ const CourseCard = ({
 
   return (
     <motion.div
-      className={`rounded-xl bg-white shadow-sm border overflow-hidden flex flex-col cursor-pointer transition-colors border-gray-100`}
+      className={`rounded-xl bg-white shadow-sm border overflow-hidden flex  h-[300px] flex-col cursor-pointer transition-colors border-gray-100`}
       whileHover={{ y: -5, boxShadow: '0 16px 32px rgba(0, 11, 96, 0.12)' }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
       onClick={() => onClick?.(id)}
@@ -77,13 +79,13 @@ const CourseCard = ({
         {category && (
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{category}</span>
-            {duration && <span className="text-[10px] text-gray-400 font-medium">{duration}</span>}
+            {/* {duration && <span className="text-[10px] text-gray-400 font-medium">{duration}</span>} */}
           </div>
         )}
 
         <Subheading className='text-[#000b60] font-bold'>{title}</Subheading>
 
-        {description ? (
+        {/* {description ? (
           <Paragraph className="text-gray-400 !text-xs mb-2">
             {description.length > 30 ? description.slice(0, 30) + '...' : description}
           </Paragraph>
@@ -98,12 +100,27 @@ const CourseCard = ({
               {students}
             </span>
           </div>
-        )}
+        )} */}
+
+        <div className='flex items-center justify-start gap-8 mb-1.5'>
+          <div className='flex items-center gap-1'>
+            <Clock size={12} />
+            <span className="text-[12px] text-gray-500 font-medium">{duration}</span>
+          </div>
+          <div className='flex items-center gap-1'>
+            <Users size={12} />
+            <span className="text-[12px] text-gray-500 font-medium">12K Students</span>
+          </div>
+        </div>
+
+        <div className='w-full h-[.5px] bg-gray-100' />
 
         <div className="flex items-center justify-between mt-auto">
-          <div className="flex items-center gap-1.5">
-            <Paragraph className='text-[#000b60] font-bold !text-[20px]'>{price}</Paragraph>
-            {!selectable && <span className="text-[11px] text-[#767683] line-through font-bold">{originalPrice}</span>}
+          <div className="flex items-center gap-5">
+            <Paragraph className='text-[#000b60] font-bold !text-[20px]'>
+              ₹
+              {final_price}</Paragraph>
+            {!selectable && <span className="text-[15px] text-[#767683] line-through font-bold "> ₹{price}</span>}
           </div>
 
           {!selectable && (
