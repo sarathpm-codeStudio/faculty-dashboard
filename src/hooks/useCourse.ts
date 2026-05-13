@@ -8,7 +8,6 @@ export const courseKeys = {
   detail: (id: string) => ['courses', 'detail', id] as const,
 }
 
-// ─── Queries ──────────────────────────────────────────
 
 export const useGetAllCourses = (filter: any, enabled = true) =>
   useQuery({
@@ -24,7 +23,6 @@ export const useGetCourseById = (id: string, enabled = true) =>
     enabled: !!id && enabled,
   })
 
-// ─── Mutations ────────────────────────────────────────
 
 export const useCreateCourseBasicDetails = () => {
   const qc = useQueryClient()
@@ -192,4 +190,12 @@ export const usePublishCourse = () => {
     },
   })
 }
+
+
+export const useGetAllFoldersInCourse = (courseId: string, enabled = true) =>
+  useQuery({
+    queryKey: ['course-folders', courseId],
+    queryFn: () => courseService.getAllFolders(courseId),
+    enabled,
+  })
 

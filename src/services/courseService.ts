@@ -106,6 +106,18 @@ export const courseService = {
       throw new Error(message)
     }
   },
+  getAllFolders: async (courseId: string): Promise<any> => {
+    try {
+      const { data } = await apiClient.get(`/courses/${courseId}/folders`)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
+
+
 
   createMaterial: async (courseId: string, payload: any): Promise<any> => {
     try {

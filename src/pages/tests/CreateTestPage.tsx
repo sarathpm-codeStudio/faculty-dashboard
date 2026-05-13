@@ -7,8 +7,8 @@ import Step2AddQuestions from './Step2AddQuestions'
 import type { TestFormData } from './Step1GeneralInfo'
 
 const emptyForm = (): TestFormData => ({
-  title: '', course: '', chapter: '',
-  testType: '', totalMarks: '25', duration: '30',
+  title: '', course: '', module: '',
+  testType: '', totalMarks: '', duration: '',
   instructions: '',
 })
 
@@ -18,8 +18,18 @@ const CreateTestPage = () => {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<TestFormData>(emptyForm)
+  const [isDraft, setIsDraft] = useState(false)
 
-  const update = (f: Partial<TestFormData>) => setForm(prev => ({ ...prev, ...f }))
+
+
+  const update = (values: TestFormData) => {
+    setForm(values)
+
+    // call api 
+    console.log("form", values)
+    setStep(2)
+
+  }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto scrollbar-hide gap-5 pb-6">
@@ -47,6 +57,8 @@ const CreateTestPage = () => {
           update={update}
           onNext={() => setStep(2)}
           onSaveDraft={() => navigate('/tests')}
+          isSubmiting={false}
+          setIsDraft={setIsDraft}
         />
       )}
       {step === 2 && (
