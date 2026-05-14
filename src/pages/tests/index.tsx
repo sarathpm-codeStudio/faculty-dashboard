@@ -103,7 +103,7 @@ const TestsPage = () => {
 
   const { data: tests, isLoading: testsLoading } = useGetAllTests({
     page: 1,
-    limit: 10,
+    limit: 1,
     search: '',
     filter: "all"
   })
