@@ -62,6 +62,7 @@ const App = () => {
               <Route path="/bundles/create" element={<CreateBundlePage />} />
               <Route path="/tests" element={<TestsPage />} />
               <Route path="/tests/create" element={<CreateTestPage />} />
+              <Route path="/tests/:id/edit" element={<CreateTestPage />} />
               <Route path="/tests/:id" element={<TestDetailPage />} />
               <Route path="/students" element={<StudentsPage />} />
               <Route path="/students/:id" element={<StudentDetailPage />} />
