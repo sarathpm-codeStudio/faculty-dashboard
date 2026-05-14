@@ -7,6 +7,7 @@ import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import Button from '@/components/ui/Button'
 import { IoAddCircleOutline } from "react-icons/io5";
+import { useGetAllTests } from '@/hooks/testHooks';
 
 
 type Test = {
@@ -97,6 +98,18 @@ const TestsPage = () => {
   const [search, setSearch] = useState('')
   const [rangeLabel, setRangeLabel] = useState('')
 
+
+  // query
+
+  const { data: tests, isLoading: testsLoading } = useGetAllTests({
+    page: 1,
+    limit: 10,
+    search: '',
+    filter: "all"
+  })
+
+  console.log("tests", tests)
+
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 800)
     return () => clearTimeout(t)
@@ -111,7 +124,7 @@ const TestsPage = () => {
   const draftCount = MOCK_TESTS.filter(t => t.status === 'Draft').length
   const totalAttempts = MOCK_TESTS.reduce((s, t) => s + t.attempts, 0)
 
-  if (loading) {
+  if (testsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Spinner label="Loading tests..." />

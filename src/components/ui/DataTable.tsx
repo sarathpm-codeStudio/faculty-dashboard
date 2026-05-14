@@ -12,7 +12,7 @@ export type TableColumn<T> = {
 type DataTableProps<T> = {
   columns: TableColumn<T>[]
   data: T[]
-  defaultPageSize?: number
+  defaultPageSize: number
   className?: string
   hidePagination?: boolean
   onRangeChange?: (start: number, end: number, total: number) => void
@@ -21,7 +21,7 @@ type DataTableProps<T> = {
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50]
 
-function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', hidePagination = false, onRangeChange, onRowClick }: DataTableProps<T>) {
+function DataTable<T>({ columns, data, defaultPageSize, className = '', hidePagination = false, onRangeChange, onRowClick }: DataTableProps<T>) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(defaultPageSize)
 
@@ -109,11 +109,10 @@ function DataTable<T>({ columns, data, defaultPageSize = 10, className = '', hid
                 <button
                   key={p}
                   onClick={() => goTo(p as number)}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors ${
-                    page === p
-                      ? 'bg-[#000B60] text-white'
-                      : 'border border-gray-200 text-[#767683] hover:bg-gray-50'
-                  }`}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors ${page === p
+                    ? 'bg-[#000B60] text-white'
+                    : 'border border-gray-200 text-[#767683] hover:bg-gray-50'
+                    }`}
                 >
                   {p}
                 </button>

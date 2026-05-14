@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
-import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft } from '@phosphor-icons/react'
+import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft, ExamIcon } from '@phosphor-icons/react'
 import { ArrowRight, ChevronRight, Download, FileText as FilePdfIcon, Home, Image as LucideImage, Link as LinkIcon, Loader2, MoreVertical, Pencil, StickyNote, Trash2, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import { storageService } from '@/services'
 import { Button, ConfirmDeleteModal, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
 import type { CourseFormData, TreeNode, FolderNode, ContentNode, ContentKind } from './index'
-import { IoAddCircleOutline } from 'react-icons/io5'
+import { IoAddCircleOutline, } from 'react-icons/io5'
 import { FaFolder } from 'react-icons/fa'
 import { MdVideoLibrary } from 'react-icons/md'
 import { BsPencilSquare } from 'react-icons/bs'
@@ -74,7 +74,7 @@ const rowVariants: Variants = {
   exit: { opacity: 0, y: -10, transition: { duration: 0.18 } },
 }
 
-type MaterialDbType = 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES' | 'LINK'
+type MaterialDbType = 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES' | 'LINK' | 'TEST'
 
 const MATERIAL_TYPE_META: Record<MaterialDbType, { label: string; icon: React.ReactNode; iconBg: string; iconColor: string }> = {
   VIDEO: { label: 'Video', icon: <VideoIcon size={16} />, iconBg: 'bg-[#E8EBFF]', iconColor: 'text-[#000B60]' },
@@ -82,6 +82,7 @@ const MATERIAL_TYPE_META: Record<MaterialDbType, { label: string; icon: React.Re
   IMAGE: { label: 'Image', icon: <LucideImage size={16} />, iconBg: 'bg-[#E5F6EA]', iconColor: 'text-[#1F9D55]' },
   NOTES: { label: 'Notes', icon: <StickyNote size={16} />, iconBg: 'bg-[#FFF6DC]', iconColor: 'text-[#B7791F]' },
   LINK: { label: 'Link', icon: <LinkIcon size={16} />, iconBg: 'bg-[#E0F1FB]', iconColor: 'text-[#1A7EBE]' },
+  TEST: { label: 'Test', icon: <ExamIcon size={16} />, iconBg: 'bg-[#FFF6DC]', iconColor: 'text-[#B7791F]' },
 }
 
 // ── Upload box (mirrors Step1 intro-video uploader) ──────────────────────────
@@ -404,6 +405,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     IMAGE: 'image',
     NOTES: 'test',
     LINK: 'document',
+    TEST: 'test',
   }
 
   const openEditMaterialModal = (material: any) => {
@@ -1026,103 +1028,105 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       </Modal>
 
       {/* ── Material Preview Modal ── */}
-      {previewItem && (() => {
-        const dbType = (previewItem.type as MaterialDbType) || 'PDF'
-        const meta = MATERIAL_TYPE_META[dbType] ?? MATERIAL_TYPE_META.PDF
-        const fileUrl: string | undefined = previewItem.file_url
-        const assetId: string | undefined = previewItem.video_asset_id
-        const orgId = import.meta.env.VITE_TPSTREAMS_ORG_ID
-        const accessToken = import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN
-        const videoEmbed = assetId
-          ? `https://app.tpstreams.com/embed/${orgId}/${assetId}/?access_token=${accessToken}`
-          : null
+      {
+        previewItem && (() => {
+          const dbType = (previewItem.type as MaterialDbType) || 'PDF'
+          const meta = MATERIAL_TYPE_META[dbType] ?? MATERIAL_TYPE_META.PDF
+          const fileUrl: string | undefined = previewItem.file_url
+          const assetId: string | undefined = previewItem.video_asset_id
+          const orgId = import.meta.env.VITE_TPSTREAMS_ORG_ID
+          const accessToken = import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN
+          const videoEmbed = assetId
+            ? `https://app.tpstreams.com/embed/${orgId}/${assetId}/?access_token=${accessToken}`
+            : null
 
-        return (
-          <Modal
-            open={!!previewItem}
-            onClose={() => setPreviewItem(null)}
-            title={previewItem.title || meta.label}
-            maxWidth="max-w-4xl"
-            footer={
-              <>
-                {fileUrl && (
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#000B60] hover:underline"
-                  >
-                    <Download size={14} /> Open in new tab
-                  </a>
+          return (
+            <Modal
+              open={!!previewItem}
+              onClose={() => setPreviewItem(null)}
+              title={previewItem.title || meta.label}
+              maxWidth="max-w-4xl"
+              footer={
+                <>
+                  {fileUrl && (
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#000B60] hover:underline"
+                    >
+                      <Download size={14} /> Open in new tab
+                    </a>
+                  )}
+                  <Button variant="primary" className='!h-10'
+                    onClick={() => setPreviewItem(null)}>Close</Button>
+                </>
+              }
+            >
+              <div className="flex items-center gap-3 -mt-1 mb-2">
+                <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
+                  {meta.icon}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-700 truncate">{previewItem.title}</p>
+                  <p className="text-xs text-gray-400">{meta.label}</p>
+                </div>
+              </div>
+              <div className="bg-[#F8F9FB] rounded-xl overflow-hidden flex items-center justify-center" style={{ minHeight: 480 }}>
+                {dbType === 'IMAGE' && fileUrl && (
+                  <img src={fileUrl} alt={previewItem.title} className="max-h-[70vh] w-auto object-contain" />
                 )}
-                <Button variant="primary" className='!h-10'
-                  onClick={() => setPreviewItem(null)}>Close</Button>
-              </>
-            }
-          >
-            <div className="flex items-center gap-3 -mt-1 mb-2">
-              <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
-                {meta.icon}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-700 truncate">{previewItem.title}</p>
-                <p className="text-xs text-gray-400">{meta.label}</p>
-              </div>
-            </div>
-            <div className="bg-[#F8F9FB] rounded-xl overflow-hidden flex items-center justify-center" style={{ minHeight: 480 }}>
-              {dbType === 'IMAGE' && fileUrl && (
-                <img src={fileUrl} alt={previewItem.title} className="max-h-[70vh] w-auto object-contain" />
-              )}
 
-              {dbType === 'PDF' && fileUrl && (
-                <iframe
-                  src={fileUrl}
-                  title={previewItem.title}
-                  className="w-full h-[70vh] border-0 bg-white"
-                />
-              )}
+                {dbType === 'PDF' && fileUrl && (
+                  <iframe
+                    src={fileUrl}
+                    title={previewItem.title}
+                    className="w-full h-[70vh] border-0 bg-white"
+                  />
+                )}
 
-              {dbType === 'VIDEO' && videoEmbed && (() => {
-                const blocked = getVideoBlockedMessage(previewItem.video_uploading_status)
-                if (blocked) {
+                {dbType === 'VIDEO' && videoEmbed && (() => {
+                  const blocked = getVideoBlockedMessage(previewItem.video_uploading_status)
+                  if (blocked) {
+                    return (
+                      <div className="flex flex-col items-center gap-2 py-12 px-6 text-center">
+                        <Loader2 size={22} className="text-[#000B60] animate-spin" />
+                        <p className="text-sm font-semibold text-[#000B60]">{blocked}</p>
+                      </div>
+                    )
+                  }
                   return (
-                    <div className="flex flex-col items-center gap-2 py-12 px-6 text-center">
-                      <Loader2 size={22} className="text-[#000B60] animate-spin" />
-                      <p className="text-sm font-semibold text-[#000B60]">{blocked}</p>
+                    <div className="w-full">
+                      <VideoPlayer src={videoEmbed} />
                     </div>
                   )
-                }
-                return (
-                  <div className="w-full">
-                    <VideoPlayer src={videoEmbed} />
+                })()}
+
+                {dbType === 'LINK' && fileUrl && (
+                  <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
+                    <LinkIcon size={32} className="text-[#1A7EBE]" />
+                    <a
+                      href={fileUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-semibold text-[#000B60] hover:underline break-all"
+                    >
+                      {fileUrl}
+                    </a>
                   </div>
-                )
-              })()}
+                )}
 
-              {dbType === 'LINK' && fileUrl && (
-                <div className="flex flex-col items-center gap-3 py-12 px-6 text-center">
-                  <LinkIcon size={32} className="text-[#1A7EBE]" />
-                  <a
-                    href={fileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm font-semibold text-[#000B60] hover:underline break-all"
-                  >
-                    {fileUrl}
-                  </a>
-                </div>
-              )}
-
-              {(dbType === 'NOTES' || (!fileUrl && !videoEmbed)) && (
-                <div className="flex flex-col items-center gap-2 py-12 px-6 text-center">
-                  <StickyNote size={28} className="text-gray-300" />
-                  <p className="text-sm text-gray-500">No preview available for this material.</p>
-                </div>
-              )}
-            </div>
-          </Modal>
-        )
-      })()}
+                {(dbType === 'NOTES' || (!fileUrl && !videoEmbed)) && (
+                  <div className="flex flex-col items-center gap-2 py-12 px-6 text-center">
+                    <StickyNote size={28} className="text-gray-300" />
+                    <p className="text-sm text-gray-500">No preview available for this material.</p>
+                  </div>
+                )}
+              </div>
+            </Modal>
+          )
+        })()
+      }
 
       <ConfirmDeleteModal
         open={!!deleteTarget}
@@ -1132,7 +1136,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         title={`Delete ${deleteTarget?.item_type === 'folder' ? 'Folder' : 'Material'}`}
         itemName={deleteTarget?.title}
       />
-    </div>
+    </div >
   )
 }
 

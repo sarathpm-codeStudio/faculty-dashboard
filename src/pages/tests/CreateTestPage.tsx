@@ -5,6 +5,10 @@ import { Heading, Paragraph } from '@/components/ui'
 import Step1GeneralInfo from './Step1GeneralInfo'
 import Step2AddQuestions from './Step2AddQuestions'
 import type { TestFormData } from './Step1GeneralInfo'
+import { generateUniqueId } from '@/utils/helper/numberGenarator'
+import { useCreateTest } from '@/hooks/testHooks'
+import { toast } from 'sonner'
+
 
 const emptyForm = (): TestFormData => ({
   title: '', course: '', module: '',
@@ -21,12 +25,30 @@ const CreateTestPage = () => {
   const [isDraft, setIsDraft] = useState(false)
 
 
+  // mutation
+  const { mutateAsync: createTest, isPending: isCreatingTest } = useCreateTest()
 
-  const update = (values: TestFormData) => {
+
+
+
+  const update = async (values: TestFormData) => {
     setForm(values)
+    console.log("values", values)
+    // genarate unique id for test 
+    const unique_id = generateUniqueId()
+
+    const payload = {
+      ...values,
+      unique_id,
+    }
 
     // call api 
-    console.log("form", values)
+    const { data, error } = await createTest(payload)
+    if (error) {
+      toast.error(error.message)
+      return
+    }
+    toast.success("Add questions to this test")
     setStep(2)
 
   }
@@ -57,7 +79,7 @@ const CreateTestPage = () => {
           update={update}
           onNext={() => setStep(2)}
           onSaveDraft={() => navigate('/tests')}
-          isSubmiting={false}
+          isSubmiting={isCreatingTest}
           setIsDraft={setIsDraft}
         />
       )}
