@@ -1,7 +1,7 @@
 
 
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, MoreVertical, CheckCircle2, FileText, BarChart2, SlidersHorizontal, Download } from 'lucide-react'
@@ -12,6 +12,7 @@ import Button from '@/components/ui/Button'
 import { IoAddCircleOutline } from "react-icons/io5"
 import { useGetAllTests } from '@/hooks/testHooks'
 import { timeAgo } from '@/utils/helper/formatDate'
+import ActionsMenu from '@/components/features/ActionBtn'
 
 type Test = {
   id: number
@@ -37,6 +38,20 @@ const TestsPage = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(5)
   const [rangeLabel, setRangeLabel] = useState('')
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
 
   const COLUMNS: TableColumn<any>[] = [
@@ -82,15 +97,31 @@ const TestsPage = () => {
         </span>
       ),
     },
+    // {
+    //   key: 'actions',
+    //   header: 'Actions',
+    //   headerClassName: 'text-right',
+    //   cellClassName: 'text-right',
+    //   render: (row) => (
+    //     <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+    //       <MoreVertical size={16} className="text-[#767683]" />
+    //     </button>
+
+
+    //   ),
+    // },
     {
       key: 'actions',
       header: 'Actions',
       headerClassName: 'text-right',
       cellClassName: 'text-right',
-      render: (row) => (
-        <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-          <MoreVertical size={16} className="text-[#767683]" />
-        </button>
+      render: row => (
+        <ActionsMenu
+          id={row.id}
+          onViewAnalytics={(id) => navigate(`/tests/${id}/analytics`)}
+          editPath={`/tests/${row.id}/edit`}         // ← dynamic per row
+          onDelete={(id) => console.log('delete', id)} // replace with your delete handler
+        />
       ),
     },
   ]

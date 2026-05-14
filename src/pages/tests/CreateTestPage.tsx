@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Heading, Paragraph } from '@/components/ui'
 import Step1GeneralInfo from './Step1GeneralInfo'
 import Step2AddQuestions from './Step2AddQuestions'
 import type { TestFormData } from './Step1GeneralInfo'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
-import { useCreateTest } from '@/hooks/testHooks'
+import { useCreateTest, useGetTestById, useUpdateTest } from '@/hooks/testHooks'
 import { toast } from 'sonner'
 
 
@@ -19,37 +19,75 @@ const emptyForm = (): TestFormData => ({
 const BREADCRUMBS = ['Create New', 'Add Questions']
 
 const CreateTestPage = () => {
+
+  const { id } = useParams()
+
+
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<TestFormData>(emptyForm)
   const [isDraft, setIsDraft] = useState(false)
+  const [testId, setTestId] = useState<string>("")
+
 
 
   // mutation
   const { mutateAsync: createTest, isPending: isCreatingTest } = useCreateTest()
+  const { mutateAsync: updateTest, isPending: isUpdatingTest } = useUpdateTest()
+
+  // query
+  const { data: testData, isLoading: isFetchingTest } = useGetTestById(id, !!id)
 
 
 
 
   const update = async (values: TestFormData) => {
-    setForm(values)
-    console.log("values", values)
-    // genarate unique id for test 
-    const unique_id = generateUniqueId()
 
-    const payload = {
-      ...values,
-      unique_id,
-    }
+    if (id) {
+      setTestId(id)
 
-    // call api 
-    const { data, error } = await createTest(payload)
-    if (error) {
-      toast.error(error.message)
-      return
+      // edit test basic details
+      setForm(values)
+      console.log("values", values)
+
+      const payload = {
+        ...values
+      }
+
+      // call api 
+      const { data, error } = await updateTest({ id, payload })
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      toast.success("Test updated successfully")
+      setStep(2)
+
+    } else {
+
+      // create test basic details
+      setForm(values)
+      console.log("values", values)
+      // genarate unique id for test 
+      const unique_id = generateUniqueId()
+
+      const payload = {
+        ...values,
+        unique_id,
+      }
+
+      // call api 
+      const { data, error } = await createTest(payload)
+      console.log("data", data)
+      setTestId(data?.id)
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      toast.success("Add questions to this test")
+      setStep(2)
+
     }
-    toast.success("Add questions to this test")
-    setStep(2)
 
   }
 
@@ -79,8 +117,9 @@ const CreateTestPage = () => {
           update={update}
           onNext={() => setStep(2)}
           onSaveDraft={() => navigate('/tests')}
-          isSubmiting={isCreatingTest}
+          isSubmiting={isCreatingTest || isUpdatingTest}
           setIsDraft={setIsDraft}
+          testData={testData}
         />
       )}
       {step === 2 && (
@@ -88,6 +127,7 @@ const CreateTestPage = () => {
           onPublish={() => navigate('/tests')}
           onSaveDraft={() => navigate('/tests')}
           onBack={() => setStep(1)}
+          testId={testId}
         />
       )}
     </div>

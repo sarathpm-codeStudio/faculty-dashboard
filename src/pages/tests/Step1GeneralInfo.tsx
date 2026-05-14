@@ -27,6 +27,7 @@ interface Props {
   onSaveDraft: () => void
   isSubmiting: boolean
   setIsDraft: (isDraft: boolean) => void
+  testData: any
 }
 
 // const courseOptions = [{ value: 'math301', label: 'Mathematics 301' }, { value: 'taxation', label: 'Taxation' }, { value: 'biz_laws', label: 'Business Laws' }]
@@ -34,7 +35,7 @@ const testTypeOptions = [{ value: 'final', label: 'Final Examination' }, { value
 const marksOptions = [{ value: '', label: 'Select Marks' }, { value: '25', label: '25' }, { value: '50', label: '50' }, { value: '100', label: '100' }]
 const durationOptions = [{ value: '', label: 'Select Duration' }, { value: '30', label: '30 mins' }, { value: '60', label: '1 hour' }, { value: '90', label: '1h 30 mins' }, { value: '120', label: '2 hours' }]
 
-const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setIsDraft }: Props) => {
+const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setIsDraft, testData }: Props) => {
 
 
 
@@ -42,7 +43,9 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
   const [moduleOptions, setModuleOptions] = useState<{ value: string; label: string }[]>([])
   const [courseId, setCourseId] = useState<string>("")
   const [moduleId, setModuleId] = useState<string>("")
+  const [isEdit, setIsEdit] = useState<boolean>(false)
   const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>("next")
+  const [testId, setTestId] = useState<string>("")
 
 
   // query
@@ -64,6 +67,25 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
       setModuleOptions(folders.data.map((folder: any) => ({ value: folder.id, label: folder.title })))
     }
   }, [folders])
+
+  useEffect(() => {
+    if (testData) {
+      setIsEdit(true)
+      formik.setValues({
+        title: testData?.data?.title,
+        course: testData?.data?.course_id,
+        module: testData?.data?.module_id,
+        testType: testData?.data?.type,
+        totalMarks: testData?.data?.total_marks,
+        duration: testData?.data?.duration_minutes,
+        instructions: testData?.data?.instructions,
+      })
+      if (testData?.data?.course_id) {
+        setCourseId(testData?.data?.course_id)
+      }
+      console.log("testData", testData)
+    }
+  }, [testData])
 
   console.log("test page", courses)
 
@@ -112,6 +134,7 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
                 setModuleId("")
                 formik.setFieldValue('course', e.target.value)
               }}
+              disabled={isEdit}
               error={formik.touched.course && formik.errors.course ? formik.errors.course : undefined}
             />
 
@@ -120,6 +143,7 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
               options={moduleOptions}
               placeholder="Select module"
               value={formik.values.module}
+              disabled={isEdit}
               onChange={e => {
                 setModuleId(e.target.value)
                 formik.setFieldValue('module', e.target.value)

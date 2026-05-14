@@ -20,3 +20,21 @@ export const useGetAllTests = (payload: any) => {
     })
 }
 
+export const useGetTestById = (id: any, isEnabled: boolean) => {
+    return useQuery({
+        queryKey: ['test', id],
+        queryFn: () => testService.getTestById(id),
+        enabled: isEnabled,
+    })
+}
+
+export const useUpdateTest = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({ id, payload }: { id: string, payload: any }) => testService.updateTest(id, payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tests'] })
+        },
+    })
+}
+

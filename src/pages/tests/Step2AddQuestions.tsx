@@ -19,6 +19,7 @@ interface Props {
   onPublish: () => void
   onSaveDraft: () => void
   onBack: () => void
+  testId: string
 }
 
 const questionTypeOptions = [
@@ -38,8 +39,8 @@ const INITIAL_QUESTIONS: Question[] = [
   { id: 2, text: 'Explain the fundamental theorem of calculus in your own words.', type: 'short', marks: 10, optionA: '', optionB: '', optionC: '', optionD: '' },
 ]
 
-const Step2AddQuestions = ({ onPublish, onSaveDraft, onBack }: Props) => {
-  const [questions, setQuestions] = useState<Question[]>(INITIAL_QUESTIONS)
+const Step2AddQuestions = ({ onPublish, onSaveDraft, onBack, testId }: Props) => {
+  const [questions, setQuestions] = useState<Question[]>([])
   const [randomize, setRandomize] = useState(false)
   const [form, setForm] = useState<Omit<Question, 'id'>>({
     text: '', type: 'mcq', marks: 5,
