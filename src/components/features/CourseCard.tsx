@@ -83,7 +83,7 @@ const CourseCard = ({
           </div>
         )}
 
-        <Subheading className='text-[#000b60] font-bold'>{title}</Subheading>
+        <Subheading className='text-[#000b60] font-bold'>{title.length > 20 ? title.slice(0, 20) + '...' : title}</Subheading>
 
         {/* {description ? (
           <Paragraph className="text-gray-400 !text-xs mb-2">

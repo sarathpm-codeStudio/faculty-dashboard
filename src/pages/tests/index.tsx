@@ -10,9 +10,10 @@ import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import Button from '@/components/ui/Button'
 import { IoAddCircleOutline } from "react-icons/io5"
-import { useGetAllTests } from '@/hooks/testHooks'
+import { useGetAllTests, useDeleteTest } from '@/hooks/testHooks'
 import { timeAgo } from '@/utils/helper/formatDate'
 import ActionsMenu from '@/components/features/ActionBtn'
+import { toast } from 'sonner'
 
 type Test = {
   id: number
@@ -52,6 +53,28 @@ const TestsPage = () => {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+
+  // mutation
+  const { mutateAsync: deleteTest, isPending: isDeletingTest } = useDeleteTest()
+
+
+  const handleDeleteTest = async (id: any) => {
+    try {
+      toast.loading("Deleting test...")
+      const { data, error } = await deleteTest(id)
+      if (error) {
+        toast.error(error.message)
+        return
+      }
+      toast.success('Test deleted successfully')
+    } catch (error: any) {
+      toast.error(error.message)
+    }
+    finally {
+      toast.dismiss()
+    }
+  }
 
 
   const COLUMNS: TableColumn<any>[] = [
@@ -120,7 +143,7 @@ const TestsPage = () => {
           id={row.id}
           onViewAnalytics={(id) => navigate(`/tests/${id}/analytics`)}
           editPath={`/tests/${row.id}/edit`}         // ← dynamic per row
-          onDelete={(id) => console.log('delete', id)} // replace with your delete handler
+          onDelete={(id) => handleDeleteTest(id)} // replace with your delete handler
         />
       ),
     },

@@ -17,6 +17,7 @@ import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder, 
 import { VideoPlayer } from '@/components/features'
 import { toast } from 'sonner'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
+import { useNavigate } from 'react-router-dom'
 
 
 interface Props {
@@ -210,6 +211,7 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
 
 const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
+  const navigate = useNavigate()
 
   // mutation
   const { mutateAsync: createFolder, isPending: isCreatingFolder } = useCreateFolder(courseId)
@@ -733,7 +735,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                     key={node.id}
                     variants={rowVariants}
                     layout
-                    onClick={() => setPreviewItem(node)}
+                    onClick={node?.type === "TEST" ? () => { } : () => setPreviewItem(node)}
                     className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#000B60]/30 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -759,6 +761,17 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                             )
                           }
 
+                          {
+                            node?.type === "TEST" && (
+                              <span className="text-xs text-gray-500 mt-0.5 ml-1">
+                                {
+                                  node?.material_status === "READY" ? "" : <span className="text-red-500">Draft</span>
+
+                                }
+                              </span>
+                            )
+                          }
+
                         </p>
                       </div>
                     </div>
@@ -778,7 +791,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                           >
                             <button
                               type="button"
-                              onClick={() => handleEditItem(node)}
+                              onClick={node?.type === "TEST" ? () => navigate("/tests") : () => handleEditItem(node)}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-[#F2F4F6]"
                             >
                               <Pencil size={14} className="text-[#000B60]" /> Edit
@@ -819,7 +832,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               <button
                 key={kind}
                 type="button"
-                onClick={() => openContentModal(kind)}
+                onClick={kind === "test" ? () => navigate("/tests/create") : () => openContentModal(kind)}
                 className="flex flex-col items-center gap-2 px-3 py-4 bg-white rounded-xl border border-gray-100 text-xs font-semibold text-[#000B60] hover:border-[#000B60] transition-colors"
               >
                 <span className="text-[#000B60]">{CONTENT_ICONS[kind]}</span>

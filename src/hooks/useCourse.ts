@@ -159,6 +159,8 @@ export const useDeleteMaterial = (courseId: string) => {
     mutationFn: (materialId: string) => courseService.deleteMaterial(courseId, materialId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['content', courseId] })
+      qc.invalidateQueries({ queryKey: ['tests'] })
+
     },
   })
 }

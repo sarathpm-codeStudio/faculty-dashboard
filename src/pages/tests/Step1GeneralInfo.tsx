@@ -45,7 +45,6 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
   const [moduleId, setModuleId] = useState<string>("")
   const [isEdit, setIsEdit] = useState<boolean>(false)
   const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>("next")
-  const [testId, setTestId] = useState<string>("")
 
 
   // query

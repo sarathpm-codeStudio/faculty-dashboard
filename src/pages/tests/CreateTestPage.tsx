@@ -124,8 +124,8 @@ const CreateTestPage = () => {
       )}
       {step === 2 && (
         <Step2AddQuestions
-          onPublish={() => navigate('/tests')}
-          onSaveDraft={() => navigate('/tests')}
+          // onPublish={() => navigate('/tests')}
+          // onSaveDraft={() => navigate('/tests')}
           onBack={() => setStep(1)}
           testId={testId}
         />
