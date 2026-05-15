@@ -48,7 +48,7 @@ const CreateTestPage = () => {
 
       // edit test basic details
       setForm(values)
-      console.log("values", values)
+      console.log("values>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", values)
 
       const payload = {
         ...values
