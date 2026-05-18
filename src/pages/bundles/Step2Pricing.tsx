@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ImagePlus, ArrowRight, Loader2 } from 'lucide-react'
 import { RiCoupon2Fill } from 'react-icons/ri'
 import { Input, Textarea, Subheading, Paragraph } from '@/components/ui'
@@ -8,15 +8,17 @@ import { bundleValidator } from '@/utils/validator/bundle.validator'
 import { UploadBox } from '@/components/features/UploadBox'
 import { storageService } from '@/services'
 import { toast } from 'sonner'
-import { useCreateBundle } from '@/hooks/useBundle'
+import { useCreateBundle, useUpdateBundle } from '@/hooks/useBundle'
 
 interface Props {
   sumOfCourses: number
   selectedCourses: any[]
   onPublish: () => void
+  bundleId?: string
+  bundle?: any
 }
 
-const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish }: Props) => {
+const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bundle }: Props) => {
   const [enableCoupons, setEnableCoupons] = useState(false)
   const [coverImage, setCoverImage] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
@@ -27,6 +29,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish }: Props) => {
 
   // mutation
   const { mutateAsync: createBundle, isPending: createBundleLoading } = useCreateBundle()
+  const { mutateAsync: updateBundle, isPending: updateBundleLoading } = useUpdateBundle()
 
   const initialValues = {
     title: '',
@@ -34,6 +37,19 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish }: Props) => {
     discount: '0',
     coverImage: null,
   }
+
+  useEffect(() => {
+    if (bundle) {
+      formik.setValues({
+        title: bundle?.data?.title,
+        description: bundle?.data?.description,
+        discount: bundle?.data?.discount,
+        coverImage: bundle?.data?.image_url,
+      })
+      setEnableCoupons(bundle?.data?.enableCoupons)
+
+    }
+  }, [bundle])
 
 
   const formik = useFormik({
@@ -44,7 +60,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish }: Props) => {
         const payload = {
           title: values.title,
           description: values.description,
-          discount: values.discount,
+          discount: values.discount.toString(),
           coverImage: values.coverImage,
           courses: selectedCourses,
           enableCoupons: enableCoupons,
@@ -52,15 +68,33 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish }: Props) => {
           price: sumOfCourses,
           isDraft: isDraft,
         }
-        console.log("payload", payload)
-        const response = await createBundle(payload)
-        if (isDraft) {
-          toast.success("Bundle saved as draft")
+
+        if (bundleId) {
+
+          // edit bundle
+
+          try {
+            console.log("payload edit", payload)
+            const response = await updateBundle({ id: bundleId, payload })
+            toast.success("Course bundle updated successfully")
+            onPublish() // navigate to bundle list
+          } catch (error: any) {
+            toast.error(error.message)
+          }
+
+        } else {
+
+          console.log("payload", payload)
+          const response = await createBundle(payload)
+          if (isDraft) {
+            toast.success("Bundle saved as draft")
+            onPublish() // navigate to bundle list
+            return
+          }
+          toast.success("Course bundle published successfully")
           onPublish() // navigate to bundle list
-          return
         }
-        toast.success("Course bundle published successfully")
-        onPublish() // navigate to bundle list
+
       } catch (error: any) {
         toast.error(error.message)
       }
@@ -196,7 +230,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish }: Props) => {
         </div> */}
         <UploadBox
           accept="image/jpeg,image/png,image/webp"
-          preview={coverPreview}
+          preview={bundle?.data?.image_url || coverPreview}
           previewType="image"
           loading={coverUploading}
           icon={<ImagePlus size={20} />}
@@ -239,19 +273,50 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish }: Props) => {
         </div>
 
 
-        <Button variant="primary" disabled={createBundleLoading && !isDraft} type='submit' fullWidth onClick={() => formik.handleSubmit()}>
-          Publish Bundle {createBundleLoading && !isDraft && <Loader2 className="animate-spin" />}
-          <ArrowRight size={16} />
-        </Button>
-        <Button
-          variant="white"
-          fullWidth
-          type="submit"
-          disabled={createBundleLoading && isDraft}
-          onClick={() => { setIsDraft(true); formik.handleSubmit() }}>
-          Save as draft {createBundleLoading && isDraft && <Loader2 className="animate-spin" />}
-        </Button>
+        {
+          bundleId ? (
+            <Button variant="primary" disabled={updateBundleLoading} type='submit' fullWidth onClick={() => {
+              setIsDraft(false)
+              formik.handleSubmit()
+            }}>
+              Publish Bundle  {updateBundleLoading && <Loader2 className="animate-spin" />}
+              <ArrowRight size={16} />
+            </Button>)
+            : (<Button variant="primary" disabled={createBundleLoading && !isDraft} type='submit' fullWidth onClick={() => {
+              setIsDraft(false)
+              formik.handleSubmit()
+            }}>
+              Publish Bundle {createBundleLoading && !isDraft && <Loader2 className="animate-spin" />}
+              <ArrowRight size={16} />
+            </Button>)
+        }
+
+        {
+          bundleId ?
+            bundle?.data?.is_draft ? (
+              <Button
+                variant="white"
+                fullWidth
+                type="submit"
+                disabled={createBundleLoading && isDraft}
+                onClick={() => { setIsDraft(true); formik.handleSubmit() }}>
+                Save as draft {createBundleLoading && isDraft && <Loader2 className="animate-spin" />}
+              </Button>
+            ) :
+              <></>
+            :
+            <Button
+              variant="white"
+              fullWidth
+              type="submit"
+              disabled={createBundleLoading && isDraft}
+              onClick={() => { setIsDraft(true); formik.handleSubmit() }}>
+              Save as draft {createBundleLoading && isDraft && <Loader2 className="animate-spin" />}
+            </Button>
+        }
       </div>
+
+
     </div>
   )
 }

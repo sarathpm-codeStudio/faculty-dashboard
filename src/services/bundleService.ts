@@ -34,4 +34,14 @@ export const bundleService = {
             throw new Error(message)
         }
     },
+
+    updateBundle: async (id: string, data: any) => {
+        try {
+            const { data: response } = await apiClient.patch(`/bundle/${id}`, data)
+            return response
+        } catch (error: any) {
+            const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+            throw new Error(message)
+        }
+    },
 }

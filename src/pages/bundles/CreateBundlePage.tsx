@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Heading, Paragraph } from '@/components/ui'
 import Step1CourseSelection from './Step1CourseSelection'
 import Step2Pricing from './Step2Pricing'
+import { useGetBundleById } from '@/hooks/useBundle'
 
 const CreateBundlePage = () => {
   const navigate = useNavigate()
@@ -18,6 +19,11 @@ const CreateBundlePage = () => {
     setSumOfCourses(total)
     setStep(2)
   }
+
+  const { data: bundle, isLoading: bundleLoading } = useGetBundleById(id, !!id)
+
+
+
 
   return (
     <div className="flex flex-col h-full p-8 overflow-hidden">
@@ -41,8 +47,8 @@ const CreateBundlePage = () => {
       </Paragraph>
 
       <div className="flex-1 min-h-0">
-        {step === 1 && <Step1CourseSelection onNext={handleStep1Next} bundleId={id} />}
-        {step === 2 && <Step2Pricing sumOfCourses={sumOfCourses} selectedCourses={selectedCourses} onPublish={() => navigate('/bundles')} />}
+        {step === 1 && <Step1CourseSelection onNext={handleStep1Next} bundleId={id} bundle={bundle} bundleLoading={bundleLoading} />}
+        {step === 2 && <Step2Pricing sumOfCourses={sumOfCourses} selectedCourses={selectedCourses} bundleId={id} bundle={bundle} onPublish={() => navigate('/bundles')} />}
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, ArrowRight, Loader2 } from 'lucide-react'
 import { Subheading, Paragraph, Input, Spinner } from '@/components/ui'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
@@ -37,19 +37,27 @@ const ALL_COURSES: Course[] = [
 
 interface Props {
   onNext: (selectedIds: number[], total: number) => void
-  bundleId?: string
+  bundleId?: string,
+  bundle?: any,
+  bundleLoading?: boolean
 }
 
-const Step1CourseSelection = ({ onNext, bundleId }: Props) => {
+const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props) => {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<number[]>([])
 
-
   // query to get all courses
   const { data: courses, isLoading: coursesLoading } = useGetAllCourses(false, search, true)
-  const { data: bundle, isLoading: bundleLoading } = useGetBundleById(bundleId, !!bundleId)
 
-  console.log("bundle ", bundle)
+  // Pre-select courses when editing an existing bundle
+  useEffect(() => {
+    if (bundle?.data?.course_bundle_courses) {
+      const preSelectedIds = bundle.data.course_bundle_courses.map(
+        (item: any) => item.courses.id
+      )
+      setSelected(preSelectedIds)
+    }
+  }, [bundle])
 
 
   // const filtered = ALL_COURSES.filter(c =>
@@ -64,6 +72,7 @@ const Step1CourseSelection = ({ onNext, bundleId }: Props) => {
   const total = selectedCourses?.reduce((sum: any, c: any) => sum + c.final_price, 0)
 
   return (
+
     <div className="grid grid-cols-12 gap-6 h-full min-h-0">
       {/* ── Left ── */}
       <div className="col-span-8 flex flex-col gap-4 min-h-0">
@@ -83,7 +92,7 @@ const Step1CourseSelection = ({ onNext, bundleId }: Props) => {
 
           {
 
-            coursesLoading ? (
+            coursesLoading || bundleLoading ? (
               <div className="flex col-span-2 items-center justify-center h-[500px]">
                 {/* <Loader2 className="w-8 h-8 animate-spin" /> */}
                 <motion.div

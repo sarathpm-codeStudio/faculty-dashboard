@@ -33,6 +33,19 @@ export const useGetBundleById = (id: any, enabled = true) => {
     })
 }
 
+export const useUpdateBundle = () => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationKey: ['bundle'],
+        mutationFn: ({ id, payload }: { id: any, payload: any }) => bundleService.updateBundle(id, payload),
+        onSuccess: (_, { id }) => {
+            qc.invalidateQueries({ queryKey: ['my-courses-bundles'] })
+            qc.invalidateQueries({ queryKey: ['bundle-by-id', id] })
+        },
+    })
+}
+
+
 
 
 
