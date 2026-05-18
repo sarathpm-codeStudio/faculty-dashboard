@@ -101,7 +101,7 @@ const TestsPage = () => {
     {
       key: 'questions',
       header: 'Questions',
-      render: row => <span className="text-[#191c1e] text-sm font-medium">10</span>,
+      render: row => <span className="text-[#191c1e] text-sm font-medium">{row?.question_count}</span>,
     },
     {
       key: 'attempts',
@@ -185,7 +185,7 @@ const TestsPage = () => {
       <motion.div className="flex items-center justify-between" {...fadeUp(0.04)}>
         <div>
           <Heading className="text-[#000B60]">Tests</Heading>
-          <div className="flex items-center gap-1.5 mt-0.5 p-1 rounded-lg bg-[#A8EDFF]">
+          <div className="flex items-center gap-1.5 mt-0.5 p-2 rounded-lg bg-[#A8EDFF]">
             <Paragraph className="text-black font-bold !text-[12px]">
               Total Tests Created: {testsTotal}
             </Paragraph>
