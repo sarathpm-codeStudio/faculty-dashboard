@@ -6,13 +6,15 @@ import { PiStackFill } from 'react-icons/pi'
 
 export type BundleCardProps = {
   id: number | string
-  image?: string
+  image_url?: string
   title: string
   coursesCount: number
   students: string
   revenue: string
   price: string
+  final_price: string
   originalPrice: string
+  total_courses_count: number
   onViewAnalytics?: (id: number | string) => void
   onEdit?: (id: number | string) => void
   onDelete?: (id: number | string) => void
@@ -21,12 +23,14 @@ export type BundleCardProps = {
 
 const BundleCard = ({
   id,
-  image,
+  image_url,
   title,
   coursesCount,
   students,
   revenue,
   price,
+  final_price,
+  total_courses_count,
   originalPrice,
   onViewAnalytics,
   onEdit,
@@ -53,8 +57,8 @@ const BundleCard = ({
       transition={{ duration: 0.22, ease: 'easeOut' }}
       onClick={() => onClick?.(id)}
     >
-      {image ? (
-        <img src={image} alt={title} className="w-full h-44 object-cover" />
+      {image_url ? (
+        <img src={image_url} alt={title} className="w-full h-44 object-cover" />
       ) : (
         <div className="w-full h-44 bg-gradient-to-br from-[#BCC2FF] to-[#142283]" />
       )}
@@ -62,7 +66,7 @@ const BundleCard = ({
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center gap-1 text-[#00A6BF] text-xs font-semibold mb-2">
           <PiStackFill size={13} />
-          <Paragraph className='text-[#00A6BF] font-semibold'>{coursesCount} Courses Included</Paragraph>
+          <Paragraph className='text-[#00A6BF] font-semibold'>{total_courses_count || 0} Courses Included</Paragraph>
         </div>
 
         <Subheading className="text-[#000b60] font-bold mb-3">{title}</Subheading>
@@ -70,19 +74,19 @@ const BundleCard = ({
         <div className="flex  items-center justify-center gap-3 mb-4 bg-[#F2F4F6] rounded-lg px-3 py-2">
           <div className="flex-1">
             <p className="text-[10px] text-[#767683] font-semibold uppercase tracking-wide">Students</p>
-            <Paragraph className="text-sm font-bold text-[#000b60]">{students}</Paragraph>
+            <Paragraph className="text-sm font-bold text-[#000b60]">{students || "100K"}</Paragraph>
           </div>
           {/* <div className="w-px h-8 bg-gray-300" /> */}
           <div className="flex-1">
             <p className="text-[10px] text-[#767683] font-semibold uppercase tracking-wide">Revenue</p>
-            <Paragraph className="text-sm font-bold text-[#000b60]">{revenue}</Paragraph>
+            <Paragraph className="text-sm font-bold text-[#000b60]">₹{revenue || "10M"}</Paragraph>
           </div>
         </div>
 
         <div className="flex items-center justify-between mt-auto">
-          <div className="flex items-center gap-1.5">
-            <Subheading className="text-[#000b60] font-bold">{price}</Subheading>
-            <Paragraph className="text-[11px] text-[#767683] line-through font-bold">{originalPrice}</Paragraph>
+          <div className="flex items-center gap-5">
+            <Subheading className="text-[#000b60] font-bold"> ₹{final_price}</Subheading>
+            <Paragraph className="text-[11px] text-[#767683] line-through font-bold">₹{price}</Paragraph>
           </div>
 
           <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>

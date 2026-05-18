@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Search, ArrowRight } from 'lucide-react'
-import { Subheading, Paragraph, Input } from '@/components/ui'
+import { Search, ArrowRight, Loader2 } from 'lucide-react'
+import { Subheading, Paragraph, Input, Spinner } from '@/components/ui'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
+
 import Button from '@/components/ui/Button'
 import { CourseCard } from '@/components/features'
 import courseImg from '@/assets/images/cou1.png'
@@ -9,6 +11,9 @@ import courseImg3 from '@/assets/images/cou3.png'
 import courseImg4 from '@/assets/images/cou4.png'
 import courseImg5 from '@/assets/images/cou5.png'
 import courseImg6 from '@/assets/images/cou6.png'
+import { useGetAllCourses } from '@/hooks/index'
+import { useGetBundleById } from '@/hooks/useBundle'
+
 
 export type Course = {
   id: number
@@ -32,22 +37,31 @@ const ALL_COURSES: Course[] = [
 
 interface Props {
   onNext: (selectedIds: number[], total: number) => void
+  bundleId?: string
 }
 
-const Step1CourseSelection = ({ onNext }: Props) => {
+const Step1CourseSelection = ({ onNext, bundleId }: Props) => {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<number[]>([])
 
-  const filtered = ALL_COURSES.filter(c =>
-    c.title.toLowerCase().includes(search.toLowerCase()) ||
-    c.category.toLowerCase().includes(search.toLowerCase())
-  )
+
+  // query to get all courses
+  const { data: courses, isLoading: coursesLoading } = useGetAllCourses(false, search, true)
+  const { data: bundle, isLoading: bundleLoading } = useGetBundleById(bundleId, !!bundleId)
+
+  console.log("bundle ", bundle)
+
+
+  // const filtered = ALL_COURSES.filter(c =>
+  //   c.title.toLowerCase().includes(search.toLowerCase()) ||
+  //   c.category.toLowerCase().includes(search.toLowerCase())
+  // )
 
   const toggle = (id: number) =>
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
-  const selectedCourses = ALL_COURSES.filter(c => selected.includes(c.id))
-  const total = selectedCourses.reduce((sum, c) => sum + c.price, 0)
+  const selectedCourses: any = courses?.data?.filter((c: any) => selected.includes(c.id))
+  const total = selectedCourses?.reduce((sum: any, c: any) => sum + c.final_price, 0)
 
   return (
     <div className="grid grid-cols-12 gap-6 h-full min-h-0">
@@ -65,23 +79,43 @@ const Step1CourseSelection = ({ onNext }: Props) => {
 
         {/* Course grid */}
         <div className="grid grid-cols-2 gap-4 flex-1 min-h-0 overflow-y-auto pr-2 auto-rows-min scrollbar-hide">
-          {filtered.map(course => (
-            <CourseCard
-              key={course.id}
-              id={course.id}
-              image={course.image}
-              title={course.title}
-              duration={course.hours}
-              students=""
-              price={`₹${course.price.toLocaleString()}.00`}
-              originalPrice=""
-              category={course.category}
-              description={course.description}
-              selectable
-              selected={selected.includes(course.id)}
-              onClick={() => toggle(course.id)}
-            />
-          ))}
+
+
+          {
+
+            coursesLoading ? (
+              <div className="flex col-span-2 items-center justify-center h-[500px]">
+                {/* <Loader2 className="w-8 h-8 animate-spin" /> */}
+                <motion.div
+                  key="spinner"
+                  className="flex items-center justify-center min-h-[50vh] w-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Spinner size={44} label="Loading courses..." />
+                </motion.div>
+              </div>
+            ) :
+
+              courses?.data?.length === 0 ? (
+                <div className="flex col-span-2 items-center justify-center h-[500px]">
+                  <Paragraph className="text-gray-400 !text-xs text-center py-4">
+                    No courses found.
+                  </Paragraph>
+                </div>
+              ) : (
+                courses?.data?.map((course: any) => (
+                  <CourseCard
+                    {...course}
+                    selectable
+                    selected={selected.includes(course.id)}
+                    onClick={() => toggle(course.id)}
+                  />
+                ))
+              )
+          }
         </div>
       </div>
 
@@ -95,26 +129,26 @@ const Step1CourseSelection = ({ onNext }: Props) => {
             </span>
           </div>
 
-          {selectedCourses.length === 0 ? (
+          {selectedCourses?.length === 0 ? (
             <Paragraph className="text-gray-400 !text-xs text-center py-4">
               Select courses from the left to add them to your bundle.
             </Paragraph>
           ) : (
             <div className="flex flex-col gap-4">
-              {selectedCourses.map(c => (
+              {selectedCourses?.map((c: any) => (
                 <div key={c.id} className="flex bg-white rounded-xl p-5 items-start gap-3">
-                  <img src={c.image} alt={c.title} className="w-20 h-20 rounded-lg object-cover shrink-0" />
+                  <img src={c.cover_image} alt="img" className="w-20 h-20 rounded-lg object-contain shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-[#191c1e] truncate leading-tight">{c.title}</p>
                     <p className="text-[11px] text-gray-400 font-medium mt-0.5">{c.category}</p>
-                    <p className="text-xs text-[#000B60] font-bold mt-1">₹{c.price.toLocaleString()}.00</p>
+                    <p className="text-xs text-[#000B60] font-bold mt-1">₹{c.final_price.toLocaleString()}.00</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {selectedCourses.length > 0 && (
+          {selectedCourses?.length > 0 && (
             <div className="flex items-center justify-between pt-2">
               <Paragraph className="text-sm font-semibold text-gray-500">Total Courses</Paragraph>
               <span className="font-bold text-[#191c1e] text-sm">₹{total.toLocaleString()}.00</span>

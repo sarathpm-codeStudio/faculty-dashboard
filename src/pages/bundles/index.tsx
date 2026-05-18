@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { IoAddCircleOutline } from 'react-icons/io5'
 import Button from '../../components/ui/Button'
@@ -9,68 +9,13 @@ import { Heading, Spinner } from '@/components/ui'
 import courseImg from '@/assets/images/cou1.png'
 import courseImg2 from '@/assets/images/cou2.png'
 import courseImg3 from '@/assets/images/cou3.png'
+import { useGetAllBundles } from "@/hooks/useBundle"
 
 type Bundle = Omit<BundleCardProps, 'onViewAnalytics' | 'onEdit' | 'onDelete'> & {
   status: 'published' | 'draft'
 }
 
-const MOCK_BUNDLES: Bundle[] = [
-  {
-    id: 1,
-    title: 'CMA Intermediate Pro Pack',
-    image: courseImg,
-    coursesCount: 5,
-    students: '2.4k',
-    revenue: '₹12,040',
-    price: '₹299.00',
-    originalPrice: '₹499.00',
-    status: 'published',
-  },
-  {
-    id: 2,
-    title: 'CA Foundation Smart Bundle',
-    image: courseImg2,
-    coursesCount: 8,
-    students: '0',
-    revenue: '₹0.00',
-    price: '₹549.00',
-    originalPrice: '₹899.00',
-    status: 'published',
-  },
-  {
-    id: 3,
-    title: 'CS Executive Complete Bundle',
-    image: courseImg3,
-    coursesCount: 12,
-    students: '1.2k',
-    revenue: '₹45,200',
-    price: '₹899.00',
-    originalPrice: '₹1,200.00',
-    status: 'published',
-  },
-  {
-    id: 4,
-    title: 'Tax Practitioner Starter Pack',
-    image: courseImg,
-    coursesCount: 4,
-    students: '0',
-    revenue: '₹0.00',
-    price: '₹199.00',
-    originalPrice: '₹399.00',
-    status: 'draft',
-  },
-  {
-    id: 5,
-    title: 'Advanced Auditing Bundle',
-    image: courseImg2,
-    coursesCount: 6,
-    students: '0',
-    revenue: '₹0.00',
-    price: '₹449.00',
-    originalPrice: '₹799.00',
-    status: 'draft',
-  },
-]
+
 
 type Tab = 'published' | 'drafts'
 
@@ -91,13 +36,20 @@ const BundlesPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('published')
   const [isLoading, setIsLoading] = useState(true)
 
+
+
+  // query for all bundles
+  const { data: bundles, isLoading: bundlesLoading } = useGetAllBundles({ filter: activeTab === "published" ? false : true })
+
+  console.log(bundles)
+
   useEffect(() => {
     setIsLoading(true)
     const timer = setTimeout(() => setIsLoading(false), 800)
     return () => clearTimeout(timer)
   }, [activeTab])
 
-  const filtered = MOCK_BUNDLES.filter(b => b.status === (activeTab === 'published' ? 'published' : 'draft'))
+  // const filtered = MOCK_BUNDLES.filter(b => b.status === (activeTab === 'published' ? 'published' : 'draft'))
 
   return (
     <div className="p-8">
@@ -108,7 +60,7 @@ const BundlesPage = () => {
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <Heading className="text-[#000b60]">
-          Course Bundles ({String(filtered.length).padStart(2, '0')})
+          Course Bundles ({String(bundles?.data?.length || 0).padStart(2, '0')})
         </Heading>
 
         <Button
@@ -132,11 +84,10 @@ const BundlesPage = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-5 py-1.5 rounded-full text-sm font-semibold capitalize transition-all ${
-              activeTab === tab
-                ? 'bg-white text-[#000B60] shadow-sm'
-                : 'text-[#767683] hover:text-[#191c1e]'
-            }`}
+            className={`px-5 py-1.5 rounded-full text-sm font-semibold capitalize transition-all ${activeTab === tab
+              ? 'bg-white text-[#000B60] shadow-sm'
+              : 'text-[#767683] hover:text-[#191c1e]'
+              }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
@@ -145,7 +96,7 @@ const BundlesPage = () => {
 
       {/* Grid */}
       <AnimatePresence mode="wait">
-        {isLoading ? (
+        {bundlesLoading ? (
           <motion.div
             key="spinner"
             className="flex items-center justify-center min-h-[50vh] w-full"
@@ -165,12 +116,12 @@ const BundlesPage = () => {
             animate="visible"
             exit="exit"
           >
-            {filtered.map(bundle => (
+            {bundles?.data?.map((bundle: any) => (
               <motion.div key={bundle.id} variants={cardVariants}>
                 <BundleCard
                   {...bundle}
                   onViewAnalytics={id => console.log('Analytics', id)}
-                  onEdit={id => console.log('Edit', id)}
+                  onEdit={id => navigate(`/bundles/${id}/edit`)}
                   onDelete={id => console.log('Delete', id)}
                   onClick={id => console.log('Open bundle', id)}
                 />

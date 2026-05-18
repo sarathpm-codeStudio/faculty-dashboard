@@ -48,7 +48,7 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
 
 
   // query
-  const { data: courses, isLoading: coursesLoading } = useGetAllCourses({ filter: false }, true)
+  const { data: courses, isLoading: coursesLoading } = useGetAllCourses(false, "", true)
   const { data: folders, isLoading: foldersLoading } = useGetAllFoldersInCourse(courseId, !!courseId)
 
   console.log("courseId", courseId)

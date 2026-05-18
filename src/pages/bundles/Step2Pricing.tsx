@@ -1,33 +1,79 @@
-import { useState, useMemo, useRef } from 'react'
-import { ImagePlus, ArrowRight } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { ImagePlus, ArrowRight, Loader2 } from 'lucide-react'
 import { RiCoupon2Fill } from 'react-icons/ri'
 import { Input, Textarea, Subheading, Paragraph } from '@/components/ui'
 import Button from '@/components/ui/Button'
+import { Formik, useFormik } from 'formik'
+import { bundleValidator } from '@/utils/validator/bundle.validator'
+import { UploadBox } from '@/components/features/UploadBox'
+import { storageService } from '@/services'
+import { toast } from 'sonner'
+import { useCreateBundle } from '@/hooks/useBundle'
 
 interface Props {
   sumOfCourses: number
+  selectedCourses: any[]
   onPublish: () => void
 }
 
-const Step2Pricing = ({ sumOfCourses, onPublish }: Props) => {
-  const [bundleName, setBundleName] = useState('')
-  const [description, setDescription] = useState('')
-  const [discount, setDiscount] = useState('15')
-  const [enableCoupons, setEnableCoupons] = useState(true)
+const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish }: Props) => {
+  const [enableCoupons, setEnableCoupons] = useState(false)
   const [coverImage, setCoverImage] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [isDraft, setIsDraft] = useState(false)
 
-  const discountPct = parseFloat(discount) || 0
+  console.log("selected courses", selectedCourses)
+
+  // mutation
+  const { mutateAsync: createBundle, isPending: createBundleLoading } = useCreateBundle()
+
+  const initialValues = {
+    title: '',
+    description: '',
+    discount: '0',
+    coverImage: null,
+  }
+
+
+  const formik = useFormik({
+    initialValues,
+    validationSchema: bundleValidator,
+    onSubmit: async (values) => {
+      try {
+        const payload = {
+          title: values.title,
+          description: values.description,
+          discount: values.discount,
+          coverImage: values.coverImage,
+          courses: selectedCourses,
+          enableCoupons: enableCoupons,
+          finalPrice: bundleOffer,
+          price: sumOfCourses,
+          isDraft: isDraft,
+        }
+        console.log("payload", payload)
+        const response = await createBundle(payload)
+        if (isDraft) {
+          toast.success("Bundle saved as draft")
+          onPublish() // navigate to bundle list
+          return
+        }
+        toast.success("Course bundle published successfully")
+        onPublish() // navigate to bundle list
+      } catch (error: any) {
+        toast.error(error.message)
+      }
+
+    }
+  })
+
+  const discountPct = parseFloat(formik.values.discount) || 0
   const bundleOffer = useMemo(() => Math.max(0, sumOfCourses - (sumOfCourses * discountPct) / 100), [sumOfCourses, discountPct])
   const studentSavings = sumOfCourses - bundleOffer
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setCoverImage(file)
-    setCoverPreview(URL.createObjectURL(file))
-  }
+
+
 
   return (
     <div className="grid grid-cols-12 gap-6 h-full min-h-0">
@@ -36,18 +82,24 @@ const Step2Pricing = ({ sumOfCourses, onPublish }: Props) => {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
           <Input
             label="BUNDLE NAME"
+            name="title"
             labelClassName="uppercase tracking-wider text-xs text-gray-500"
             placeholder="Taxation & Laws Combo"
-            value={bundleName}
-            onChange={e => setBundleName(e.target.value)}
+            value={formik.values.title}
+            onChange={e => formik.setFieldValue('title', e.target.value)}
+            error={formik.touched.title && formik.errors.title ? formik.errors.title : undefined}
+
           />
 
           <Textarea
             label="BUNDLE DESCRIPTION"
+            name="description"
             placeholder="Describe what students will learn from this bundle..."
-            value={description}
-            onChange={e => setDescription(e.target.value)}
+            value={formik.values.description}
+            onChange={e => formik.setFieldValue('description', e.target.value)}
             rows={4}
+            error={formik.touched.description && formik.errors.description ? formik.errors.description : undefined}
+
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -61,14 +113,17 @@ const Step2Pricing = ({ sumOfCourses, onPublish }: Props) => {
             <div className="relative">
               <Input
                 label="DISCOUNT (%)"
+                name="discount"
                 labelClassName="uppercase tracking-wider text-xs text-gray-500"
                 type="number"
                 min={0}
                 max={100}
-                placeholder="15"
-                value={discount}
-                onChange={e => setDiscount(e.target.value)}
+                placeholder="10"
+                value={formik.values.discount}
+                onChange={e => formik.setFieldValue('discount', e.target.value)}
                 className="pr-8"
+                error={formik.touched.discount && formik.errors.discount ? formik.errors.discount : undefined}
+
               />
               <span className="absolute right-3 bottom-4 text-gray-400 font-bold text-sm pointer-events-none">%</span>
             </div>
@@ -121,7 +176,7 @@ const Step2Pricing = ({ sumOfCourses, onPublish }: Props) => {
       {/* ── Right Sidebar ── */}
       <div className="col-span-4 flex flex-col gap-4 overflow-y-auto scrollbar-hide min-h-0">
         {/* Cover Image */}
-        <div
+        {/* <div
           onClick={() => fileInputRef.current?.click()}
           className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#000B60] hover:bg-[#f5f6ff] transition-colors min-h-[300px]"
         >
@@ -138,7 +193,39 @@ const Step2Pricing = ({ sumOfCourses, onPublish }: Props) => {
             </>
           )}
           <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-        </div>
+        </div> */}
+        <UploadBox
+          accept="image/jpeg,image/png,image/webp"
+          preview={coverPreview}
+          previewType="image"
+          loading={coverUploading}
+          icon={<ImagePlus size={20} />}
+          title="Cover Image"
+          hint="High resolution JPEG or PNG (16:9)"
+          onFile={async (f) => {
+            setCoverPreview(URL.createObjectURL(f))
+            try {
+              setCoverUploading(true)
+              const url = await storageService.uploadCourseCover(f)
+              formik.setFieldValue('coverImage', url)
+              toast.success('Cover image uploaded')
+            } catch (error) {
+              console.log("file uploading error", error)
+              toast.error('Failed to upload cover image')
+              formik.setFieldValue('coverImage', null)
+              setCoverPreview(null)
+            } finally {
+              setCoverUploading(false)
+            }
+
+          }}
+          onClear={() => {
+            setCoverImage(null)
+            setCoverPreview(null)
+            formik.setFieldValue('coverImage', null)
+          }}
+
+        />
 
         {/* Bundle Offer Price */}
         <div className='bg-gray-100 p-10 rounded-xl' >
@@ -152,9 +239,17 @@ const Step2Pricing = ({ sumOfCourses, onPublish }: Props) => {
         </div>
 
 
-        <Button variant="primary" fullWidth onClick={onPublish}>
-          Publish Bundle
+        <Button variant="primary" disabled={createBundleLoading && !isDraft} type='submit' fullWidth onClick={() => formik.handleSubmit()}>
+          Publish Bundle {createBundleLoading && !isDraft && <Loader2 className="animate-spin" />}
           <ArrowRight size={16} />
+        </Button>
+        <Button
+          variant="white"
+          fullWidth
+          type="submit"
+          disabled={createBundleLoading && isDraft}
+          onClick={() => { setIsDraft(true); formik.handleSubmit() }}>
+          Save as draft {createBundleLoading && isDraft && <Loader2 className="animate-spin" />}
         </Button>
       </div>
     </div>

@@ -120,7 +120,7 @@ const CourseCard = ({
             <Paragraph className='text-[#000b60] font-bold !text-[20px]'>
               ₹
               {final_price}</Paragraph>
-            {!selectable && <span className="text-[15px] text-[#767683] line-through font-bold "> ₹{price}</span>}
+            {<span className="text-[15px] text-[#767683] line-through font-bold "> ₹{price}</span>}
           </div>
 
           {!selectable && (

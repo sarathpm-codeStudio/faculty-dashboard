@@ -41,7 +41,7 @@ const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('active')
   const [isLoading, setIsLoading] = useState(true)
 
-  const { data: courses, isLoading: coursesLoading } = useGetAllCourses({ filter: activeTab === "active" ? false : true }, true)
+  const { data: courses, isLoading: coursesLoading } = useGetAllCourses({ filter: activeTab === "active" ? false : true }, "", true)
 
   useEffect(() => {
     setIsLoading(true)

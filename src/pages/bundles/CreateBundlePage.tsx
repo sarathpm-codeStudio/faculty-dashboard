@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { Heading, Paragraph } from '@/components/ui'
 import Step1CourseSelection from './Step1CourseSelection'
@@ -9,8 +9,12 @@ const CreateBundlePage = () => {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [sumOfCourses, setSumOfCourses] = useState(0)
+  const [selectedCourses, setSelectedCourses] = useState<any[]>([])
+
+  const { id } = useParams()
 
   const handleStep1Next = (_ids: number[], total: number) => {
+    setSelectedCourses(_ids)
     setSumOfCourses(total)
     setStep(2)
   }
@@ -37,8 +41,8 @@ const CreateBundlePage = () => {
       </Paragraph>
 
       <div className="flex-1 min-h-0">
-        {step === 1 && <Step1CourseSelection onNext={handleStep1Next} />}
-        {step === 2 && <Step2Pricing sumOfCourses={sumOfCourses} onPublish={() => navigate('/bundles')} />}
+        {step === 1 && <Step1CourseSelection onNext={handleStep1Next} bundleId={id} />}
+        {step === 2 && <Step2Pricing sumOfCourses={sumOfCourses} selectedCourses={selectedCourses} onPublish={() => navigate('/bundles')} />}
       </div>
     </div>
   )
