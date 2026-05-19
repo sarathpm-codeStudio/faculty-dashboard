@@ -10,6 +10,8 @@ import courseImg from '@/assets/images/cou1.png'
 import courseImg2 from '@/assets/images/cou2.png'
 import courseImg3 from '@/assets/images/cou3.png'
 import { useGetAllBundles } from "@/hooks/useBundle"
+import { useDeleteBundle } from "@/hooks/useBundle"
+import { toast } from 'sonner'
 
 type Bundle = Omit<BundleCardProps, 'onViewAnalytics' | 'onEdit' | 'onDelete'> & {
   status: 'published' | 'draft'
@@ -41,6 +43,9 @@ const BundlesPage = () => {
   // query for all bundles
   const { data: bundles, isLoading: bundlesLoading } = useGetAllBundles({ filter: activeTab === "published" ? false : true })
 
+  // mutation for delete bundle
+  const { mutateAsync: deleteBundle, isPending: deletePending } = useDeleteBundle()
+
   console.log(bundles)
 
   useEffect(() => {
@@ -49,7 +54,32 @@ const BundlesPage = () => {
     return () => clearTimeout(timer)
   }, [activeTab])
 
+  // const handleDeleteBundle = async (id: any) => {
+  //   try {
+  //     toast.loading("Deleting bundle...")
+  //     await deleteBundle(id)
+  //     toast.success("Bundle deleted successfully")
+  //   } catch (error: any) {
+  //     toast.error(error?.response?.data?.message || error?.message || 'Something went wrong')
+  //   } finally {
+  //     toast.dismiss()
+  //   }
+  // }
+
   // const filtered = MOCK_BUNDLES.filter(b => b.status === (activeTab === 'published' ? 'published' : 'draft'))
+
+  const handleDeleteBundle = async (id: any) => {
+    const toastId = toast.loading("Deleting bundle...")
+    try {
+      await deleteBundle(id)
+      toast.success("Bundle deleted successfully", { id: toastId })
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.message || error?.message || 'Something went wrong',
+        { id: toastId }
+      )
+    }
+  }
 
   return (
     <div className="p-8">
@@ -116,17 +146,27 @@ const BundlesPage = () => {
             animate="visible"
             exit="exit"
           >
-            {bundles?.data?.map((bundle: any) => (
-              <motion.div key={bundle.id} variants={cardVariants}>
-                <BundleCard
-                  {...bundle}
-                  onViewAnalytics={id => console.log('Analytics', id)}
-                  onEdit={id => navigate(`/bundles/${id}/edit`)}
-                  onDelete={id => console.log('Delete', id)}
-                  onClick={id => console.log('Open bundle', id)}
-                />
-              </motion.div>
-            ))}
+            {
+
+              bundles?.data?.length === 0 ? (
+                <div className="col-span-full flex items-center justify-center min-h-[40vh] w-full">
+                  <p className="text-gray-500">No bundles found</p>
+                </div>
+              ) : (
+                bundles?.data?.map((bundle: any) => (
+                  <motion.div key={bundle.id} variants={cardVariants}>
+                    <BundleCard
+                      {...bundle}
+                      onViewAnalytics={id => console.log('Analytics', id)}
+                      onEdit={id => navigate(`/bundles/${id}/edit`)}
+                      onDelete={id => handleDeleteBundle(id)}
+                      onClick={id => console.log('Open bundle', id)}
+                    />
+                  </motion.div>
+                ))
+              )}
+
+
           </motion.div>
         )}
       </AnimatePresence>

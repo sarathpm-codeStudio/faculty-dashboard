@@ -44,4 +44,14 @@ export const bundleService = {
             throw new Error(message)
         }
     },
+
+    deleteBundle: async (id: string) => {
+        try {
+            const { data } = await apiClient.delete(`/bundle/${id}`)
+            return data
+        } catch (error: any) {
+            const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+            throw new Error(message)
+        }
+    },
 }

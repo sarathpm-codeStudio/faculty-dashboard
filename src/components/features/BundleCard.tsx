@@ -84,9 +84,11 @@ const BundleCard = ({
         </div>
 
         <div className="flex items-center justify-between mt-auto">
-          <div className="flex items-center gap-5">
-            <Subheading className="text-[#000b60] font-bold"> ₹{final_price}</Subheading>
+          <div className="">
+
             <Paragraph className="text-[11px] text-[#767683] line-through font-bold">₹{price}</Paragraph>
+
+            <Subheading className="text-[#000b60] font-bold"> ₹{final_price}</Subheading>
           </div>
 
           <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
@@ -104,13 +106,13 @@ const BundleCard = ({
                 transition={{ duration: 0.15, ease: 'easeOut' }}
                 className="absolute right-0 bottom-full mb-1 w-44 bg-white rounded-lg shadow-lg border border-gray-100 z-10 py-1"
               >
-                <button
+                {/* <button
                   onClick={() => { onViewAnalytics?.(id); setMenuOpen(false) }}
                   className="w-full text-left px-4 py-2 text-sm text-[#191c1e] hover:bg-gray-50 flex items-center gap-2"
                 >
                   <BarChart2 size={14} />
                   View Analytics
-                </button>
+                </button> */}
                 <button
                   onClick={() => { onEdit?.(id); setMenuOpen(false) }}
                   className="w-full text-left px-4 py-2 text-sm text-[#191c1e] hover:bg-gray-50 flex items-center gap-2"

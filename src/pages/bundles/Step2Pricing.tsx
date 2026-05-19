@@ -46,7 +46,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
         discount: bundle?.data?.discount,
         coverImage: bundle?.data?.image_url,
       })
-      setEnableCoupons(bundle?.data?.enableCoupons)
+      setEnableCoupons(bundle?.data?.enable_coupons)
 
     }
   }, [bundle])

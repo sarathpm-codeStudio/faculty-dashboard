@@ -45,6 +45,19 @@ export const useUpdateBundle = () => {
     })
 }
 
+export const useDeleteBundle = () => {
+    const qc = useQueryClient()
+    return useMutation({
+        mutationKey: ['bundle'],
+        mutationFn: (id: any) => bundleService.deleteBundle(id),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['my-courses-bundles'] })
+        },
+    })
+}
+
+
+
 
 
 
