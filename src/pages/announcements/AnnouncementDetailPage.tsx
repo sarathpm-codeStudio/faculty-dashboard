@@ -116,7 +116,7 @@ const AnnouncementDetailPage = () => {
             <Subheading className="text-[#000B60] font-bold mb-3">
               Announcement Message
             </Subheading>
-            <div className="flex flex-col gap-3 leading-relaxed">
+            {/* <div className="flex flex-col gap-3 leading-relaxed">
               <Paragraph>Greetings Students,</Paragraph>
               <Paragraph>
                 We are pleased to announce an exclusive early-bird registration discount for the upcoming{' '}
@@ -126,7 +126,11 @@ const AnnouncementDetailPage = () => {
               <Paragraph>
                 Use the code below to receive 20% off your enrollment fee. This offer is valid until the end of the current academic period.
               </Paragraph>
-            </div>
+            </div> */}
+            <div
+              className="prose prose-sm max-w-none text-gray-800 prose-a:text-[#000B60] prose-strong:text-gray-900"
+              dangerouslySetInnerHTML={{ __html: announcement?.data?.content }}
+            />
           </div>
 
           {/* Meta info box */}

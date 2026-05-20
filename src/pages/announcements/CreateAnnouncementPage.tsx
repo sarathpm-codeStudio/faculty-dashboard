@@ -10,6 +10,7 @@ import { storageService } from '@/services'
 import { toast } from 'sonner'
 import { useGetAllCourses } from '@/hooks/index'
 import { useCreateAnnouncement, useGetAnnouncementById, useUpdateAnnouncement } from '@/hooks/announcement'
+import RichTextEditor from '@/components/ui/RichTextEditor'
 
 
 
@@ -231,7 +232,7 @@ const CreateAnnouncementPage = () => {
             )}
           </div>
 
-          <Textarea
+          {/* <Textarea
             label="Announcement Message"
             placeholder="Compose your detailed announcement here..."
             name="content"
@@ -239,7 +240,17 @@ const CreateAnnouncementPage = () => {
             onChange={formik.handleChange}
             error={formik.errors.content}
             rows={8}
+          /> */}
+
+          <RichTextEditor
+            label="Announcement Message"
+            placeholder="Compose your detailed announcement here..."
+            value={formik.values.content}
+            onChange={(html) => formik.setFieldValue('content', html)}
+            error={formik.errors.content}
+            minHeight={220}
           />
+
         </div>
 
         {/* Right sidebar */}
