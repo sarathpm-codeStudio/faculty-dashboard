@@ -10,9 +10,10 @@ type ActionsMenuProps = {
     editPath: string
     onViewAnalytics?: (id: number) => void
     onDelete?: (id: number) => void
+    isAnalytic?: boolean
 }
 
-const ActionsMenu = ({ id, editPath, onViewAnalytics, onDelete }: ActionsMenuProps) => {
+const ActionsMenu = ({ id, editPath, onViewAnalytics, onDelete, isAnalytic = true }: ActionsMenuProps) => {
     const [open, setOpen] = useState(false)
     const [openUpward, setOpenUpward] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
@@ -62,13 +63,17 @@ const ActionsMenu = ({ id, editPath, onViewAnalytics, onDelete }: ActionsMenuPro
                         className={`absolute right-0 w-44 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1 ${openUpward ? 'bottom-full mb-1' : 'top-full mt-1'
                             }`}
                     >
-                        <button
-                            onClick={e => { e.stopPropagation(); onViewAnalytics?.(id); setOpen(false) }}
-                            className="w-full text-left px-4 py-2 text-sm text-[#191c1e] hover:bg-gray-50 flex items-center gap-2"
-                        >
-                            <BarChart2 size={14} />
-                            View Analytics
-                        </button>
+                        {
+                            isAnalytic && (
+                                <button
+                                    onClick={e => { e.stopPropagation(); onViewAnalytics?.(id); setOpen(false) }}
+                                    className="w-full text-left px-4 py-2 text-sm text-[#191c1e] hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                    <BarChart2 size={14} />
+                                    View Analytics
+                                </button>
+                            )
+                        }
                         <button
                             onClick={e => { e.stopPropagation(); navigate(editPath); setOpen(false) }}
                             className="w-full text-left px-4 py-2 text-sm text-[#191c1e] hover:bg-gray-50 flex items-center gap-2"

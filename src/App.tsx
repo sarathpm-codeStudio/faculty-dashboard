@@ -74,6 +74,7 @@ const App = () => {
               <Route path="/announcements" element={<AnnouncementsPage />} />
               <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
               <Route path="/announcements/create" element={<CreateAnnouncementPage />} />
+              <Route path="/announcements/:id/edit" element={<CreateAnnouncementPage />} />
               <Route path="/account" element={<ProfilePage />} />
               <Route path="/account/bank" element={<BankDetailsAndTransaction />} />
               <Route path="/account/bank/update" element={<UpdateBankDetails />} />

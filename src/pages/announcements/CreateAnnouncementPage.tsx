@@ -1,29 +1,134 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, CalendarDays, ImageIcon, Send } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, CalendarDays, ImageIcon, Loader2, Send } from 'lucide-react'
 import { RocketLaunch } from '@phosphor-icons/react'
 import { Button, Heading, Input, Paragraph, Select, Textarea } from '@/components/ui'
+import { UploadBox } from '@/components/features/UploadBox'
+import { useFormik } from 'formik'
+import { announcementSchema } from '@/utils/validator/announcement.validator'
+import { storageService } from '@/services'
+import { toast } from 'sonner'
+import { useGetAllCourses } from '@/hooks/index'
+import { useCreateAnnouncement, useGetAnnouncementById, useUpdateAnnouncement } from '@/hooks/announcement'
+
+
 
 const CreateAnnouncementPage = () => {
   const navigate = useNavigate()
+  const { id } = useParams()
 
-  const [name, setName] = useState('')
-  const [audience, setAudience] = useState('')
-  const [startDate, setStartDate] = useState('Oct 12, 2024')
-  const [endDate, setEndDate] = useState('Oct 19, 2024')
-  const [message, setMessage] = useState('')
-  const [banner, setBanner] = useState<File | null>(null)
 
-  const handleBannerDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file) setBanner(file)
-  }
+  const [coverImage, setCoverImage] = useState<File | null>(null)
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [isDraft, setIsDraft] = useState(false)
+  const [audience, setAudience] = useState<{ value: string, label: string }[]>([{ value: 'all', label: 'All Registered Students' }])
 
-  const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) setBanner(file)
-  }
+  // query to get all courses
+  const { data: courses, isLoading: coursesLoading } = useGetAllCourses(false, "", true)
+  const { data: announcement, isLoading: announcementLoading } = useGetAnnouncementById(id, !!id)
+
+  // mutation
+  const { mutateAsync: createAnnouncement, isPending: createAnnouncementLoading } = useCreateAnnouncement()
+  const { mutateAsync: updateAnnouncement, isPending: updateAnnouncementLoading } = useUpdateAnnouncement()
+
+  const loading = createAnnouncementLoading || updateAnnouncementLoading
+
+  useEffect(() => {
+    if (courses) {
+      const data = courses?.data?.map((course: any) => ({
+        value: course.id,
+        label: course.title,
+      }))
+      setAudience([
+        { value: 'all', label: 'All Registered Students' },
+        ...data
+      ])
+    }
+  }, [courses])
+
+  useEffect(() => {
+    if (announcement) {
+      formik.setValues({
+        title: announcement.data.title,
+        audience: announcement.data.course_id || "all",
+        startDate: announcement.data.time_period.split('/')[0],
+        endDate: announcement.data.time_period.split('/')[1],
+        content: announcement.data.content,
+        image_url: announcement.data.image_url,
+      })
+    }
+  }, [announcement])
+
+
+  const formik = useFormik({
+    initialValues: {
+      title: '',
+      audience: '',
+      startDate: '',
+      endDate: '',
+      content: '',
+      image_url: null,
+    },
+    validationSchema: announcementSchema,
+    onSubmit: async (values) => {
+
+      try {
+
+        const payload = {
+          title: values.title,
+          audience: values.audience,
+          timePeriod: `${values.startDate}/${values.endDate}`,
+          content: values.content,
+          image_url: values.image_url,
+          isDraft: isDraft,
+        }
+        console.log(" announcement payload", payload)
+
+        if (id) {
+
+          const { data, error } = await updateAnnouncement({ id, payload })
+          if (error) {
+            toast.error(error)
+          }
+          if (data) {
+            if (isDraft) {
+              toast.success("Announcement saved as draft successfully")
+            } else {
+              toast.success("Announcement updated successfully")
+            }
+            formik.resetForm()
+            navigate('/announcements')
+          }
+
+        } else {
+
+          const { data, error } = await createAnnouncement(payload)
+          if (error) {
+            toast.error(error)
+          }
+          if (data) {
+            if (isDraft) {
+              toast.success("Announcement saved as draft successfully")
+            } else {
+              toast.success("Announcement published successfully")
+            }
+            formik.resetForm()
+            navigate('/announcements')
+          }
+        }
+
+
+      } catch (error: any) {
+        toast.error(error)
+      }
+
+    },
+  })
+
+
+
+
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -45,9 +150,30 @@ const CreateAnnouncementPage = () => {
             Design and distribute high-impact academic updates.
           </Paragraph>
         </div>
-        <Button variant="white" className="!h-10 !text-sm !px-5 shrink-0">
-          Save Draft
-        </Button>
+        {
+          id ? announcement?.data?.is_draft ? (
+            <Button variant="white" disabled={loading && isDraft} type='button' onClick={() => { formik.handleSubmit(); setIsDraft(true) }} className="!h-10 !text-sm !px-5 shrink-0">
+              Save Draft
+              {
+                loading && isDraft && (
+                  <Loader2 size={14} className="animate-spin" />
+                )
+              }
+            </Button>
+          )
+            : <></>
+
+            :
+            <Button variant="white" disabled={loading && isDraft} type='button' onClick={() => { formik.handleSubmit(); setIsDraft(true) }} className="!h-10 !text-sm !px-5 shrink-0">
+              Save Draft
+              {
+                loading && isDraft && (
+                  <Loader2 size={14} className="animate-spin" />
+                )
+              }
+            </Button>
+
+        }
       </div>
 
       {/* Grid layout */}
@@ -59,21 +185,20 @@ const CreateAnnouncementPage = () => {
           <Input
             label="Announcement Name"
             placeholder="e.g., Mid-Term Symposium Update 2024"
-            value={name}
-            onChange={e => setName(e.target.value)}
+            name='title'
+            value={formik.values.title}
+            onChange={formik.handleChange}
+            error={formik.errors.title}
           />
 
           <Select
             label="Audience Selection"
             placeholder="Select audience..."
-            value={audience}
-            onChange={e => setAudience(e.target.value)}
-            options={[
-              { value: 'all', label: 'All Registered Students' },
-              { value: 'advanced-quantum', label: 'Advanced Quantum Mecha...' },
-              { value: 'master-economics', label: 'Master of Economics' },
-              { value: 'tax-402', label: 'Advanced International Taxation (TAX-402)' },
-            ]}
+            name='audience'
+            value={formik.values.audience}
+            onChange={(e: any) => formik.setFieldValue('audience', e.target.value)}
+            error={formik.errors.audience}
+            options={audience}
           />
 
           {/* Time Period */}
@@ -83,29 +208,36 @@ const CreateAnnouncementPage = () => {
               <CalendarDays size={16} className="text-[#767683] shrink-0" />
               <div className="flex items-center gap-2 flex-1">
                 <input
-                  type="text"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  className="bg-transparent outline-none text-sm text-[#191c1e] font-medium w-28"
-                  placeholder="Start date"
+                  type="date"
+                  name="startDate"
+                  value={formik.values.startDate}
+                  onChange={formik.handleChange}
+                  className="bg-transparent outline-none text-sm text-[#191c1e] font-medium cursor-pointer"
                 />
                 <span className="text-[#767683]">–</span>
                 <input
-                  type="text"
-                  value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
-                  className="bg-transparent outline-none text-sm text-[#191c1e] font-medium w-28"
-                  placeholder="End date"
+                  type="date"
+                  name="endDate"
+                  value={formik.values.endDate}
+                  onChange={formik.handleChange}
+                  className="bg-transparent outline-none text-sm text-[#191c1e] font-medium cursor-pointer"
                 />
               </div>
             </div>
+            {(formik.errors.startDate || formik.errors.endDate) && (
+              <p className="text-xs text-red-500 font-medium">
+                {formik.errors.startDate || formik.errors.endDate}
+              </p>
+            )}
           </div>
 
           <Textarea
             label="Announcement Message"
             placeholder="Compose your detailed announcement here..."
-            value={message}
-            onChange={e => setMessage(e.target.value)}
+            name="content"
+            value={formik.values.content}
+            onChange={formik.handleChange}
+            error={formik.errors.content}
             rows={8}
           />
         </div>
@@ -125,10 +257,21 @@ const CreateAnnouncementPage = () => {
             <Button
               variant="white"
               fullWidth
+              disabled={loading}
               className="!h-10 !text-sm flex items-center justify-center gap-2"
+              onClick={() => { formik.handleSubmit() }}
+              type='submit'
             >
-              Publish Now
-              <Send size={14} />
+              {
+                loading && !isDraft ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <>
+                    Publish Now
+                    <Send size={14} />
+                  </>
+                )
+              }
             </Button>
           </div>
 
@@ -139,23 +282,37 @@ const CreateAnnouncementPage = () => {
               <p className="text-sm font-bold text-[#000B60] uppercase tracking-wider">Banner Image</p>
             </div>
 
-            <label
-              className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 bg-[#F2F4F6] flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#000B60] transition-colors"
-              onDragOver={e => e.preventDefault()}
-              onDrop={handleBannerDrop}
-            >
-              <input type="file" accept="image/*" className="hidden" onChange={handleBannerChange} />
-              {banner ? (
-                <p className="text-xs text-[#000B60] font-semibold px-3 text-center truncate w-full text-center">
-                  {banner.name}
-                </p>
-              ) : (
-                <>
-                  <ImageIcon size={24} className="text-gray-300" />
-                  <p className="text-xs text-[#767683] font-semibold">Drop files here</p>
-                </>
-              )}
-            </label>
+            <UploadBox
+              accept="image/*"
+              preview={announcement?.data.image_url || coverPreview}
+              previewType="image"
+              icon={<ImageIcon size={16} />}
+              title="Upload Banner"
+              hint="PNG, JPG or GIF recommended"
+              loading={coverUploading}
+              onFile={async (f) => {
+                setCoverPreview(URL.createObjectURL(f))
+                try {
+                  setCoverUploading(true)
+                  const url = await storageService.uploadCourseCover(f)
+                  formik.setFieldValue('image_url', url)
+                  toast.success('Cover image uploaded')
+                } catch (error) {
+                  console.log("file uploading error", error)
+                  toast.error('Failed to upload cover image')
+                  formik.setFieldValue('image_url', null)
+                  setCoverPreview(null)
+                } finally {
+                  setCoverUploading(false)
+                }
+
+              }}
+              onClear={() => {
+                setCoverImage(null)
+                setCoverPreview(null)
+                formik.setFieldValue('image_url', null)
+              }}
+            />
           </div>
 
         </div>

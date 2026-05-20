@@ -8,10 +8,14 @@ import { RiMegaphoneLine } from 'react-icons/ri'
 import { IoAddCircleOutline } from 'react-icons/io5'
 import { Button, Heading, Paragraph, DataTable, Spinner } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
+import { useGetAllAnnouncements, useDeleteAnnouncement } from '@/hooks/announcement'
+import { formatDate, formatDateTime } from '@/utils/helper/formatDate'
+import ActionsMenu from '@/components/features/ActionBtn'
+import { toast } from 'sonner'
 
 type Announcement = {
   id: number
-  name: string
+  title: string
   audience: string
   course: string
   date: string
@@ -20,15 +24,7 @@ type Announcement = {
   iconType: 'megaphone' | 'calendar' | 'message'
 }
 
-const ANNOUNCEMENTS: Announcement[] = [
-  { id: 1, name: 'Final Examination Schedule', audience: 'All Users', course: 'Advanced Calculus', date: 'May 12, 2024', timePeriod: '09:00 AM –\n10:00 AM', status: 'Active', iconType: 'megaphone' },
-  { id: 2, name: 'Final Examination Schedule', audience: 'All Users', course: 'Advanced Calculus', date: 'May 12, 2024', timePeriod: '09:00 AM –\n10:00 AM', status: 'Active', iconType: 'calendar' },
-  { id: 3, name: 'Final Examination Schedule', audience: 'All Users', course: 'Advanced Calculus', date: 'May 12, 2024', timePeriod: '09:00 AM –\n10:00 AM', status: 'Active', iconType: 'message' },
-  { id: 4, name: 'Final Examination Schedule', audience: 'All Users', course: 'Advanced Calculus', date: 'May 12, 2024', timePeriod: '09:00 AM –\n10:00 AM', status: 'Active', iconType: 'megaphone' },
-  { id: 5, name: 'Final Examination Schedule', audience: 'All Users', course: 'Advanced Calculus', date: 'May 12, 2024', timePeriod: '09:00 AM –\n10:00 AM', status: 'Active', iconType: 'calendar' },
-  { id: 6, name: 'Final Examination Schedule', audience: 'All Users', course: 'Advanced Calculus', date: 'May 12, 2024', timePeriod: '09:00 AM –\n10:00 AM', status: 'Active', iconType: 'message' },
-  { id: 7, name: 'Final Examination Schedule', audience: 'All Users', course: 'Advanced Calculus', date: 'May 12, 2024', timePeriod: '09:00 AM –\n10:00 AM', status: 'Active', iconType: 'megaphone' },
-]
+
 
 const AnnouncementIcon = ({ type }: { type: Announcement['iconType'] }) => {
   const configs = {
@@ -46,60 +42,9 @@ const AnnouncementIcon = ({ type }: { type: Announcement['iconType'] }) => {
 
 type Tab = 'All' | 'Drafts' | 'Archive'
 
-const COLUMNS: TableColumn<Announcement>[] = [
-  {
-    key: 'name',
-    header: 'Announcement Name',
-    render: row => (
-      <div className="flex items-center gap-3">
-        <AnnouncementIcon type={row.iconType} />
-        <span className="text-sm font-semibold text-[#191c1e]">{row.name}</span>
-      </div>
-    ),
-  },
-  {
-    key: 'audience',
-    header: 'Audience',
-    render: row => <span className="text-sm text-[#767683]">{row.audience}</span>,
-  },
-  {
-    key: 'course',
-    header: 'Course',
-    render: row => <span className="text-sm text-[#767683]">{row.course}</span>,
-  },
-  {
-    key: 'date',
-    header: 'Date',
-    render: row => <span className="text-sm text-[#767683]">{row.date}</span>,
-  },
-  {
-    key: 'timePeriod',
-    header: 'Time Period',
-    render: row => (
-      <span className="text-sm text-[#767683] whitespace-pre-line">{row.timePeriod}</span>
-    ),
-  },
-  {
-    key: 'status',
-    header: 'Status',
-    render: row => (
-      <span className="text-sm font-bold text-[#00875A]">{row.status}</span>
-    ),
-  },
-  {
-    key: 'actions',
-    header: 'Actions',
-    headerClassName: 'text-right',
-    cellClassName: 'text-right',
-    render: () => (
-      <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-        <MoreVertical size={15} className="text-[#767683]" />
-      </button>
-    ),
-  },
-]
 
-const TABS: Tab[] = ['All', 'Drafts', 'Archive']
+
+const TABS: Tab[] = ['All', 'Drafts']
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 18 },
@@ -111,18 +56,123 @@ const AnnouncementsPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('All')
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
+  const [rangeLabel, setRangeLabel] = useState('')
+
+  // query
+  const { data: announcements, isLoading: getAllAnnouncementsLoading } = useGetAllAnnouncements({
+    page,
+    limit: pageSize,
+    filter: activeTab === 'Drafts' ? 'draft' : 'all',
+    search: "",
+  })
+
+  // mutation
+  const { mutateAsync: deleteAnnouncement } = useDeleteAnnouncement()
+
+
+
+
+  const announcementsData = announcements?.data?.data ?? []
+  const announcementsTotal = announcements?.data?.total ?? 0
+
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 800)
     return () => clearTimeout(t)
   }, [])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Spinner label="Loading announcements..." />
-      </div>
-    )
+  // if (loading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen bg-gray-50">
+  //       <Spinner label="Loading announcements..." />
+  //     </div>
+  //   )
+  // }
+
+  const COLUMNS: TableColumn<any>[] = [
+    {
+      key: 'name',
+      header: 'Announcement Name',
+      render: row => (
+        <div className="flex items-center gap-3">
+          <AnnouncementIcon type={"megaphone"} />
+          <span onClick={() => navigate(`/announcements/${row.id}`)} className="text-sm font-semibold text-[#191c1e] cursor-pointer">{row?.title}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'audience',
+      header: 'Audience',
+      render: row => <span className="text-sm text-[#767683]">{row?.course_id === null ? "All Students" : "Selected Course"}</span>,
+    },
+    {
+      key: 'course',
+      header: 'Course',
+      render: row => <span className="text-sm text-[#767683]">{row.courses?.title || ""}</span>,
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      render: row => <span className="text-sm text-[#767683]">{formatDateTime(row?.created_at)}</span>,
+    },
+    {
+      key: 'timePeriod',
+      header: 'Time Period',
+      render: row => (
+        <span className="text-sm text-[#767683] whitespace-pre-line">{row?.time_period.split("/").join(" to ") || ""}</span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: row => (
+        <span className={`inline-flex items-center gap-1 text-xs font-bold ${row?.is_draft ? 'text-orange-500' : 'text-[#00875A]'
+          }`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${row?.is_draft ? 'bg-orange-500' : 'bg-[#00875A]'
+            }`} />
+          {row?.is_draft ? 'Draft' : 'Active'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      headerClassName: 'text-right',
+      cellClassName: 'text-right',
+      render: row => (
+        <ActionsMenu
+          id={row.id}
+          editPath={`/announcements/${row.id}/edit`}         // ← dynamic per row
+          onDelete={(id) => handleDeleteAnnouncement(id)} // replace with your delete handler
+          isAnalytic={false}
+        />
+      ),
+    },
+  ]
+
+
+
+
+  const handleDeleteAnnouncement = async (id: any) => {
+
+    const toastId = toast.loading("Deleting announcement...")
+
+    try {
+
+      const { data: response } = await deleteAnnouncement(id)
+
+      if (response) {
+        toast.success("Announcement deleted successfully", { id: toastId })
+        navigate('/announcements')
+      }
+
+    } catch (error: any) {
+
+      toast.error(error.message, { id: toastId })
+
+    }
   }
 
   return (
@@ -158,10 +208,10 @@ const AnnouncementsPage = () => {
           ))}
         </div>
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#000B60] transition-colors">
+          {/* <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#000B60] transition-colors">
             <Filter size={14} />
             Filter
-          </button>
+          </button> */}
           <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#000B60] transition-colors">
             <ArrowUpDown size={14} />
             Sort by: Date
@@ -173,9 +223,18 @@ const AnnouncementsPage = () => {
       <motion.div className="flex-1 min-h-0 px-2" {...fadeUp(0.12)}>
         <DataTable
           columns={COLUMNS}
-          data={ANNOUNCEMENTS}
-          defaultPageSize={10}
-          onRowClick={row => navigate(`/announcements/${row.id}`)}
+          data={announcementsData}
+          total={announcementsTotal}
+          page={page}
+          pageSize={pageSize}
+          loading={getAllAnnouncementsLoading}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size)
+            setPage(1)
+          }}
+          onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
+        // onRowClick={row => navigate(`/announcements/${row.id}`)}
         />
       </motion.div>
 

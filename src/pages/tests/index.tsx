@@ -170,13 +170,13 @@ const TestsPage = () => {
   const draftCount = testsData.filter((t: any) => t.is_draft === true).length
   // const totalAttempts = testsData.reduce((s: number, t: any) => s + t.attempts, 0)
 
-  if (testsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Spinner label="Loading tests..." />
-      </div>
-    )
-  }
+  // if (testsLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen bg-gray-50">
+  //       <Spinner label="Loading tests..." />
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="flex flex-col h-full overflow-hidden gap-5">
@@ -253,6 +253,7 @@ const TestsPage = () => {
             data={testsData}
             total={testsTotal}
             page={page}
+            loading={testsLoading}
             pageSize={pageSize}
             onPageChange={setPage}
             onPageSizeChange={(size) => {

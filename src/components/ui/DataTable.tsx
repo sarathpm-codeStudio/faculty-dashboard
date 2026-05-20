@@ -2,7 +2,7 @@
 
 
 import { useEffect, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 
 export type TableColumn<T> = {
   key: string
@@ -22,6 +22,7 @@ type DataTableProps<T> = {
   onPageSizeChange: (size: number) => void
   className?: string
   hidePagination?: boolean
+  loading?: boolean
   onRangeChange?: (start: number, end: number, total: number) => void
   onRowClick?: (row: T) => void
 }
@@ -38,6 +39,7 @@ function DataTable<T>({
   onPageSizeChange,
   className = '',
   hidePagination = false,
+  loading = false,
   onRangeChange,
   onRowClick,
 }: DataTableProps<T>) {
@@ -73,19 +75,37 @@ function DataTable<T>({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {data?.map((row, i) => (
-              <tr
-                key={i}
-                // onClick={() => onRowClick?.(row)}
-                className={`hover:bg-gray-50/60 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
-              >
-                {columns.map(col => (
-                  <td key={col.key} className={`px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
-                    {col.render(row)}
-                  </td>
-                ))}
+            {loading ? (
+              <tr>
+                <td colSpan={columns.length}>
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 size={28} className="text-[#000B60] animate-spin" />
+                  </div>
+                </td>
               </tr>
-            ))}
+            ) : data?.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length}>
+                  <div className="flex flex-col items-center justify-center py-16 gap-2">
+                    <p className="text-sm font-semibold text-[#767683]">No data found</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              data?.map((row, i) => (
+                <tr
+                  key={i}
+                  onClick={() => onRowClick?.(row)}
+                  className={`hover:bg-gray-50/60 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                >
+                  {columns.map(col => (
+                    <td key={col.key} className={`px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
+                      {col.render(row)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
