@@ -5,6 +5,8 @@ import { MoreHorizontal } from 'lucide-react'
 import { Heading, Paragraph, Spinner, DataTable, FilterSelect, FilterDatePicker } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import man from '@/assets/images/man.jpg'
+import { useGetStudents } from '@/hooks/studentHooks'
+import { useGetAllCourses } from '@/hooks/useCourse'
 
 type Student = {
   id: number
@@ -93,22 +95,45 @@ const fadeUp = (delay = 0) => ({
 const StudentsPage = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
-  const [department, setDepartment] = useState('')
+  const [department, setDepartment] = useState<{ value: string, label: string }[]>([]);
   const [filterDate, setFilterDate] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
   const [rangeLabel, setRangeLabel] = useState('')
+  const [selectedCourse, setSelectedCourse] = useState('')
+
+
+
+  // query
+
+  const { data: students, isLoading, error } = useGetStudents(
+    {
+      search: '',
+      page,
+      limit: pageSize,
+      filter: { selectedCourse: selectedCourse, selectedDate: filterDate }
+    },
+    true
+  )
+
+  const { data: courses, isLoading: coursesLoading, error: coursesError } = useGetAllCourses(false, "", true)
+
 
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 800)
-    return () => clearTimeout(t)
-  }, [])
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Spinner label="Loading students..." />
-      </div>
-    )
-  }
+    if (courses) {
+      const courseOptions = courses?.data?.map((course: any) => ({
+        value: course.id,
+        label: course.title,
+      }))
+      console.log("opts", courseOptions)
+      setDepartment([{ value: 'all', label: 'All Courses' }, ...courseOptions])
+    }
+
+
+  }, [courses])
+
+
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -125,14 +150,10 @@ const StudentsPage = () => {
       <motion.div className="flex items-center gap-3 mb-5 px-2 justify-between" {...fadeUp(0.08)}>
         <div className="flex items-center gap-3">
           <FilterSelect
-            value={department}
-            onChange={e => setDepartment(e.target.value)}
-            options={[
-              { value: '', label: 'All Departments' },
-              { value: 'commerce', label: 'Commerce' },
-              { value: 'science', label: 'Science' },
-              { value: 'arts', label: 'Arts' },
-            ]}
+            value={selectedCourse}
+            onChange={e => setSelectedCourse(e.target.value)}
+            options={department}
+            className='w-[200px]'
           />
 
           <FilterDatePicker
@@ -141,9 +162,9 @@ const StudentsPage = () => {
             placeholder="Select Date"
           />
 
-          <button className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-gray-200 bg-[#E6E8EA] text-sm font-semibold text-gray-500 transition-colors">
+          {/* <button className="inline-flex items-center gap-2 h-9 px-4 rounded-lg border border-gray-200 bg-[#E6E8EA] text-sm font-semibold text-gray-500 transition-colors">
             More Filters
-          </button>
+          </button> */}
         </div>
         {rangeLabel && (
           <span className="text-xs text-[#767683] font-medium shrink-0">{rangeLabel}</span>
@@ -154,10 +175,17 @@ const StudentsPage = () => {
       <motion.div className="flex-1 min-h-0" {...fadeUp(0.12)}>
         <DataTable
           columns={COLUMNS}
-          data={MOCK_STUDENTS}
-          defaultPageSize={10}
-          onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s}–${e} of ${t}`)}
-          onRowClick={row => navigate(`/students/${row.id}`)}
+          data={students?.data?.data}
+          total={students?.data?.pagination?.total}
+          page={page}
+          pageSize={pageSize}
+          loading={isLoading}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size)
+            setPage(1)
+          }}
+          onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
         />
       </motion.div>
 
