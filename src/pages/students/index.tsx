@@ -5,7 +5,7 @@ import { MoreHorizontal } from 'lucide-react'
 import { Heading, Paragraph, Spinner, DataTable, FilterSelect, FilterDatePicker } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import man from '@/assets/images/man.jpg'
-import { useGetStudents } from '@/hooks/studentHooks'
+import { useGetStudents } from '@/hooks/student'
 import { useGetAllCourses } from '@/hooks/useCourse'
 
 type Student = {

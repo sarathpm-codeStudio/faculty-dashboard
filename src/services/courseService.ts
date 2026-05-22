@@ -9,7 +9,7 @@ import type {
 
 export const courseService = {
 
-  getAll: async (filter: any, search?: string): Promise<CoursesResponse> => {
+  getAll: async ({ filter, search }: { filter: any, search?: string }): Promise<CoursesResponse> => {
 
     try {
       const { data } = await apiClient.get('/courses', { params: { filter, search } })

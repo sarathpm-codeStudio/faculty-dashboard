@@ -53,7 +53,7 @@ export type CourseFormData = {
   offlineDownload: boolean
   pdfPermissions: boolean
   // Step 3
-  duration: string
+  validity: string
   price: string
   discount: string
   discountType: string
@@ -86,7 +86,7 @@ const emptyForm = (): CourseFormData => ({
   tree: [],
   offlineDownload: false,
   pdfPermissions: false,
-  duration: '',
+  validity: '',
   price: '',
   discount: '',
   discountType: '',

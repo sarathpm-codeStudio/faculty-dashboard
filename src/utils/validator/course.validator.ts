@@ -21,7 +21,7 @@ export const courseBasicDetailsSchema = Yup.object({
 
 
 export const coursePricingSchema = Yup.object({
-    duration: Yup.string().required('Duration is required'),
+    validity: Yup.string().required('Validity is required'),
     price: Yup.string()
         .required('Price is required')
         .test('is-number', 'Price must be a valid number', (v) => v !== undefined && v !== '' && !isNaN(Number(v)))

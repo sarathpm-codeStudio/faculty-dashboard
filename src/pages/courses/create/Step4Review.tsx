@@ -64,7 +64,7 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
   const courseName = form.title || DEMO.name
   const courseCategory = form.category || DEMO.category
   const courseDesc = form.description || DEMO.description
-  const courseDuration = form.duration ? durationLabel[form.duration] : durationLabel[DEMO.duration]
+  // const courseDuration = form.validity ? validityLabel[form.validity] : validityLabel[DEMO.validity]
 
   const navigate = useNavigate()
 
@@ -202,7 +202,7 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
               <ShieldCheck size={16} className="text-[#000B60] shrink-0" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Duration</p>
-                <p className="text-sm font-bold text-[#000B60]">{coursePreview?.data?.duration}</p>
+                <p className="text-sm font-bold text-[#000B60]">{coursePreview?.data?.validity}</p>
               </div>
             </div>
           </div>

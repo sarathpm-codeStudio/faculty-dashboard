@@ -17,7 +17,7 @@ interface Props {
   isLoadingCourseDetails?: boolean
 }
 
-const durationOptions = [
+const validityOptions = [
   { value: '1 month', label: '1 Month' },
   { value: '3 month', label: '3 Months' },
   { value: '6 month', label: '6 Months' },
@@ -31,7 +31,7 @@ const discountTypeOptions = [
 ]
 
 type PricingValues = {
-  duration: string
+  validity: string
   price: string
   discount: string
   discountType: string
@@ -41,7 +41,7 @@ type PricingValues = {
 const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDetails }: Props) => {
   const formik = useFormik<PricingValues>({
     initialValues: {
-      duration: form.duration ?? '',
+      validity: form.validity ?? '',
       price: form.price ?? '',
       discount: form.discount ?? '',
       discountType: form.discountType ?? '',
@@ -52,7 +52,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
     onSubmit: async (values) => {
       try {
         const payload = {
-          duration: values.duration,
+          validity: values.validity,
           price: Number(values.price) || 0,
           discount: values.discount ? Number(values.discount) : 0,
           discount_type: values.discountType,
@@ -80,7 +80,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
     if (!courseDetails?.data) return
     const d = courseDetails.data
     formik.setValues({
-      duration: d.duration ?? '',
+      validity: d.validity ?? '',
       price: d.price != null ? String(d.price) : '',
       discount: d.discount != null ? String(d.discount) : '',
       discountType: d.discount_type ?? '',
@@ -123,12 +123,12 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
           <Select
             label="Course Duration"
             placeholder="Select duration"
-            options={durationOptions}
-            name="duration"
-            value={values.duration}
+            options={validityOptions}
+            name="validity"
+            value={values.validity}
             onChange={handleChange}
             onBlur={handleBlur}
-            error={touched.duration && errors.duration ? errors.duration : undefined}
+            error={touched.validity && errors.validity ? errors.validity : undefined}
           />
 
           <Input

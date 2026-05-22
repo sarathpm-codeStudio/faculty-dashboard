@@ -6,7 +6,7 @@ import Step1GeneralInfo from './Step1GeneralInfo'
 import Step2AddQuestions from './Step2AddQuestions'
 import type { TestFormData } from './Step1GeneralInfo'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
-import { useCreateTest, useGetTestById, useUpdateTest } from '@/hooks/testHooks'
+import { useCreateTest, useGetTestById, useUpdateTest } from '@/hooks/test'
 import { toast } from 'sonner'
 
 

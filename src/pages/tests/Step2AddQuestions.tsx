@@ -8,7 +8,7 @@ import * as Yup from 'yup'
 import { Input, Textarea, Select, Paragraph, Checkbox } from '@/components/ui'
 import Button from '@/components/ui/Button'
 import { IoRocketOutline } from 'react-icons/io5'
-import { useAddQuestion, useGetQuestionsByTestId, useUpdateQuestion, useDeleteQuestion, usePublishTest } from '@/hooks/testHooks'
+import { useAddQuestion, useGetQuestionsByTestId, useUpdateQuestion, useDeleteQuestion, usePublishTest } from '@/hooks/test'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 

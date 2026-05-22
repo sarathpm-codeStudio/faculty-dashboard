@@ -10,7 +10,7 @@ import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import Button from '@/components/ui/Button'
 import { IoAddCircleOutline } from "react-icons/io5"
-import { useGetAllTests, useDeleteTest } from '@/hooks/testHooks'
+import { useGetAllTests, useDeleteTest } from '@/hooks/test'
 import { timeAgo } from '@/utils/helper/formatDate'
 import ActionsMenu from '@/components/features/ActionBtn'
 import { toast } from 'sonner'

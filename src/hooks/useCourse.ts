@@ -11,8 +11,8 @@ export const courseKeys = {
 
 export const useGetAllCourses = (filter: any, search?: string, enabled = true) =>
   useQuery({
-    queryKey: ['my-courses', filter, search],
-    queryFn: () => courseService.getAll(filter, search),
+    queryKey: ['my-courses', {  filter,  search }],
+    queryFn: () => courseService.getAll({  filter,  search }),
     enabled,
   })
 

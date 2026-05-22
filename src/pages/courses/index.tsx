@@ -39,9 +39,10 @@ const cardVariants: Variants = {
 const CoursesPage = () => {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<Tab>('active')
+  const [selectTab,setSelectTab] = useState<any>(false)
   const [isLoading, setIsLoading] = useState(true)
 
-  const { data: courses, isLoading: coursesLoading } = useGetAllCourses({ filter: activeTab === "active" ? false : true }, "", true)
+  const { data: courses, isLoading: coursesLoading } = useGetAllCourses(selectTab , "", true)
 
   useEffect(() => {
     setIsLoading(true)
@@ -51,6 +52,9 @@ const CoursesPage = () => {
   }, [activeTab])
 
 
+  useEffect(() => {
+    setSelectTab(activeTab === "active" ? false : true)
+  }, [activeTab])
 
   const handleViewAnalytics = (id: number | string) => {
     console.log('View analytics for course', id)
