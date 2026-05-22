@@ -8,12 +8,13 @@ import { useNavigate } from 'react-router-dom'
 type ActionsMenuProps = {
     id: number
     editPath: string
+    onEdit?: (id: number) => void
     onViewAnalytics?: (id: number) => void
     onDelete?: (id: number) => void
     isAnalytic?: boolean
 }
 
-const ActionsMenu = ({ id, editPath, onViewAnalytics, onDelete, isAnalytic = true }: ActionsMenuProps) => {
+const ActionsMenu = ({ id, editPath, onEdit, onViewAnalytics, onDelete, isAnalytic = true }: ActionsMenuProps) => {
     const [open, setOpen] = useState(false)
     const [openUpward, setOpenUpward] = useState(false)
     const ref = useRef<HTMLDivElement>(null)
@@ -75,11 +76,19 @@ const ActionsMenu = ({ id, editPath, onViewAnalytics, onDelete, isAnalytic = tru
                             )
                         }
                         <button
-                            onClick={e => { e.stopPropagation(); navigate(editPath); setOpen(false) }}
+                            onClick={e => {
+                                e.stopPropagation()
+                                if (onEdit) {
+                                    onEdit(id)
+                                } else {
+                                    navigate(editPath)
+                                }
+                                setOpen(false)
+                            }}
                             className="w-full text-left px-4 py-2 text-sm text-[#191c1e] hover:bg-gray-50 flex items-center gap-2"
                         >
                             <Pencil size={14} />
-                            Edit Test
+                            Edit
                         </button>
                         <button
                             onClick={e => { e.stopPropagation(); onDelete?.(id); setOpen(false) }}

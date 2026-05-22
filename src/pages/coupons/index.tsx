@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { MoreVertical, Download, SlidersHorizontal, Tag, Users, PiggyBank } from 'lucide-react'
 import { IoAddCircleOutline } from 'react-icons/io5'
-import { Button, Heading, Paragraph, DataTable, Spinner } from '@/components/ui'
+import { Button, Heading, Paragraph, DataTable, Spinner, ToggleButton, ConfirmDeleteModal } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
-import { useGetAllCoupons } from '@/hooks/coupons'
+import { useGetAllCoupons, useUpdateCouponStatus, useDeleteCoupon, useGetCouponAnalytics } from '@/hooks/coupons'
 import { formatDateTime } from '@/utils/helper/formatDate'
+import { toast } from 'sonner'
+import ActionsMenu from '@/components/features/ActionBtn'
 
 type CouponStatus = 'Active' | 'Draft' | 'Expired'
 
@@ -52,6 +54,59 @@ const CouponsPage = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(5)
   const [rangeLabel, setRangeLabel] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null)
+
+ 
+
+  // query
+  const { data: coupons, isLoading: couponsLoading } = useGetAllCoupons(
+    { filter:activeFilter,
+      search:'', 
+      page,
+      limit: pageSize,
+    }, true
+  )
+  const { data: couponAnalytics, isLoading: couponAnalyticsLoading } = useGetCouponAnalytics(true)
+ // mutation
+  const { mutateAsync: updateCouponStatus, isPending: updateCouponStatusPending } = useUpdateCouponStatus()
+  const { mutateAsync: deleteCoupon, isPending: deleteCouponPending } = useDeleteCoupon()
+
+  const handleToggleCoupon = async(row: Coupon, next: boolean) => {
+   
+    const toastId = toast.loading('Updating coupon status...')
+
+    try {
+      console.log('Toggle coupon', row.id, '->', next)
+      await updateCouponStatus({ id: row.id, status: next })
+      toast.success('Coupon status updated successfully', { id: toastId })
+    } catch (error: any) {
+      console.log('error', error)
+      toast.error(error.message, { id: toastId })
+    } 
+   
+  }
+
+  const handleDeleteCoupon = (coupon: Coupon) => {
+    setDeleteTarget(coupon)
+  }
+
+  const confirmDeleteCoupon = async () => {
+    if (!deleteTarget) return
+    const toastId = toast.loading('Deleting coupon...')
+    try {
+      await deleteCoupon(deleteTarget.id)
+      toast.success('Coupon deleted successfully', { id: toastId })
+      setDeleteTarget(null)
+    } catch (error: any) {
+      console.log('error', error)
+      toast.error(error.message, { id: toastId })
+    }
+  }
+
+  const handleEditCoupon = (coupon: Coupon) => {
+    navigate(`/coupon-management/${coupon.id}/edit`, { state: { coupon } })
+  }
+
 
 
   const COLUMNS: TableColumn<Coupon>[] = [
@@ -104,34 +159,43 @@ const CouponsPage = () => {
       key: 'status',
       header: 'Status',
       render: row => (
-        <span className={`text-sm font-bold`}>{row?.is_active ? 'Active' : 'Inactive'}</span>
+        <ToggleButton
+          checked={row?.is_active}
+          expireDate={row?.expire_date}
+          onChange={(next) => handleToggleCoupon(row, next)}
+        />
       ),
     },
+    // {
+    //   key: 'actions',
+    //   header: 'Actions',
+    //   headerClassName: 'text-right',
+    //   cellClassName: 'text-right',
+    //   render: () => (
+    //     <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+    //       <MoreVertical size={15} className="text-[#767683]" />
+    //     </button>
+    //   ),
+    // },
     {
       key: 'actions',
       header: 'Actions',
       headerClassName: 'text-right',
       cellClassName: 'text-right',
-      render: () => (
-        <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-          <MoreVertical size={15} className="text-[#767683]" />
-        </button>
+      render: row => (
+        <ActionsMenu
+          id={row.id}
+          isAnalytic={false}
+          editPath={`/coupon-management/${row.id}/edit`}
+          onEdit={() => handleEditCoupon(row)}
+          onDelete={() => handleDeleteCoupon(row)}
+        />
       ),
     },
   ]
 
 
-  // query
-  const { data: coupons, isLoading: couponsLoading } = useGetAllCoupons(
-    { filter:activeFilter,
-      search:'', 
-      page,
-      limit: pageSize,
-    }, true
-  )
-
-
-
+  
   const filtered = coupons?.data?.data ?? []
 
   return (
@@ -155,17 +219,17 @@ const CouponsPage = () => {
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><Tag className="text-[#000B60]" size={20} /></div>}
           label="Active Coupons"
-          value="24"
+          value={couponAnalytics?.data?.active_coupons ?? 0}
         />
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCE5FF]"><Users className="text-[#1565C0]" size={20} /></div>}
           label="Total Redeemed Users"
-          value="1,482"
+          value={couponAnalytics?.data?.total_redeemed_users ?? 0}
         />
         <StatCard
-          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><PiggyBank className="text-[#00875A]" size={20} /></div>}
+          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><PiggyBank className="text-[#00875A]" size={24} /></div>}
           label="Total Savings Generated"
-          value="12,450.00"
+          value={couponAnalytics?.data?.total_savings_generated ?? 0}
           prefix="₹"
         // valueColor="#00875A"
         />
@@ -221,6 +285,15 @@ const CouponsPage = () => {
       {rangeLabel && (
         <p className="text-xs text-[#767683] px-4 py-2 font-medium">{rangeLabel}</p>
       )}
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onClose={() => !deleteCouponPending && setDeleteTarget(null)}
+        onConfirm={confirmDeleteCoupon}
+        title="Delete Coupon"
+        itemName={deleteTarget?.code}
+        loading={deleteCouponPending}
+      />
 
     </div>
   )

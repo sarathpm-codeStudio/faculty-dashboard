@@ -70,6 +70,7 @@ const App = () => {
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/coupon-management" element={<CouponsPage />} />
               <Route path="/coupon-management/create" element={<CreateCouponPage />} />
+              <Route path="/coupon-management/:id/edit" element={<CreateCouponPage />} />
               <Route path="/chats" element={<ChatsPage />} />
               <Route path="/announcements" element={<AnnouncementsPage />} />
               <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />

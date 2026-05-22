@@ -1,11 +1,16 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { Copy, Clock, Plus, X, Eye, Loader2 } from 'lucide-react'
 import { Button, Heading, Input, Paragraph } from '@/components/ui'
-import { useGetAllCouponsEnabledCourses } from '@/hooks/coupons'
+import {
+  useGetAllCouponsEnabledCourses,
+  useCreateCoupon,
+  useUpdateCoupon,
+  useGetCouponById,
+} from '@/hooks/coupons'
 import { useFormik } from 'formik'
+import * as Yup from 'yup'
 import { couponValidator } from '@/utils/validator/coupon.validator'
-import { useCreateCoupon } from '@/hooks/coupons'
 import { toast } from 'sonner'
 import type { CreateCouponPayload } from '@/types/coupons.type'
 
@@ -13,12 +18,62 @@ type DiscountType = 'PERCENTAGE' | 'FLAT'
 
 type CourseOption = { value: string; label: string }
 
+type EditCouponData = {
+  id: number | string
+  code: string
+  discount_type: DiscountType
+  discount: number
+  is_all_courses: boolean
+  max_usage: number
+  usage_per_person: number
+  expire_date: string
+}
+
 const ALL_COURSES_OPTION: CourseOption = { value: 'all', label: 'All Courses' }
 
 const LABEL_CLS = 'text-xs font-bold uppercase tracking-wider text-[#767683]'
+const DISABLED_CLS = 'opacity-60 cursor-not-allowed'
+
+const editCouponValidator = Yup.object({
+  expiryDate: Yup.date().required('Expiry date is required'),
+  maxUsage: Yup.number().min(1, 'Must be at least 1').required('Max usage is required'),
+  usagePerPerson: Yup.number().min(1, 'Must be at least 1').required('Usage per person is required'),
+  courses: Yup.array()
+    .of(Yup.string())
+    .min(1, 'Please select at least one course')
+    .required('Please select at least one course'),
+})
+
+const normalizeCourseList = (raw: any): CourseOption[] => {
+  if (!Array.isArray(raw)) return []
+  return raw.map((c: any) => {
+    if (c == null) return null
+    if (typeof c === 'string' || typeof c === 'number') {
+      return { value: String(c), label: String(c) }
+    }
+    const value = c.id ?? c.value ?? c._id
+    const label = c.title ?? c.label ?? c.name ?? String(value ?? '')
+    if (value == null) return null
+    return { value: String(value), label: String(label) }
+  }).filter(Boolean) as CourseOption[]
+}
+
+const toDateInputValue = (iso?: string): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
 
 const CreateCouponPage = () => {
   const navigate = useNavigate()
+  const { id } = useParams<{ id?: string }>()
+  const location = useLocation()
+  const editingCoupon = (location.state as { coupon?: EditCouponData } | null)?.coupon
+  const isEditMode = Boolean(id)
 
   const [selectedCourses, setSelectedCourses] = useState<CourseOption[]>([])
   const [showCourseDropdown, setShowCourseDropdown] = useState(false)
@@ -26,15 +81,25 @@ const CreateCouponPage = () => {
 
   // query
   const { data: Courses, isLoading: enabledCoursesLoading } = useGetAllCouponsEnabledCourses(true)
+  const { data: couponDetail } = useGetCouponById(id, isEditMode)
 
   // mutation
   const { mutateAsync: createCoupon, isPending: isCreatingCoupon } = useCreateCoupon()
+  const { mutateAsync: updateCoupon, isPending: isUpdatingCoupon } = useUpdateCoupon()
 
   useEffect(() => {
     if (Courses) {
       setEnabledCourses(Courses.data.map((course: any) => ({ value: course.id, label: course.title })))
     }
   }, [Courses])
+
+  // Redirect back if landing on edit URL without state (e.g. page refresh).
+  useEffect(() => {
+    if (isEditMode && !editingCoupon) {
+      toast.error('Coupon data is missing. Please re-open from the list.')
+      navigate('/coupon-management', { replace: true })
+    }
+  }, [isEditMode, editingCoupon, navigate])
 
   const isAllSelected = selectedCourses.some(c => c.value === ALL_COURSES_OPTION.value)
 
@@ -58,37 +123,100 @@ const CreateCouponPage = () => {
     ? []
     : [ALL_COURSES_OPTION, ...enabledCourses.filter(c => !selectedCourses.some(s => s.value === c.value))]
 
-    const formik = useFormik({
-        initialValues: {
-            code: '',
-            discountType: 'PERCENTAGE' as DiscountType,
-            discountValue: '',
-            expiryDate: '',
-            maxUsage: '',
-            usagePerPerson: '',
-            courses: [] as string[],
-        },
-        validationSchema: couponValidator,
-        onSubmit: async (values) => {
-            try {
+  const initialValues = useMemo(() => {
+    if (isEditMode && editingCoupon) {
+      return {
+        code: editingCoupon.code,
+        discountType: editingCoupon.discount_type,
+        discountValue: String(editingCoupon.discount ?? ''),
+        expiryDate: toDateInputValue(editingCoupon.expire_date),
+        maxUsage: String(editingCoupon.max_usage ?? ''),
+        usagePerPerson: String(editingCoupon.usage_per_person ?? ''),
+        courses: editingCoupon.is_all_courses ? ['all'] : [],
+      }
+    }
+    return {
+      code: '',
+      discountType: 'PERCENTAGE' as DiscountType,
+      discountValue: '',
+      expiryDate: '',
+      maxUsage: '',
+      usagePerPerson: '',
+      courses: [] as string[],
+    }
+  }, [isEditMode, editingCoupon])
 
-              const payload: CreateCouponPayload = {
-                code: values.code,
-                discountType: values.discountType,
-                discountValue: Number(values.discountValue),
-                expiryDate: values.expiryDate,
-                maxUsage: Number(values.maxUsage),
-                usagePerPerson: Number(values.usagePerPerson),
-                courses: values.courses,
-              }
-              const response = await createCoupon(payload)
-              toast.success('Coupon created successfully')
-              navigate('/coupons')
-            } catch (error:any) {
-              toast.error(error.message || 'Something went wrong')
-            }
+  const formik = useFormik({
+    initialValues,
+    enableReinitialize: true,
+    validationSchema: isEditMode ? editCouponValidator : couponValidator,
+    onSubmit: async (values) => {
+      try {
+        if (isEditMode && (editingCoupon || id)) {
+          await updateCoupon({
+            id: editingCoupon?.id ?? id,
+            payload: {
+              
+              expiryDate: values.expiryDate,
+              maxUsage: Number(values.maxUsage),
+              usagePerPerson: Number(values.usagePerPerson),
+              courses: values.courses,
+            },
+          })
+          toast.success('Coupon updated successfully')
+          navigate('/coupon-management')
+          return
         }
-    })   
+
+        const payload: CreateCouponPayload = {
+          code: values.code,
+          discountType: values.discountType,
+          discountValue: Number(values.discountValue),
+          expiryDate: values.expiryDate,
+          maxUsage: Number(values.maxUsage),
+          usagePerPerson: Number(values.usagePerPerson),
+          courses: values.courses,
+        }
+        await createCoupon(payload)
+
+        toast.success('Coupon created successfully')
+        navigate('/coupon-management')
+      } catch (error: any) {
+        console.log("error response", error)
+        toast.error(error.message || 'Something went wrong')
+      }
+    }
+  })
+
+  // Sync the courses-chip UI back to form values.
+  useEffect(() => {
+    formik.setFieldValue(
+      'courses',
+      selectedCourses.map(c => c.value),
+      formik.touched.courses ?? false,
+    )
+  }, [selectedCourses])
+
+  // Prefill the courses-chip UI when editing an existing coupon. We start with
+  // a quick value from navigation state, then refine once the full coupon
+  // detail (with its course list) has been fetched.
+  useEffect(() => {
+    if (!isEditMode) return
+    if (editingCoupon?.is_all_courses) {
+      setSelectedCourses([ALL_COURSES_OPTION])
+    }
+  }, [isEditMode, editingCoupon])
+
+  useEffect(() => {
+    if (!isEditMode || !couponDetail) return
+    const detail = (couponDetail as any).data ?? couponDetail
+    if (detail?.is_all_courses) {
+      setSelectedCourses([ALL_COURSES_OPTION])
+      return
+    }
+    const courses = normalizeCourseList(detail?.courses)
+    if (courses.length > 0) setSelectedCourses(courses)
+  }, [isEditMode, couponDetail])
 
   const previewCode = formik.values.code || 'FALL2024'
   const rawValue = formik.values.discountValue?.toString().trim() || '25'
@@ -98,25 +226,27 @@ const CreateCouponPage = () => {
     ? new Date(formik.values.expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : 'Dec 31, 2024'
 
-  useEffect(() => {
-    formik.setFieldValue(
-      'courses',
-      selectedCourses.map(c => c.value),
-      formik.touched.courses ?? false,
-    )
-  }, [selectedCourses])
+  const minExpiryDate = (() => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const yyyy = tomorrow.getFullYear()
+    const mm = String(tomorrow.getMonth() + 1).padStart(2, '0')
+    const dd = String(tomorrow.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  })()
 
-
-
+  const isSubmitting = isCreatingCoupon || isUpdatingCoupon
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
 
       {/* Header */}
       <div className="mb-6">
-        <Heading className="text-[#000B60]">Create New Coupon</Heading>
+        <Heading className="text-[#000B60]">{isEditMode ? 'Edit Coupon' : 'Create New Coupon'}</Heading>
         <Paragraph className="text-[#767683] mt-1">
-          Set up a new promotional campaign for your courses.
+          {isEditMode
+            ? 'Update the expiry date and usage limits for this coupon.'
+            : 'Set up a new promotional campaign for your courses.'}
         </Paragraph>
       </div>
 
@@ -133,20 +263,23 @@ const CreateCouponPage = () => {
             labelClassName={LABEL_CLS}
             placeholder="E.G. FALL2024"
             value={formik.values.code}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.code ? formik.errors.code : undefined}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            error={!isEditMode && formik.touched.code ? formik.errors.code : undefined}
+            disabled={isEditMode}
+            className={isEditMode ? DISABLED_CLS : ''}
           />
 
           {/* Discount Type */}
           <div className="flex flex-col gap-1.5">
             <label className={`text-sm font-bold text-gray-700 ${LABEL_CLS}`}>Discount Type</label>
-            <div className="flex items-center bg-[#F2F4F6] rounded-xl p-1 w-fit">
+            <div className={`flex items-center bg-[#F2F4F6] rounded-xl p-1 w-fit ${isEditMode ? DISABLED_CLS : ''}`}>
               {(['PERCENTAGE', 'FLAT'] as DiscountType[]).map(type => (
                 <button
                   key={type}
                   type="button"
-                  onClick={() => formik.setFieldValue('discountType', type)}
+                  disabled={isEditMode}
+                  onClick={() => !isEditMode && formik.setFieldValue('discountType', type)}
                   className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${formik.values.discountType === type
                     ? 'bg-white text-[#000B60] shadow-sm'
                     : 'text-[#767683] hover:text-[#000B60]'
@@ -169,23 +302,25 @@ const CreateCouponPage = () => {
               max={formik.values.discountType === 'PERCENTAGE' ? 100 : undefined}
               placeholder={formik.values.discountType === 'PERCENTAGE' ? '25' : '50'}
               value={formik.values.discountValue}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={formik.touched.discountValue ? formik.errors.discountValue : undefined}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={!isEditMode && formik.touched.discountValue ? formik.errors.discountValue : undefined}
+              disabled={isEditMode}
+              className={isEditMode ? DISABLED_CLS : ''}
             />
             <div className="flex flex-col gap-2">
-              {/* <label className={LABEL_CLS}>Expiry Date</label> */}
               <Input
-              label="Expiry Date"
-              name='expiryDate'
-              labelClassName={LABEL_CLS}
-              type="date"
-              placeholder="e.g. 100"
-              value={formik.values.expiryDate}
+                label="Expiry Date"
+                name='expiryDate'
+                labelClassName={LABEL_CLS}
+                type="date"
+                placeholder="e.g. 100"
+                min={minExpiryDate}
+                value={formik.values.expiryDate}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.expiryDate ? formik.errors.expiryDate : undefined}
-            />
+              />
             </div>
           </div>
 
@@ -199,9 +334,9 @@ const CreateCouponPage = () => {
               min={1}
               placeholder="e.g. 100"
               value={formik.values.maxUsage}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.maxUsage ? formik.errors.maxUsage : undefined}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.maxUsage ? formik.errors.maxUsage : undefined}
             />
             <Input
               label="Usage Per Person"
@@ -333,10 +468,16 @@ const CreateCouponPage = () => {
           <div className="flex items-center justify-end gap-4">
             <Button variant="white" className="!text-[#191c1e] !text-[14px] !h-10 !px-6" onClick={() => navigate(-1)}>
               Cancel
-            </Button> 
-            <Button variant="primary" type='submit' onClick={() => { formik.handleSubmit() }} className="!h-10 !text-sm !px-6">
-              Create Coupon
-              {isCreatingCoupon && <Loader2 size={14} className="animate-spin" />}
+            </Button>
+            <Button
+              variant="primary"
+              type='submit'
+              onClick={() => { formik.handleSubmit() }}
+              className="!h-10 !text-sm !px-6"
+              disabled={isSubmitting}
+            >
+              {isEditMode ? 'Update Coupon' : 'Create Coupon'}
+              {isSubmitting && <Loader2 size={14} className="animate-spin" />}
             </Button>
           </div>
 
