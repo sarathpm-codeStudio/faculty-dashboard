@@ -15,6 +15,7 @@ export interface IdentityData {
   phone: string
   date_of_birth: string
   bio: string
+  avatar_url: string
 }
 
 export interface Qualification {
@@ -33,7 +34,7 @@ const OnboardingPage = () => {
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
   const [identity, setIdentity] = useState<IdentityData>({
     first_name: '', last_name: '', email: '',
-    phone: '', date_of_birth: '', bio: '',
+    phone: '', date_of_birth: '', bio: '', avatar_url: '',
   })
   const [qualifications, setQualifications] = useState<Qualification[]>([])
 

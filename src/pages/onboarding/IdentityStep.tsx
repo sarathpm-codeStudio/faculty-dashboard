@@ -1,10 +1,11 @@
-import { Mail, Phone } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Mail, Phone, Camera, ImagePlus, Trash2 } from 'lucide-react'
 import { useFormik } from 'formik'
 import OnboardingLayout from './OnboardingLayout'
-import { Input, Textarea, Button, DateInput } from '@/components/ui'
+import { Input, Textarea, Button, DateInput, ImageCropperModal } from '@/components/ui'
 import { IdentityData } from './index'
 import { identitySchema } from '@/utils/validator/auth.validator'
-import { IoMdArrowForward } from "react-icons/io";
+import { IoMdArrowForward } from "react-icons/io"
 
 interface Props {
     data: IdentityData
@@ -15,6 +16,11 @@ interface Props {
 }
 
 const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props) => {
+    const fileRef = useRef<HTMLInputElement>(null)
+    const [dragOver, setDragOver] = useState(false)
+    const [rawImage, setRawImage] = useState<string | null>(null)
+    const [cropperOpen, setCropperOpen] = useState(false)
+
     const formik = useFormik<IdentityData>({
         initialValues: data,
         validationSchema: identitySchema,
@@ -26,6 +32,37 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
 
     const err = (field: keyof IdentityData) =>
         formik.touched[field] && formik.errors[field] ? formik.errors[field] : undefined
+
+    const handleFile = (file: File) => {
+        if (!file.type.startsWith('image/')) return
+        const reader = new FileReader()
+        reader.onloadend = () => {
+            setRawImage(reader.result as string)
+            setCropperOpen(true)
+        }
+        reader.readAsDataURL(file)
+    }
+
+    const handleSaveCrop = (cropped: string) => {
+        formik.setFieldValue('avatar_url', cropped)
+        setCropperOpen(false)
+        setRawImage(null)
+    }
+
+    const handleCancelCrop = () => {
+        setCropperOpen(false)
+        setRawImage(null)
+        if (fileRef.current) fileRef.current.value = ''
+    }
+
+    const handleRemove = () => {
+        formik.setFieldValue('avatar_url', '')
+        if (fileRef.current) fileRef.current.value = ''
+    }
+
+    const handleChange = () => fileRef.current?.click()
+
+    const hasImage = !!formik.values.avatar_url
 
     return (
         <OnboardingLayout
@@ -41,6 +78,71 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
                 <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-6">
                     <div className="flex flex-col gap-5">
 
+                        {/* Profile photo uploader */}
+                        <div className="flex flex-col gap-1.5">
+                            <span className="text-sm font-bold text-gray-700">Profile Photo</span>
+
+                            {!hasImage ? (
+                                <div
+                                    onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
+                                    onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+                                    onDragLeave={() => setDragOver(false)}
+                                    onClick={handleChange}
+                                    className={`border-2 border-dashed rounded-xl py-5 px-4 flex items-center gap-4 cursor-pointer transition-colors
+                                        ${dragOver ? 'border-[#000B60] bg-blue-50' : 'border-gray-200 hover:border-[#000B60]'}`}
+                                >
+                                    <div className="w-16 h-16 rounded-full bg-[#DFE0FF] flex items-center justify-center shrink-0">
+                                        <ImagePlus size={26} className="text-[#000B60]" />
+                                    </div>
+                                    <div className="flex flex-col flex-1">
+                                        <p className="text-sm font-bold text-[#000B60]">Click to upload or drag and drop</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">JPG or PNG (max. 2MB) — you can crop after upload</p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="border-2 border-dashed border-gray-200 rounded-xl py-4 px-4 flex items-center gap-4">
+                                    <div className="relative shrink-0">
+                                        <img
+                                            src={formik.values.avatar_url}
+                                            alt="Profile"
+                                            className="w-16 h-16 rounded-full object-cover border border-gray-100"
+                                        />
+                                        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-[#000B60] rounded-full flex items-center justify-center text-white">
+                                            <Camera size={10} />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-[#000B60] truncate">Profile photo added</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">Looks good — change or remove anytime</p>
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        <button
+                                            type="button"
+                                            onClick={handleChange}
+                                            className="text-sm font-bold text-[#000B60] hover:underline cursor-pointer"
+                                        >
+                                            Change
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={handleRemove}
+                                            className="flex items-center gap-1 text-sm text-[#BA1A1A] hover:text-red-700 cursor-pointer"
+                                        >
+                                            <Trash2 size={12} />
+                                            <span className="font-bold">Remove</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <input
+                                ref={fileRef}
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png"
+                                className="hidden"
+                                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
+                            />
+                        </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Input
@@ -114,6 +216,14 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
                     </div>
                 </div>
             </form>
+
+            <ImageCropperModal
+                open={cropperOpen}
+                image={rawImage}
+                onClose={handleCancelCrop}
+                onSave={handleSaveCrop}
+                title="Crop your profile photo"
+            />
         </OnboardingLayout>
     )
 }
