@@ -5,6 +5,7 @@ type CoursePerformanceRowProps = {
   students: string
   revenue: string
   label?: string
+  isLoading?: boolean
 }
 
 const CoursePerformanceRow = ({
@@ -12,6 +13,7 @@ const CoursePerformanceRow = ({
   students,
   revenue,
   label = 'TOTAL PURCHASED',
+  isLoading = false,
 }: CoursePerformanceRowProps) => (
   <div className="flex items-center justify-between rounded-lg border border-gray-100 p-4">
     <div>

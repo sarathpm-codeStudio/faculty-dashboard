@@ -1,4 +1,4 @@
-import { ChevronDown, Film } from 'lucide-react'
+import { ChevronDown, Film, Tag } from 'lucide-react'
 import { FaUsers } from "react-icons/fa6";
 import { MdOutlineMenuBook } from "react-icons/md";
 import { BsChatSquareTextFill } from "react-icons/bs";
@@ -6,6 +6,7 @@ import { HiMiniCurrencyDollar } from "react-icons/hi2";
 import { MdVideoSettings } from "react-icons/md";
 import { useVideoUploadProgress } from '@/hooks/video'
 import { useAuthStore } from '@/store/authStore'
+import { useGetDashboardCounters, useGetTopCoursesPerformance } from '@/hooks/dashboard'
 import {
   StatCard,
   SectionCard,
@@ -16,6 +17,7 @@ import {
 import EnrollmentChart from './EnrollmentChart'
 import RevenueChart from './RevenueChart'
 import { Heading, Paragraph } from '@/components/ui'
+import formatNumber from '@/utils/helper/numberFormating';
 const courses = [
   { id: 1, title: 'Advanced Macroeconomics', students: '1,240', revenue: '₹62,000.00' },
   { id: 2, title: 'CA Inter - Costing', students: '842', revenue: '₹42,100.00' },
@@ -41,6 +43,9 @@ const DashboardPage = () => {
 
   console.log("uploads", uploads)
 
+  // query
+  const { data: dashboardCounters, isLoading: dashboardCountersLoading } = useGetDashboardCounters(true)
+  const { data: topCoursesPerformance, isLoading: topCoursesPerformanceLoading } = useGetTopCoursesPerformance(true)
 
   return (
     <div className="space-y-5">
@@ -71,22 +76,22 @@ const DashboardPage = () => {
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#000b60]" size={25} /></div>}
           label="Total Students"
-          value="1,050"
+          value={formatNumber(dashboardCounters?.data?.total_students ?? 0)}
         />
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
           label="Active Courses"
-          value="06"
+          value={formatNumber(dashboardCounters?.data?.active_courses ?? 0)}
         />
         <StatCard
-          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFDAD6]"><BsChatSquareTextFill className="text-[#BA1A1A]" size={25} /></div>}
-          label="Pending Doubts"
-          value="56"
+          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFDAD6]"><Tag className="text-[#BA1A1A]" size={25} /></div>}
+          label="Active Coupons"
+          value={formatNumber(dashboardCounters?.data?.active_coupons ?? 0)}
         />
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
           label="Total Revenue"
-          value="123,025"
+          value={formatNumber(dashboardCounters?.data?.total_revenue ?? 0)}
           prefix="₹"
         />
       </div>
@@ -113,14 +118,24 @@ const DashboardPage = () => {
             }
           >
             <div className="space-y-3">
-              {courses.map(c => (
-                <CoursePerformanceRow
-                  key={c.id}
-                  title={c.title}
-                  students={c.students}
-                  revenue={c.revenue}
-                />
-              ))}
+              {
+                topCoursesPerformance?.data?.has_data ? (
+                  topCoursesPerformance?.data?.data?.map((c: any) => (
+                    <CoursePerformanceRow
+                      key={c.id}
+                      title={c.title}
+                      students={c.total_students}
+                      revenue={c.total_revenue}
+                      isLoading={topCoursesPerformanceLoading}
+                    />
+                  ))
+                )
+                : (
+                  <Paragraph className='text-[#767683] !text-[12px] text-center'>No Top Courses Performance found</Paragraph>
+                  
+                )
+              }
+              
             </div>
 
             {/* Transcoding Status */}

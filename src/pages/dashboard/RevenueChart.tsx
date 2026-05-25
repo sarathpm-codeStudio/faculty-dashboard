@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, LabelList } from 'recharts'
 import { ChevronDown, TrendingUp } from 'lucide-react'
-import { Paragraph, Subheading } from '@/components/ui'
+import { Paragraph, Spinner, Subheading } from '@/components/ui'
+import { useGetRevenueTrend } from '@/hooks/dashboard'
 
 type Period = 'week' | 'month' | 'year'
 
@@ -56,8 +57,18 @@ const PERIODS: { key: Period; label: string }[] = [
 
 const RevenueChart = () => {
   const [period, setPeriod] = useState<Period>('week')
+  const [chartData, setChartData] = useState<DataPoint[]>([])
   const currentData = dataMap[period]
   const peak = Math.max(...currentData.map(d => d.value))
+
+  // query
+  const { data: revenueTrend, isLoading: revenueTrendLoading } = useGetRevenueTrend(period, true)
+
+  useEffect(() => {
+    if (revenueTrend) {
+      setChartData(revenueTrend.data?.data ?? [])
+    }
+  }, [period,revenueTrend])
 
   return (
     <div
@@ -84,10 +95,15 @@ const RevenueChart = () => {
       </div>
 
       {/* Chart */}
-      <div className="mt-6 flex-1 min-h-[200px]">
+      <div className="mt-6 flex-1 min-h-[200px] relative">
+        {revenueTrendLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-brand-from/40 backdrop-blur-[1px] rounded-md">
+            <Spinner size={44} color="#ffffff" label="Loading revenue data..." />
+          </div>
+        )}
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={currentData}
+            data={chartData}
             margin={{ top: 38, right: 8, left: 8, bottom: 0 }}
             barCategoryGap="28%"
           >
@@ -98,7 +114,7 @@ const RevenueChart = () => {
               tickLine={false}
             />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-              {currentData.map((entry, index) => (
+              {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={
@@ -155,7 +171,7 @@ const RevenueChart = () => {
       {/* Trend footer */}
       <div className="mt-4 flex items-center gap-2">
         <TrendingUp className="h-4 w-4 shrink-0 text-[#dfe0ff]" />
-        <Paragraph className="text-[#dfe0ff]">{trendText[period]}</Paragraph>
+        <Paragraph className="text-[#dfe0ff]">{revenueTrend?.data?.trend ?? ''}</Paragraph>
       </div>
     </div>
   )

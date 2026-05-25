@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   AreaChart,
   Area,
@@ -10,6 +10,8 @@ import {
 } from 'recharts'
 import { ChevronDown } from 'lucide-react'
 import { SectionCard } from '@/components/features'
+import { Spinner } from '@/components/ui'
+import { useGetEnrollmentTrend } from '@/hooks/dashboard'
 
 type Period = 'week' | 'month' | 'year'
 
@@ -65,7 +67,11 @@ const PERIODS: { key: Period; label: string }[] = [
 
 const EnrollmentChart = () => {
   const [period, setPeriod] = useState<Period>('week')
+  const [chartData, setChartData] = useState<DataPoint[]>([])
   const currentData = dataMap[period]
+
+  // query
+  const { data: enrollmentTrend, isLoading: enrollmentTrendLoading } = useGetEnrollmentTrend(period, true)
 
   const filter = (
     <div className="relative">
@@ -82,6 +88,16 @@ const EnrollmentChart = () => {
     </div>
   )
 
+  useEffect(() => {
+    const fetchData = async () => {
+        
+        if (enrollmentTrend) {
+            setChartData(enrollmentTrend.data)
+          }
+        }
+    fetchData()
+}, [period, enrollmentTrend])
+
   return (
     <SectionCard
       title="Enrollment Trend"
@@ -89,11 +105,16 @@ const EnrollmentChart = () => {
       rightContent={filter}
       className="h-full"
     >
-      <div className="h-[340px]">
+      <div className="h-[340px] relative">
+        {enrollmentTrendLoading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-[1px] rounded-md">
+            <Spinner size={44} label="Loading enrollment data..." />
+          </div>
+        )}
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             key={period}
-            data={currentData}
+            data={chartData}
             margin={{ top: 10, right: 16, left: 0, bottom: period === 'week' ? 28 : 8 }}
           >
             <defs>
@@ -120,7 +141,7 @@ const EnrollmentChart = () => {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               tick={(props: any) => {
                 const { x, y, payload } = props
-                const datum = currentData.find(d => d.primary === payload?.value)
+                const datum = chartData.find(d => d.primary === payload?.value)
                 if (!datum) return <g />
                 return (
                   <g transform={`translate(${x},${y})`}>
