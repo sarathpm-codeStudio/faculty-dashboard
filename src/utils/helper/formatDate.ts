@@ -3,14 +3,45 @@
 export const formatDate = (dateStr: string | null | undefined): string | null => {
     if (!dateStr) return null;
     const cleaned = dateStr.replace(/\s/g, '');
+
+    // Native date picker value (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleaned)) {
+        const [year, month, day] = cleaned.split('-');
+        const yearNum = parseInt(year, 10);
+        if (yearNum < 1900 || yearNum > new Date().getFullYear() + 1) return null;
+        return cleaned;
+    }
+
+    // Legacy typed format (DD/MM/YYYY)
     const parts = cleaned.split('/');
     if (parts.length !== 3) return null;
     const [day, month, year] = parts;
     if (!day || !month || !year || year.length !== 4) return null;
-    const yearNum = parseInt(year);
+    const yearNum = parseInt(year, 10);
     if (yearNum < 1900 || yearNum > new Date().getFullYear()) return null;
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 };
+
+/** Maps form / picker value to Postgres `date` for graduation_year. */
+export const toGraduationDate = (value: string | null | undefined): string | null => {
+    const iso = formatDate(value)
+    if (iso) return iso
+    const yearOnly = value?.trim()
+    if (yearOnly && /^\d{4}$/.test(yearOnly)) return `${yearOnly}-01-01`
+    return null
+}
+
+/** Maps DB graduation_year (date or legacy year) to YYYY-MM-DD for the date picker. */
+export const graduationDateToInput = (value: string | number | null | undefined): string => {
+    if (value == null) return ''
+    if (typeof value === 'number') return `${value}-01-01`
+    const str = String(value).trim()
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.split('T')[0]
+    if (/^\d{4}$/.test(str)) return `${str}-01-01`
+    const d = new Date(str)
+    if (!Number.isNaN(d.getTime())) return d.toISOString().split('T')[0]
+    return ''
+}
 
 
 // utils/timeAgo.ts

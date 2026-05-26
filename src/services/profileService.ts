@@ -20,7 +20,7 @@ export type AcademicProfile = {
     faculty_id: string
     type?: string
     field_of_study?: string
-    graduation_year?: number | null
+    graduation_year?: string | number | null
     teaching_experience?: number | null
     document_url?: string | null
 }
@@ -43,5 +43,27 @@ export const profileService = {
             .eq('faculty_id', facultyId)
         if (error) throw error
         return data ?? []
+    },
+
+    updateProfile: async (
+        userId: string,
+        data: {
+            first_name?: string
+            last_name?: string
+            email?: string
+            phone?: string
+            date_of_birth?: string | null
+            bio?: string
+            avatar_url?: string
+        },
+    ) => {
+        const { error } = await supabase.from('profiles').update(data).eq('id', userId)
+        if (error) throw error
+    },
+
+    deleteAcademicProfiles: async (ids: string[]) => {
+        if (ids.length === 0) return
+        const { error } = await supabase.from('academic_profiles').delete().in('id', ids)
+        if (error) throw error
     },
 }

@@ -4,7 +4,7 @@ import { useFormik } from 'formik'
 import { toast } from 'sonner'
 import OnboardingLayout from './OnboardingLayout'
 import { Input, Textarea, Button, DateInput, ImageCropperModal } from '@/components/ui'
-import { IdentityData } from './index'
+import { IdentityData, type OnboardingStepMode } from './index'
 import { identitySchema } from '@/utils/validator/auth.validator'
 import { storageService } from '@/services/storageService'
 import { IoMdArrowForward } from "react-icons/io"
@@ -24,9 +24,11 @@ interface Props {
     onNext: () => void
     onBack: () => void
     animClass?: string
+    mode?: OnboardingStepMode
 }
 
-const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props) => {
+const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = 'onboarding' }: Props) => {
+    const isEdit = mode === 'edit'
     const fileRef = useRef<HTMLInputElement>(null)
     const [dragOver, setDragOver] = useState(false)
     const [rawImage, setRawImage] = useState<string | null>(null)
@@ -94,10 +96,14 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
     return (
         <OnboardingLayout
             step={1}
-            total={5}
-            title="Basic Information"
-            subtitle="Welcome to the Academic Curator. To begin your journey as a faculty member, please provide your fundamental identification details."
-            backLabel="Back to Sign in"
+            total={isEdit ? 2 : 5}
+            title={isEdit ? 'Edit Basic Information' : 'Basic Information'}
+            subtitle={
+                isEdit
+                    ? 'Update your personal details and profile photo. ID verification and policies cannot be changed here.'
+                    : 'Welcome to the Academic Curator. To begin your journey as a faculty member, please provide your fundamental identification details.'
+            }
+            backLabel={isEdit ? 'Back to profile' : 'Back to Sign in'}
             onBack={onBack}
             animClass={animClass}
         >
@@ -216,6 +222,9 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
                             placeholder="name@university.edu"
                             leftIcon={<Mail size={14} />}
                             error={err('email')}
+                            disabled={isEdit}
+                            readOnly={isEdit}
+                            className={isEdit ? 'opacity-70 cursor-not-allowed' : ''}
                         />
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -229,6 +238,9 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
                                 placeholder="+91 98765 •••••"
                                 leftIcon={<Phone size={14} />}
                                 error={err('phone')}
+                                disabled={isEdit}
+                                readOnly={isEdit}
+                                className={isEdit ? 'opacity-70 cursor-not-allowed' : ''}
                             />
                             <DateInput
                                 label="Date of Birth"
@@ -236,6 +248,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
                                 onChange={(val) => formik.setFieldValue('date_of_birth', val)}
                                 onBlur={() => formik.setFieldTouched('date_of_birth', true)}
                                 error={err('date_of_birth')}
+                                max={new Date().toISOString().split('T')[0]}
                             />
                         </div>
 

@@ -2,6 +2,7 @@
 
 
 import { supabase } from "./supabase"
+import { toGraduationDate } from '@/utils/helper/formatDate'
 
 
 
@@ -31,7 +32,7 @@ export const onBoardingService = {
                 faculty_id,
                 type: item.type,
                 field_of_study: item.fieldOfStudy,
-                graduation_year: item.graduationYear ? parseInt(item.graduationYear) : null,
+                graduation_year: toGraduationDate(item.graduationYear),
                 teaching_experience: item.teachingExperience ? parseInt(item.teachingExperience) : null,
                 document_url: item.document_url ?? null,
             }));

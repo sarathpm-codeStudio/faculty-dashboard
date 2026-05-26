@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Pencil, ChevronRight, FileText, GraduationCap, Eye, Download, User } from 'lucide-react'
 import { HiOutlineBadgeCheck } from 'react-icons/hi'
@@ -28,9 +29,16 @@ const formatDisplayDob = (dob?: string) => {
 
 type DetailFieldProps = { label: string; value: string }
 
-const formatGraduationYear = (year?: number | null) => {
+const formatGraduationYear = (year?: string | number | null) => {
     if (year == null) return '—'
-    return String(year)
+    const str = String(year)
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+        const d = new Date(str.split('T')[0] + 'T00:00:00')
+        if (!Number.isNaN(d.getTime())) {
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+        }
+    }
+    return str
 }
 
 const formatTeachingExperience = (years?: number | null) => {
@@ -53,6 +61,7 @@ const DetailField = ({ label, value }: DetailFieldProps) => (
 )
 
 const ProfilePage = () => {
+    const navigate = useNavigate()
     const authUser = useAuthStore((s) => s.user)
     const [loading, setLoading] = useState(true)
     const [profile, setProfile] = useState<FacultyProfile | null>(null)
@@ -126,7 +135,7 @@ const ProfilePage = () => {
                 <Button2
                     variant="primary"
                     className="!h-11 !text-sm !px-5 shrink-0"
-                    onClick={() => toast.info('Profile editing will be available soon.')}
+                    onClick={() => navigate('/account/edit')}
                 >
                     <Pencil size={16} />
                     Edit Profile

@@ -26,6 +26,7 @@ import AnnouncementDetailPage from '@/pages/announcements/AnnouncementDetailPage
 import CreateAnnouncementPage from '@/pages/announcements/CreateAnnouncementPage'
 import CreateCouponPage from '@/pages/coupons/CreateCouponPage'
 import ProfilePage from '@/pages/profile'
+import EditProfilePage from '@/pages/profile/EditProfilePage'
 import BankDetailsAndTransaction from '@/pages/profile/BankDetails&Transaction'
 import UpdateBankDetails from '@/pages/profile/UpdateBankDetails'
 import FullTransactionHistory from '@/pages/profile/FullTransactionHistory'
@@ -77,6 +78,7 @@ const App = () => {
               <Route path="/announcements/create" element={<CreateAnnouncementPage />} />
               <Route path="/announcements/:id/edit" element={<CreateAnnouncementPage />} />
               <Route path="/account" element={<ProfilePage />} />
+              <Route path="/account/edit" element={<EditProfilePage />} />
               <Route path="/account/bank" element={<BankDetailsAndTransaction />} />
               <Route path="/account/bank/update" element={<UpdateBankDetails />} />
               <Route path="/account/bank/history" element={<FullTransactionHistory />} />

@@ -29,7 +29,11 @@ export interface Qualification {
   document_url?: string
   fileName?: string
   fileSize?: string
+  /** Set for qualifications loaded from the database (read-only; remove or keep only). */
+  isExisting?: boolean
 }
+
+export type OnboardingStepMode = 'onboarding' | 'edit'
 
 export type DocumentType = 'aadhar_card' | 'license' | 'passport' | 'voter_id' | ''
 
