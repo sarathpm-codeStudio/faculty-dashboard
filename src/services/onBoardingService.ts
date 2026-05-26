@@ -33,7 +33,7 @@ export const onBoardingService = {
                 field_of_study: item.fieldOfStudy,
                 graduation_year: item.graduationYear ? parseInt(item.graduationYear) : null,
                 teaching_experience: item.teachingExperience ? parseInt(item.teachingExperience) : null,
-                document_url: item.fileName ? item.fileName : null,
+                document_url: item.document_url ?? null,
             }));
 
             const { data: result, error } = await supabase

@@ -1,10 +1,13 @@
-import { useRef, useState } from 'react'
-import { CloudUpload, Plus, Trash2, Eye, FileText, Download, GraduationCap } from 'lucide-react'
+import { useState } from 'react'
+import { Trash2, Eye, FileText, Download, GraduationCap } from 'lucide-react'
 import { useFormik } from 'formik'
+import { toast } from 'sonner'
 import OnboardingLayout from './OnboardingLayout'
 import { Input, Select, Button, Subheading, Paragraph, DateInput } from '@/components/ui'
+import { UploadBox } from '@/components/features/UploadBox'
 import { Qualification } from './index'
 import { qualificationFormSchema } from '@/utils/validator/auth.validator'
+import { storageService } from '@/services/storageService'
 import { IoMdArrowForward } from "react-icons/io";
 import { IoAddCircleOutline } from "react-icons/io5";
 
@@ -21,6 +24,7 @@ interface QualificationForm {
     fieldOfStudy: string
     graduationYear: string
     teachingExperience: string
+    document_url: string
     fileName: string
     fileSize: string
 }
@@ -40,14 +44,15 @@ const emptyForm = (): QualificationForm => ({
     fieldOfStudy: '',
     graduationYear: '',
     teachingExperience: '',
+    document_url: '',
     fileName: '',
     fileSize: '',
 })
 
 const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass = '' }: Props) => {
-    const [dragOver, setDragOver] = useState(false)
+    const [preview, setPreview] = useState<string | null>(null)
+    const [uploading, setUploading] = useState(false)
     const [noQualError, setNoQualError] = useState(false)
-    const fileRef = useRef<HTMLInputElement>(null)
 
     const formik = useFormik<QualificationForm>({
         initialValues: emptyForm(),
@@ -55,6 +60,7 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
         onSubmit: (values, { resetForm }) => {
             onChange([...qualifications, { ...values, id: Date.now().toString() }])
             resetForm()
+            setPreview(null)
             setNoQualError(false)
         },
     })
@@ -62,9 +68,37 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
     const err = (field: keyof QualificationForm) =>
         formik.touched[field] && formik.errors[field] ? formik.errors[field] : undefined
 
-    const handleFile = (file: File) => {
+    const handleFile = async (file: File) => {
+        if (file.type.startsWith('image/')) {
+            setPreview(URL.createObjectURL(file))
+        } else {
+            setPreview(null)
+        }
         formik.setFieldValue('fileName', file.name)
         formik.setFieldValue('fileSize', `${(file.size / 1024 / 1024).toFixed(1)} MB`)
+
+        setUploading(true)
+        try {
+            const publicUrl = await storageService.uploadCourseCover(file)
+            formik.setFieldValue('document_url', publicUrl)
+            toast.success('Certificate uploaded')
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Failed to upload certificate'
+            toast.error(message)
+            formik.setFieldValue('document_url', '')
+            formik.setFieldValue('fileName', '')
+            formik.setFieldValue('fileSize', '')
+            setPreview(null)
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    const handleClear = () => {
+        setPreview(null)
+        formik.setFieldValue('document_url', '')
+        formik.setFieldValue('fileName', '')
+        formik.setFieldValue('fileSize', '')
     }
 
     const handleRemove = (id: string) =>
@@ -137,38 +171,29 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                             />
                         </div>
 
-                        {/* Upload zone */}
                         <div className="flex flex-col gap-1.5">
                             <span className="text-sm font-bold text-gray-700">Upload Certificate</span>
-                            <div
-                                onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f) }}
-                                onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-                                onDragLeave={() => setDragOver(false)}
-                                onClick={() => fileRef.current?.click()}
-                                className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors
-                                    ${dragOver ? 'border-[#000B60] bg-blue-50' : 'border-gray-200 hover:border-[#000B60]'}`}
-                            >
-                                <CloudUpload size={26} className="text-[#000B60]" />
-                                {formik.values.fileName ? (
-                                    <p className="text-sm font-medium text-[#000B60]">{formik.values.fileName}</p>
-                                ) : (
-                                    <>
-                                        <p className="text-sm text-gray-500">Click to upload or drag and drop</p>
-                                        <p className="text-xs text-gray-400">PDF, JPG or PNG (max. 10MB)</p>
-                                    </>
-                                )}
-                            </div>
-                            <input
-                                ref={fileRef}
-                                type="file"
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                className="hidden"
-                                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
+                            <UploadBox
+                                accept=".pdf,.jpg,.jpeg,.png,image/jpeg,image/png,application/pdf"
+                                preview={preview}
+                                previewType="image"
+                                icon={<FileText size={20} />}
+                                title="Certificate"
+                                hint="PDF, JPG or PNG (max. 10MB)"
+                                loading={uploading}
+                                onFile={handleFile}
+                                onClear={handleClear}
                             />
+                            {!preview && formik.values.fileName && (
+                                <p className="text-xs font-medium text-[#000B60]">{formik.values.fileName}</p>
+                            )}
+                            {err('document_url') && (
+                                <p className="text-xs text-red-500 font-medium mt-1">{err('document_url')}</p>
+                            )}
                         </div>
 
                         <div className="flex justify-end mt-4">
-                            <Button type="submit" variant="secondary">
+                            <Button type="submit" variant="secondary" disabled={uploading} loading={uploading}>
                                 <IoAddCircleOutline size={25} />
                                 Add Qualification
                             </Button>
@@ -215,7 +240,7 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                             ))}
                         </div>
 
-                        {q.fileName && (
+                        {(q.fileName || q.document_url) && (
                             <div className="flex items-center justify-between px-3 py-2.5 bg-[#F2F4F6] border border-gray-100 rounded-lg mt-2">
                                 <div className="flex items-center gap-2">
                                     <div className="w-7 h-7 bg-red-50 rounded flex items-center justify-center border border-red-100">
@@ -226,10 +251,27 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
                                         <p className="text-xs text-gray-400">Verified • {q.fileSize}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <button type="button" className="text-[#000B60] font-bold"><Eye size={20} /></button>
-                                    <button type="button" className="text-[#000B60] font-bold"><Download size={20} /></button>
-                                </div>
+                                {q.document_url && (
+                                    <div className="flex items-center gap-3">
+                                        <a
+                                            href={q.document_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-[#000B60] font-bold"
+                                            aria-label="View certificate"
+                                        >
+                                            <Eye size={20} />
+                                        </a>
+                                        <a
+                                            href={q.document_url}
+                                            download={q.fileName}
+                                            className="text-[#000B60] font-bold"
+                                            aria-label="Download certificate"
+                                        >
+                                            <Download size={20} />
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

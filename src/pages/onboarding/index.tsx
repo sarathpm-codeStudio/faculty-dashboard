@@ -26,6 +26,7 @@ export interface Qualification {
   fieldOfStudy: string
   graduationYear: string
   teachingExperience: string
+  document_url?: string
   fileName?: string
   fileSize?: string
 }

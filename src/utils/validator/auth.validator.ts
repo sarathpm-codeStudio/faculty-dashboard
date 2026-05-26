@@ -18,6 +18,7 @@ export const qualificationFormSchema = Yup.object({
     fieldOfStudy: Yup.string().trim().required('Field of study is required'),
     graduationYear: Yup.string().required('Graduation date is required'),
     teachingExperience: Yup.string().trim(),
+    document_url: Yup.string().required('Please upload your certificate'),
 })
 
 export const idVerificationSchema = Yup.object({
