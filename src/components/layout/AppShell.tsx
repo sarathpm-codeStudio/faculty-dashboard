@@ -13,7 +13,7 @@ import GlobalUploadIndicator from '@/components/ui/GlobalUploadIndicator'
 
 const AppShell = () => {
     const [notifOpen, setNotifOpen] = useState(false)
-    const { user, isPending, setIsPending, setNoProfile } = useAuthStore()
+    const { user, isPending, setIsPending, setNoProfile ,setProfileStatus} = useAuthStore()
     const { pathname } = useLocation()
     const setProfile = useAuthStore((state) => state.setProfile)
 
@@ -25,6 +25,7 @@ const AppShell = () => {
                 console.log('user profile', profile)
                 if (profile === null) {
                     setNoProfile(true)
+                    setProfileStatus(profile?.account_verified ?? '')
                     setIsPending(true)
                     return
                 }
@@ -35,7 +36,8 @@ const AppShell = () => {
                     avatar_url: profile?.avatar_url || "",
                 })
                 setNoProfile(false)
-                setIsPending(profile?.account_verified === 'PENDING')
+                setProfileStatus(profile?.account_verified ?? '')
+                setIsPending(profile?.account_verified === 'PENDING' || profile?.account_verified === 'REJECTED')
             } catch (error: any) {
                 toast.error(error.message)
             }

@@ -15,6 +15,13 @@ export type FacultyProfile = {
     faculty_code?: string
 }
 
+export type DocumentVerification = {
+    id?: string
+    user_id?: string
+    document_type?: string
+    document_url?: string | null
+}
+
 export type AcademicProfile = {
     id: string
     faculty_id: string
@@ -55,10 +62,53 @@ export const profileService = {
             date_of_birth?: string | null
             bio?: string
             avatar_url?: string
+            account_verified?: string
         },
     ) => {
         const { error } = await supabase.from('profiles').update(data).eq('id', userId)
         if (error) throw error
+    },
+
+    getIdVerification: async (userId: string): Promise<DocumentVerification | null> => {
+        const { data, error } = await supabase
+            .from('document_verifications')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle()
+        if (error) throw error
+        return data
+    },
+
+    updateIdVerification: async (
+        userId: string,
+        payload: { document_type: string; document_url: string },
+    ) => {
+        const existing = await profileService.getIdVerification(userId)
+        if (existing?.id) {
+            const { error } = await supabase
+                .from('document_verifications')
+                .update({
+                    document_type: payload.document_type,
+                    document_url: payload.document_url,
+                })
+                .eq('id', existing.id)
+            if (error) throw error
+        } else {
+            const { error } = await supabase.from('document_verifications').insert([
+                {
+                    user_id: userId,
+                    document_type: payload.document_type,
+                    document_url: payload.document_url,
+                },
+            ])
+            if (error) throw error
+        }
+
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ account_verified: 'PENDING' })
+            .eq('id', userId)
+        if (profileError) throw profileError
     },
 
     deleteAcademicProfiles: async (ids: string[]) => {

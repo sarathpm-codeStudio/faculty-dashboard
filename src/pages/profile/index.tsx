@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Pencil, ChevronRight, FileText, GraduationCap, Eye, Download, User } from 'lucide-react'
 import { HiOutlineBadgeCheck } from 'react-icons/hi'
-import { Heading, Paragraph, Spinner, Button2, Modal } from '@/components/ui'
+import { Heading, Paragraph, Spinner, Button2, Modal, Button } from '@/components/ui'
 import { useAuthStore } from '@/store/authStore'
 import { profileService, type AcademicProfile, type FacultyProfile } from '@/services/profileService'
 import { toast } from 'sonner'
@@ -67,6 +67,7 @@ const ProfilePage = () => {
     const [profile, setProfile] = useState<FacultyProfile | null>(null)
     const [academics, setAcademics] = useState<AcademicProfile[]>([])
     const [selectedQualification, setSelectedQualification] = useState<AcademicProfile | null>(null)
+    const [rejectedModalOpen, setRejectedModalOpen] = useState(false)
 
     useEffect(() => {
         const load = async () => {
@@ -81,8 +82,9 @@ const ProfilePage = () => {
                 ])
                 setProfile(p)
                 setAcademics(a)
-                console.log("profile", p)
-                console.log("academics", a)
+                if (p?.account_verified === 'REJECTED') {
+                    setRejectedModalOpen(true)
+                }
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : 'Failed to load profile'
                 toast.error(message)
@@ -178,10 +180,23 @@ const ProfilePage = () => {
                                 <div className="flex flex-wrap items-center gap-3">
                                     <Paragraph className="!text-xl font-bold text-[#191c1e]">{fullName}</Paragraph>
                                     
-                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wider bg-[#A8EDFF] text-[#00A6BF] uppercase">
-                                            {
-                                              profile?.account_verified === 'PENDING' ? 'Verification Pending' : profile?.account_verified === 'REJECTED' ? 'Verification Rejected' : 'Verified'
-                                            } <HiOutlineBadgeCheck size={16} className="text-[#00875A] shrink-0" />
+                                        <span
+                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase ${
+                                                profile?.account_verified === 'REJECTED'
+                                                    ? 'bg-[#FFE5E5] text-[#BA1A1A]'
+                                                    : profile?.account_verified === 'PENDING'
+                                                      ? 'bg-[#FFF4E5] text-[#B86E00]'
+                                                      : 'bg-[#A8EDFF] text-[#00A6BF]'
+                                            }`}
+                                        >
+                                            {profile?.account_verified === 'PENDING'
+                                                ? 'Verification Pending'
+                                                : profile?.account_verified === 'REJECTED'
+                                                  ? 'Verification Rejected'
+                                                  : 'Verified'}
+                                            {profile?.account_verified !== 'REJECTED' && (
+                                                <HiOutlineBadgeCheck size={16} className="text-[#00875A] shrink-0 ml-1" />
+                                            )}
                                         </span>
                                    
                                 </div>
@@ -369,6 +384,42 @@ const ProfilePage = () => {
                         )}
                     </>
                 )}
+            </Modal>
+
+            <Modal
+                open={rejectedModalOpen}
+                onClose={() => setRejectedModalOpen(false)}
+                title="ID Verification Rejected"
+                maxWidth="max-w-md"
+                footer={
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="white"
+                            onClick={() => setRejectedModalOpen(false)}
+                        >
+                            Dismiss
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={() => {
+                                setRejectedModalOpen(false)
+                                navigate('/account/edit', { state: { step: 3 } })
+                            }}
+                        >
+                            Resubmit ID Document
+                        </Button>
+                    </div>
+                }
+            >
+                <Paragraph className="!text-sm text-[#454652] leading-relaxed">
+                    Your identity verification was not approved. Please upload a new, clear photo of your
+                    government-issued ID so our team can review your account again.
+                </Paragraph>
+                <Paragraph className="!text-sm text-[#767683] mt-3">
+                    You can update your ID document from Edit Profile. After resubmission, your status will
+                    change to pending review.
+                </Paragraph>
             </Modal>
         </div>
     )

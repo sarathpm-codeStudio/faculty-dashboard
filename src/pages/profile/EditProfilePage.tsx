@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import IdentityStep from '@/pages/onboarding/IdentityStep'
 import QualificationStep from '@/pages/onboarding/QualificationStep'
-import type { IdentityData, Qualification } from '@/pages/onboarding'
+import IdVerificationStep from '@/pages/onboarding/IdVerificationStep'
+import type { IdentityData, Qualification, IdVerificationData } from '@/pages/onboarding'
 import { profileService, type AcademicProfile } from '@/services/profileService'
 import { onBoardingService } from '@/services/onBoardingService'
 import { formatDate, graduationDateToInput } from '@/utils/helper/formatDate'
@@ -38,6 +39,7 @@ const mapAcademicToQualification = (a: AcademicProfile): Qualification => ({
 
 const EditProfilePage = () => {
     const navigate = useNavigate()
+    const location = useLocation()
     const authUser = useAuthStore((s) => s.user)
     const setAuthProfile = useAuthStore((s) => s.setProfile)
 
@@ -46,6 +48,7 @@ const EditProfilePage = () => {
     const [step, setStep] = useState(1)
     const [direction, setDirection] = useState<'forward' | 'back'>('forward')
     const [initialExistingIds, setInitialExistingIds] = useState<string[]>([])
+    const [accountVerified, setAccountVerified] = useState('')
 
     const [identity, setIdentity] = useState<IdentityData>({
         first_name: '',
@@ -57,8 +60,15 @@ const EditProfilePage = () => {
         avatar_url: '',
     })
     const [qualifications, setQualifications] = useState<Qualification[]>([])
+    const [idVerification, setIdVerification] = useState<IdVerificationData>({
+        document_type: '',
+        document_url: '',
+        fileName: '',
+        fileSize: '',
+    })
 
     const userId = authUser?.id
+    const isRejected = accountVerified === 'REJECTED'
 
     useEffect(() => {
         const load = async () => {
@@ -68,15 +78,25 @@ const EditProfilePage = () => {
                 return
             }
             try {
-                const [profile, academics] = await Promise.all([
+                const [profile, academics, idDoc] = await Promise.all([
                     profileService.getProfile(userId),
                     profileService.getAcademicProfiles(userId),
+                    profileService.getIdVerification(userId),
                 ])
                 if (!profile) {
                     toast.error('Profile not found')
                     navigate('/account')
                     return
                 }
+
+                const verified = profile.account_verified ?? ''
+                setAccountVerified(verified)
+
+                const requestedStep = (location.state as { step?: number } | null)?.step
+                if (requestedStep === 3 && verified === 'REJECTED') {
+                    setStep(3)
+                }
+
                 setIdentity({
                     first_name: profile.first_name ?? '',
                     last_name: profile.last_name ?? '',
@@ -86,9 +106,19 @@ const EditProfilePage = () => {
                     bio: profile.bio ?? '',
                     avatar_url: profile.avatar_url ?? '',
                 })
+
                 const mapped = academics.map(mapAcademicToQualification)
                 setQualifications(mapped)
                 setInitialExistingIds(mapped.map((q) => q.id))
+
+                if (idDoc) {
+                    setIdVerification({
+                        document_type: (idDoc.document_type as IdVerificationData['document_type']) ?? '',
+                        document_url: idDoc.document_url ?? '',
+                        fileName: certificateFileName(idDoc.document_url),
+                        fileSize: '',
+                    })
+                }
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : 'Failed to load profile'
                 toast.error(message)
@@ -98,11 +128,16 @@ const EditProfilePage = () => {
             }
         }
         load()
-    }, [userId, navigate, authUser?.email])
+    }, [userId, navigate, authUser?.email, location.state])
 
     const goNext = () => {
         setDirection('forward')
         setStep(2)
+    }
+
+    const goToIdStep = () => {
+        setDirection('forward')
+        setStep(3)
     }
 
     const goBack = (to: number) => {
@@ -112,11 +147,19 @@ const EditProfilePage = () => {
 
     const animClass = direction === 'forward' ? 'slide-in-right' : 'slide-in-left'
 
-    const handleSave = async () => {
+    const handleSave = async (latestId?: IdVerificationData) => {
         if (!userId) return
         if (qualifications.length === 0) {
             toast.error('Please keep or add at least one qualification')
             return
+        }
+
+        const idData = latestId ?? idVerification
+        if (isRejected) {
+            if (!idData.document_type || !idData.document_url) {
+                toast.error('Please upload your ID document to resubmit verification')
+                return
+            }
         }
 
         setSaving(true)
@@ -138,6 +181,13 @@ const EditProfilePage = () => {
                 await onBoardingService.createAcademicProfiles(newQualifications, userId)
             }
 
+            if (isRejected) {
+                await profileService.updateIdVerification(userId, {
+                    document_type: idData.document_type,
+                    document_url: idData.document_url,
+                })
+            }
+
             const fullName = `${identity.first_name} ${identity.last_name}`.trim()
             if (authUser) {
                 setAuthProfile({
@@ -148,7 +198,11 @@ const EditProfilePage = () => {
                 })
             }
 
-            toast.success('Profile updated successfully')
+            toast.success(
+                isRejected
+                    ? 'Profile updated and ID resubmitted for review'
+                    : 'Profile updated successfully',
+            )
             navigate('/account')
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Failed to update profile'
@@ -156,6 +210,14 @@ const EditProfilePage = () => {
         } finally {
             setSaving(false)
         }
+    }
+
+    const handleQualificationsContinue = async () => {
+        if (isRejected) {
+            goToIdStep()
+            return
+        }
+        await handleSave()
     }
 
     if (loading) {
@@ -185,8 +247,21 @@ const EditProfilePage = () => {
                     mode="edit"
                     qualifications={qualifications}
                     onChange={setQualifications}
-                    onNext={handleSave}
+                    onNext={handleQualificationsContinue}
                     onBack={() => goBack(1)}
+                    animClass={animClass}
+                    saving={saving && !isRejected}
+                    showIdResubmitStep={isRejected}
+                />
+            )}
+            {step === 3 && isRejected && (
+                <IdVerificationStep
+                    key="edit-id"
+                    mode="edit"
+                    data={idVerification}
+                    onChange={setIdVerification}
+                    onNext={handleSave}
+                    onBack={() => goBack(2)}
                     animClass={animClass}
                     saving={saving}
                 />

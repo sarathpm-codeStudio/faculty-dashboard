@@ -4,7 +4,9 @@ import { Heading, Paragraph } from '@/components/ui'
 
 const PendingScreen = () => {
     const user = useAuthStore((state) => state.user)
+    const profileStatus = useAuthStore((state) => state.profileStatus)
     const noProfile = useAuthStore((state) => state.noProfile)
+
 
     return (
         <div className="space-y-4">
@@ -19,6 +21,7 @@ const PendingScreen = () => {
                     </Link>
                 </Paragraph>
             ) : (
+                profileStatus === 'PENDING' ? (
                 <Paragraph className="text-[#454652]">
                     Thank you for submitting your details.{' '}
                     <span className="font-bold">Your account is under review</span>{' '}
@@ -26,7 +29,14 @@ const PendingScreen = () => {
                     You will gain access to the dashboard once your account is approved.{' '}
                     <span className="font-bold text-[#000b60] cursor-pointer">Check The Mail</span>
                 </Paragraph>
-            )}
+            ) : profileStatus === 'REJECTED' ? (
+                <Paragraph className="text-[#454652]">
+                    Your account verification was not approved. Please update your profile and resubmit for review. 
+                    {' '}
+                    <Link to="/account" className="font-bold text-[#000b60] underline cursor-pointer">Update Profile</Link>
+                </Paragraph>
+            ) : <Paragraph className="text-[#454652]">  wwqrqw</Paragraph>
+        )}
 
             <div className="flex justify-center mt-6">
                 <svg width="380" height="280" viewBox="0 0 380 280" fill="none" xmlns="http://www.w3.org/2000/svg">

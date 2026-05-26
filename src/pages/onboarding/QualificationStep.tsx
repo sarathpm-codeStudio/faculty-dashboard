@@ -19,6 +19,8 @@ interface Props {
     animClass?: string
     mode?: OnboardingStepMode
     saving?: boolean
+    /** When true (edit + rejected), Continue goes to ID step instead of saving. */
+    showIdResubmitStep?: boolean
 }
 
 interface QualificationForm {
@@ -76,6 +78,7 @@ const QualificationStep = ({
     animClass = '',
     mode = 'onboarding',
     saving = false,
+    showIdResubmitStep = false,
 }: Props) => {
     const isEdit = mode === 'edit'
     const [preview, setPreview] = useState<string | null>(null)
@@ -150,7 +153,7 @@ const QualificationStep = ({
     return (
         <OnboardingLayout
             step={2}
-            total={isEdit ? 2 : 5}
+            total={isEdit ? (showIdResubmitStep ? 3 : 2) : 5}
             title={isEdit ? 'Edit Academic Profile' : 'Academic Profile'}
             subtitle={
                 isEdit
@@ -282,7 +285,7 @@ const QualificationStep = ({
                         disabled={uploading || saving}
                         loading={saving}
                     >
-                        {isEdit ? 'Save changes' : 'Continue'} <IoMdArrowForward />
+                        {isEdit && !showIdResubmitStep ? 'Save changes' : 'Continue'} <IoMdArrowForward />
                     </Button>
                 </div>
 

@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import OnboardingLayout from './OnboardingLayout'
 import { Select, Button, Subheading, Paragraph } from '@/components/ui'
 import { UploadBox } from '@/components/features/UploadBox'
-import { IdVerificationData } from './index'
+import { IdVerificationData, type OnboardingStepMode } from './index'
 import { idVerificationSchema } from '@/utils/validator/auth.validator'
 import { storageService } from '@/services/storageService'
 import { IoMdArrowForward } from "react-icons/io"
@@ -13,9 +13,11 @@ import { IoMdArrowForward } from "react-icons/io"
 interface Props {
     data: IdVerificationData
     onChange: (data: IdVerificationData) => void
-    onNext: () => void
+    onNext: (data?: IdVerificationData) => void | Promise<void>
     onBack: () => void
     animClass?: string
+    mode?: OnboardingStepMode
+    saving?: boolean
 }
 
 const documentTypes = [
@@ -26,17 +28,26 @@ const documentTypes = [
     { value: 'voter_id', label: 'Voter ID' },
 ]
 
-const IdVerificationStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props) => {
+const IdVerificationStep = ({
+    data,
+    onChange,
+    onNext,
+    onBack,
+    animClass = '',
+    mode = 'onboarding',
+    saving = false,
+}: Props) => {
+    const isEdit = mode === 'edit'
     const [preview, setPreview] = useState<string | null>(data.document_url || null)
     const [uploading, setUploading] = useState(false)
 
     const formik = useFormik<IdVerificationData>({
         initialValues: data,
         validationSchema: idVerificationSchema,
-        onSubmit: (values) => {
+        enableReinitialize: true,
+        onSubmit: async (values) => {
             onChange(values)
-            console.log("id verification values", values)
-            onNext()
+            await onNext(values)
         },
     })
 
@@ -75,18 +86,26 @@ const IdVerificationStep = ({ data, onChange, onNext, onBack, animClass = '' }: 
 
     return (
         <OnboardingLayout
-            step={3}
-            total={5}
-            title="ID Verification"
-            subtitle="Please upload an original government-issued ID document to verify your identity. This helps us keep the platform secure for everyone."
-            backLabel="Back to Academic"
+            step={isEdit ? 3 : 3}
+            total={isEdit ? 3 : 5}
+            title={isEdit ? 'Resubmit ID Verification' : 'ID Verification'}
+            subtitle={
+                isEdit
+                    ? 'Your previous ID verification was rejected. Please upload a new clear copy of your government-issued ID for review.'
+                    : 'Please upload an original government-issued ID document to verify your identity. This helps us keep the platform secure for everyone.'
+            }
+            backLabel={isEdit ? 'Back to qualifications' : 'Back to Academic'}
             onBack={onBack}
             animClass={animClass}
         >
             <form onSubmit={formik.handleSubmit} className="w-full max-w-4xl">
                 <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-5">
                     <Subheading className='text-[#000B60] font-bold'>Identity Document</Subheading>
-                    <Paragraph className='mb-4 text-gray-500'>Choose your document type and upload a clear, original copy.</Paragraph>
+                    <Paragraph className='mb-4 text-gray-500'>
+                        {isEdit
+                            ? 'Select your document type and upload a new photo. Our team will review it again.'
+                            : 'Choose your document type and upload a clear, original copy.'}
+                    </Paragraph>
 
                     <div className="flex flex-col gap-4">
 
@@ -119,8 +138,12 @@ const IdVerificationStep = ({ data, onChange, onNext, onBack, animClass = '' }: 
                         </div>
 
                         <div className="flex justify-end pt-2">
-                            <Button type="submit" disabled={uploading} loading={uploading}>
-                                Continue <IoMdArrowForward />
+                            <Button
+                                type="submit"
+                                disabled={uploading || saving}
+                                loading={uploading || saving}
+                            >
+                                {isEdit ? 'Save changes' : 'Continue'} <IoMdArrowForward />
                             </Button>
                         </div>
 

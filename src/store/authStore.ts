@@ -16,10 +16,12 @@ interface AuthState {
     token: string | null
     isPending: boolean
     noProfile: boolean
+    profileStatus: string
     login: (user: User, token: string) => void
     logout: () => void
     setIsPending: (value: boolean) => void
     setNoProfile: (value: boolean) => void
+    setProfileStatus: (value: string) => void
     setProfile: (profile: User) => void
 }
 
@@ -31,11 +33,14 @@ export const useAuthStore = create<AuthState>()(
             token: null,
             isPending: false,
             noProfile: false,
+            profileStatus: "",
             login: (user, token) => set({ isAuthenticated: true, user, token }),
             logout: () => set({ isAuthenticated: false, user: null, token: null, isPending: false, noProfile: false }),
             setIsPending: (value) => set({ isPending: value }),
             setNoProfile: (value) => set({ noProfile: value }),
             setProfile: (profile) => set({ user: profile }),
+            setProfileStatus: (value) => set({ profileStatus: value }),
+
         }),
         { name: 'auth-storage' }
     )
