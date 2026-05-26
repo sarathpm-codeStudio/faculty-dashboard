@@ -48,6 +48,7 @@ const LoginPage = () => {
                         id: user?.id ?? '',
                         name: `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || "",
                         email: user?.email ? values.email : " ",
+                        avatar_url: profile?.avatar_url || "",
                     },
                     data.session?.access_token ?? ''
                 )

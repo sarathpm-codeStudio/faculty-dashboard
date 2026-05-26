@@ -82,7 +82,7 @@ const QualificationStep = ({ qualifications, onChange, onNext, onBack, animClass
     return (
         <OnboardingLayout
             step={2}
-            total={3}
+            total={5}
             title="Academic Profile"
             subtitle="To tailor your platform experience, please provide your academic background and professional history."
             backLabel="Back to information"

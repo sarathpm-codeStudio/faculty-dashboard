@@ -1,11 +1,22 @@
 import { useRef, useState } from 'react'
-import { Mail, Phone, Camera, ImagePlus, Trash2 } from 'lucide-react'
+import { Mail, Phone, Camera, ImagePlus, Trash2, Loader2 } from 'lucide-react'
 import { useFormik } from 'formik'
+import { toast } from 'sonner'
 import OnboardingLayout from './OnboardingLayout'
 import { Input, Textarea, Button, DateInput, ImageCropperModal } from '@/components/ui'
 import { IdentityData } from './index'
 import { identitySchema } from '@/utils/validator/auth.validator'
+import { storageService } from '@/services/storageService'
 import { IoMdArrowForward } from "react-icons/io"
+
+const dataUrlToFile = (dataUrl: string, filename: string): File => {
+    const [meta, base64] = dataUrl.split(',')
+    const mime = meta.match(/:(.*?);/)?.[1] || 'image/png'
+    const binary = atob(base64)
+    const arr = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i)
+    return new File([arr], filename, { type: mime })
+}
 
 interface Props {
     data: IdentityData
@@ -20,6 +31,8 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
     const [dragOver, setDragOver] = useState(false)
     const [rawImage, setRawImage] = useState<string | null>(null)
     const [cropperOpen, setCropperOpen] = useState(false)
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(data.avatar_url || null)
+    const [avatarUploading, setAvatarUploading] = useState(false)
 
     const formik = useFormik<IdentityData>({
         initialValues: data,
@@ -43,10 +56,23 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
         reader.readAsDataURL(file)
     }
 
-    const handleSaveCrop = (cropped: string) => {
-        formik.setFieldValue('avatar_url', cropped)
+    const handleSaveCrop = async (cropped: string) => {
         setCropperOpen(false)
         setRawImage(null)
+        setAvatarPreview(cropped)
+        setAvatarUploading(true)
+        try {
+            const file = dataUrlToFile(cropped, `avatar-${Date.now()}.png`)
+            const url = await storageService.uploadCourseCover(file)
+            formik.setFieldValue('avatar_url', url)
+            toast.success('Profile picture uploaded')
+        } catch (error: any) {
+            toast.error(error?.message || 'Failed to upload profile picture')
+            formik.setFieldValue('avatar_url', '')
+            setAvatarPreview(null)
+        } finally {
+            setAvatarUploading(false)
+        }
     }
 
     const handleCancelCrop = () => {
@@ -57,17 +83,18 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
 
     const handleRemove = () => {
         formik.setFieldValue('avatar_url', '')
+        setAvatarPreview(null)
         if (fileRef.current) fileRef.current.value = ''
     }
 
     const handleChange = () => fileRef.current?.click()
 
-    const hasImage = !!formik.values.avatar_url
+    const hasImage = !!avatarPreview
 
     return (
         <OnboardingLayout
             step={1}
-            total={3}
+            total={5}
             title="Basic Information"
             subtitle="Welcome to the Academic Curator. To begin your journey as a faculty member, please provide your fundamental identification details."
             backLabel="Back to Sign in"
@@ -103,30 +130,44 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
                                 <div className="border-2 border-dashed border-gray-200 rounded-xl py-4 px-4 flex items-center gap-4">
                                     <div className="relative shrink-0">
                                         <img
-                                            src={formik.values.avatar_url}
+                                            src={avatarPreview!}
                                             alt="Profile"
                                             className="w-16 h-16 rounded-full object-cover border border-gray-100"
                                         />
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-[#000B60] rounded-full flex items-center justify-center text-white">
-                                            <Camera size={10} />
-                                        </div>
+                                        {avatarUploading ? (
+                                            <div className="absolute inset-0 rounded-full bg-white/70 flex items-center justify-center">
+                                                <Loader2 size={18} className="text-[#000B60] animate-spin" />
+                                            </div>
+                                        ) : (
+                                            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-[#000B60] rounded-full flex items-center justify-center text-white">
+                                                <Camera size={10} />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex flex-col flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-[#000B60] truncate">Profile photo added</p>
-                                        <p className="text-xs text-gray-500 mt-0.5">Looks good — change or remove anytime</p>
+                                        <p className="text-sm font-bold text-[#000B60] truncate">
+                                            {avatarUploading ? 'Uploading profile photo…' : 'Profile photo added'}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                            {avatarUploading
+                                                ? 'Please wait while we securely upload your image.'
+                                                : 'Looks good — change or remove anytime'}
+                                        </p>
                                     </div>
                                     <div className="flex items-center gap-3 shrink-0">
                                         <button
                                             type="button"
                                             onClick={handleChange}
-                                            className="text-sm font-bold text-[#000B60] hover:underline cursor-pointer"
+                                            disabled={avatarUploading}
+                                            className="text-sm font-bold text-[#000B60] hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Change
                                         </button>
                                         <button
                                             type="button"
                                             onClick={handleRemove}
-                                            className="flex items-center gap-1 text-sm text-[#BA1A1A] hover:text-red-700 cursor-pointer"
+                                            disabled={avatarUploading}
+                                            className="flex items-center gap-1 text-sm text-[#BA1A1A] hover:text-red-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Trash2 size={12} />
                                             <span className="font-bold">Remove</span>
@@ -210,7 +251,9 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '' }: Props)
                         />
 
                         <div className="flex justify-end pt-2">
-                            <Button type="submit">Continue <IoMdArrowForward /></Button>
+                            <Button type="submit" disabled={avatarUploading} loading={avatarUploading}>
+                                Continue <IoMdArrowForward />
+                            </Button>
                         </div>
 
                     </div>

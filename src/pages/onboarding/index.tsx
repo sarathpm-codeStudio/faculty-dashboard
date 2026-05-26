@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import IdentityStep from './IdentityStep'
 import QualificationStep from './QualificationStep'
+import IdVerificationStep from './IdVerificationStep'
+import PolicyStep, { PolicyAcceptance } from './PolicyStep'
 import VerificationStep from './VerificationStep'
 import { onBoardingService } from '@/services/onBoardingService'
 import { toast } from 'sonner'
@@ -28,6 +30,15 @@ export interface Qualification {
   fileSize?: string
 }
 
+export type DocumentType = 'aadhar_card' | 'license' | 'passport' | 'voter_id' | ''
+
+export interface IdVerificationData {
+  document_type: DocumentType
+  document_url: string
+  fileName?: string
+  fileSize?: string
+}
+
 const OnboardingPage = () => {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
@@ -37,6 +48,12 @@ const OnboardingPage = () => {
     phone: '', date_of_birth: '', bio: '', avatar_url: '',
   })
   const [qualifications, setQualifications] = useState<Qualification[]>([])
+  const [idVerification, setIdVerification] = useState<IdVerificationData>({
+    document_type: '', document_url: '', fileName: '', fileSize: '',
+  })
+  const [policies, setPolicies] = useState<PolicyAcceptance>({
+    accepted: false,
+  })
 
   const goNext = (to: number) => { setDirection('forward'); setStep(to) }
   const goBack = (to: number | (() => void)) => {
@@ -59,12 +76,15 @@ const OnboardingPage = () => {
       const result = await onBoardingService.createProfile({
         ...identity,
         role: "FACULTY",
+        is_policies_accepted: policies.accepted,
         date_of_birth: formatDate(identity.date_of_birth),
       }, id)
 
       if (result) {
         // add qualifications
         await onBoardingService.createAcademicProfiles(qualifications, id)
+        // add id verification
+        await onBoardingService.createIdVerification(idVerification, id)
         toast.success("Profile created successfully")
         navigate("/dashboard")
       }
@@ -102,11 +122,31 @@ const OnboardingPage = () => {
         />
       )}
       {step === 3 && (
+        <IdVerificationStep
+          key={step}
+          data={idVerification}
+          onChange={setIdVerification}
+          onNext={() => goNext(4)}
+          onBack={() => goBack(2)}
+          animClass={animClass}
+        />
+      )}
+      {step === 4 && (
+        <PolicyStep
+          key={step}
+          data={policies}
+          onChange={setPolicies}
+          onNext={() => goNext(5)}
+          onBack={() => goBack(3)}
+          animClass={animClass}
+        />
+      )}
+      {step === 5 && (
         <VerificationStep
           key={step}
           identity={identity}
           qualifications={qualifications}
-          onBack={() => goBack(2)}
+          onBack={() => goBack(4)}
           onSubmit={handleVerificationSubmit}
           animClass={animClass}
         />

@@ -29,11 +29,11 @@ const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClas
 
     return (
         <OnboardingLayout
-            step={3}
-            total={3}
+            step={5}
+            total={5}
             title="Review & Finalize"
             subtitle="Please ensure all academic credentials and personal details are accurate. Once submitted, your profile will be reviewed by the Admin."
-            backLabel="Back to Academic"
+            backLabel="Back to Policies"
             onBack={onBack}
             animClass={animClass}
         >

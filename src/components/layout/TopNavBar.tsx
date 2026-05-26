@@ -84,8 +84,13 @@ const TopNavBar = ({ onNotifClick }: Props) => {
                         <Paragraph className="font-bold hidden md:block">{user?.name ?? 'Faculty'}</Paragraph>
                         <ChevronDown size={14} className={`text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                         <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
-                            <img src={manAvatar} alt="avatar" className="w-full h-full object-cover" />
-                            {/* <UserCircle2 size={36} className="text-gray-300" /> */}
+                            {
+                                user?.avatar_url ? (
+                                    <img src={user?.avatar_url} alt="avatar" className="w-full h-full object-cover" />
+                                ) : (
+                                    <UserCircle2 size={36} className="text-gray-300" />
+                                )
+                            }
                         </div>
                     </button>
 

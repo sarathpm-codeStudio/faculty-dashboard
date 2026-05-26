@@ -32,6 +32,7 @@ const AppShell = () => {
                     id: profile.id,
                     name: `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || "",
                     email: user?.email ? user.email : " ",
+                    avatar_url: profile?.avatar_url || "",
                 })
                 setNoProfile(false)
                 setIsPending(profile?.account_verified === 'PENDING')

@@ -20,6 +20,13 @@ export const qualificationFormSchema = Yup.object({
     teachingExperience: Yup.string().trim(),
 })
 
+export const idVerificationSchema = Yup.object({
+    document_type: Yup.string()
+        .oneOf(['aadhar_card', 'license', 'passport', 'voter_id'], 'Select a valid document type')
+        .required('Document type is required'),
+    document_url: Yup.string().required('Please upload your ID document'),
+})
+
 export const validationSchema = Yup.object({
     email: Yup.string()
         .email('Enter a valid email address')

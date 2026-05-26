@@ -52,4 +52,20 @@ export const onBoardingService = {
         }
     },
 
+    // create id verification
+    createIdVerification: async (data: any, faculty_id: any) => {
+        try {
+            const { data: result, error } = await supabase
+            .from('document_verifications')
+            .insert([{ 
+                 user_id: faculty_id,
+                 document_type: data.document_type,
+                 document_url: data.document_url,
+                 }])
+            if (error) throw error
+            return true
+        } catch (error: any) {
+            throw error.message;
+        }
+    }
 }
