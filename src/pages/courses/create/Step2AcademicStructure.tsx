@@ -229,6 +229,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   // Folder modal (create + edit)
   const [showFolderModal, setShowFolderModal] = useState(false)
   const [folderName, setFolderName] = useState('')
+  const [folderDescription, setFolderDescription] = useState('')
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
 
   // Content modal
@@ -339,35 +340,42 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const openFolderModal = () => {
     setEditingFolderId(null)
     setFolderName('')
+    setFolderDescription('')
     setShowFolderModal(true)
   }
 
   const openEditFolderModal = (folder: any) => {
     setEditingFolderId(folder.id)
     setFolderName(folder.title ?? '')
+    setFolderDescription(folder.description ?? '')
     setShowFolderModal(true)
   }
 
   const closeFolderModal = () => {
     setShowFolderModal(false)
     setFolderName('')
+    setFolderDescription('')
     setEditingFolderId(null)
   }
 
   const handleSubmitFolder = async () => {
     const name = folderName.trim()
     if (!name) return
+    const description = folderDescription.trim()
 
     try {
       if (editingFolderId) {
         const { data, error } = await updateFolder({
           folderId: editingFolderId,
-          payload: { title: name },
+          payload: { title: name, description },
         })
         if (error) throw error
         if (data) toast.success('Folder updated')
       } else {
-        const payload: { title: string; parent_id?: string } = { title: name }
+        const payload: { title: string; description: string; parent_id?: string } = {
+          title: name,
+          description,
+        }
         if (currentParentId) payload.parent_id = currentParentId
 
         const { data, error } = await createFolder(payload)
@@ -875,7 +883,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         open={showFolderModal}
         onClose={closeFolderModal}
         title={editingFolderId ? 'Edit Folder' : (navPath.length > 0 ? 'New Sub-folder' : 'New Folder')}
-        maxWidth="max-w-sm"
+        maxWidth="max-w-xl"
         footer={
           <>
             <Button variant="white" className='!h-10'
@@ -906,6 +914,16 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           onChange={e => setFolderName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSubmitFolder()}
           autoFocus
+        />
+        <Textarea
+          label="Description"
+          placeholder="Brief summary of what this folder contains..."
+          value={folderDescription}
+          onChange={e => setFolderDescription(e.target.value)}
+          maxLength={500}
+          showCount
+          rows={4}
+          className="min-h-[100px]"
         />
       </Modal>
 
