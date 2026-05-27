@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { MoreHorizontal } from 'lucide-react'
+import { MoreHorizontal, User } from 'lucide-react'
 import { Heading, Paragraph, Spinner, DataTable, FilterSelect, FilterDatePicker } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import man from '@/assets/images/man.jpg'
@@ -11,27 +11,30 @@ import { useGetAllCourses } from '@/hooks/useCourse'
 type Student = {
   id: number
   avatar: string
-  name: string
+  first_name: string
+  last_name: string
   course: string
   enrollmentDate: string
   email: string
   status: 'Active' | 'Expired'
+  courses: any[]
+  avatar_url: string
 }
 
-const MOCK_STUDENTS: Student[] = [
-  { id: 1, avatar: man, name: 'Elena Rodriguez', course: 'Advanced Algorithms', enrollmentDate: 'Sep 14, 2024', email: 'e.rodriguez@academy.edu', status: 'Active' },
-  { id: 2, avatar: man, name: 'Julian Vance', course: 'Data Structures', enrollmentDate: 'Sep 14, 2024', email: 'j.vance@academy.edu', status: 'Active' },
-  { id: 3, avatar: man, name: 'Maya Ishikawa', course: 'Modern Philosophy', enrollmentDate: 'Sep 10, 2024', email: 'm.ishikawa@academy.edu', status: 'Expired' },
-  { id: 4, avatar: man, name: 'Marcus Kalu', course: 'Linear Algebra II', enrollmentDate: 'Aug 28, 2024', email: 'm.kalu@academy.edu', status: 'Active' },
-  { id: 5, avatar: man, name: 'Sarah Bennett', course: 'Cybersecurity Ethics', enrollmentDate: 'Sep 01, 2024', email: 's.bennett@academy.edu', status: 'Active' },
-  { id: 6, avatar: man, name: 'Priya Sharma', course: 'Cost Accounting', enrollmentDate: 'Aug 20, 2024', email: 'p.sharma@academy.edu', status: 'Expired' },
-  { id: 7, avatar: man, name: 'Aditya Rao', course: 'Taxation', enrollmentDate: 'Aug 15, 2024', email: 'a.rao@academy.edu', status: 'Active' },
-  { id: 8, avatar: man, name: 'Emily Chen', course: 'Business Laws', enrollmentDate: 'Sep 05, 2024', email: 'e.chen@academy.edu', status: 'Active' },
-  { id: 9, avatar: man, name: 'David Okonkwo', course: 'Financial Management', enrollmentDate: 'Jul 30, 2024', email: 'd.okonkwo@academy.edu', status: 'Active' },
-  { id: 10, avatar: man, name: 'Sophie Laurent', course: 'Macroeconomics', enrollmentDate: 'Aug 10, 2024', email: 's.laurent@academy.edu', status: 'Expired' },
-  { id: 11, avatar: man, name: 'Ravi Menon', course: 'Advanced Algorithms', enrollmentDate: 'Sep 12, 2024', email: 'r.menon@academy.edu', status: 'Active' },
-  { id: 12, avatar: man, name: 'Hana Kobayashi', course: 'Data Structures', enrollmentDate: 'Sep 08, 2024', email: 'h.kobayashi@academy.edu', status: 'Active' },
-]
+// const MOCK_STUDENTS: Student[] = [
+//   { id: 1, avatar: man, name: 'Elena Rodriguez', course: 'Advanced Algorithms', enrollmentDate: 'Sep 14, 2024', email: 'e.rodriguez@academy.edu', status: 'Active' },
+//   { id: 2, avatar: man, name: 'Julian Vance', course: 'Data Structures', enrollmentDate: 'Sep 14, 2024', email: 'j.vance@academy.edu', status: 'Active' },
+//   { id: 3, avatar: man, name: 'Maya Ishikawa', course: 'Modern Philosophy', enrollmentDate: 'Sep 10, 2024', email: 'm.ishikawa@academy.edu', status: 'Expired' },
+//   { id: 4, avatar: man, name: 'Marcus Kalu', course: 'Linear Algebra II', enrollmentDate: 'Aug 28, 2024', email: 'm.kalu@academy.edu', status: 'Active' },
+//   { id: 5, avatar: man, name: 'Sarah Bennett', course: 'Cybersecurity Ethics', enrollmentDate: 'Sep 01, 2024', email: 's.bennett@academy.edu', status: 'Active' },
+//   { id: 6, avatar: man, name: 'Priya Sharma', course: 'Cost Accounting', enrollmentDate: 'Aug 20, 2024', email: 'p.sharma@academy.edu', status: 'Expired' },
+//   { id: 7, avatar: man, name: 'Aditya Rao', course: 'Taxation', enrollmentDate: 'Aug 15, 2024', email: 'a.rao@academy.edu', status: 'Active' },
+//   { id: 8, avatar: man, name: 'Emily Chen', course: 'Business Laws', enrollmentDate: 'Sep 05, 2024', email: 'e.chen@academy.edu', status: 'Active' },
+//   { id: 9, avatar: man, name: 'David Okonkwo', course: 'Financial Management', enrollmentDate: 'Jul 30, 2024', email: 'd.okonkwo@academy.edu', status: 'Active' },
+//   { id: 10, avatar: man, name: 'Sophie Laurent', course: 'Macroeconomics', enrollmentDate: 'Aug 10, 2024', email: 's.laurent@academy.edu', status: 'Expired' },
+//   { id: 11, avatar: man, name: 'Ravi Menon', course: 'Advanced Algorithms', enrollmentDate: 'Sep 12, 2024', email: 'r.menon@academy.edu', status: 'Active' },
+//   { id: 12, avatar: man, name: 'Hana Kobayashi', course: 'Data Structures', enrollmentDate: 'Sep 08, 2024', email: 'h.kobayashi@academy.edu', status: 'Active' },
+// ]
 
 const COLUMNS: TableColumn<Student>[] = [
   {
@@ -39,20 +42,19 @@ const COLUMNS: TableColumn<Student>[] = [
     header: 'Student Name',
     render: row => (
       <div className="flex items-center gap-3">
-        <img src={row.avatar} alt={row.name} className="w-12 h-12 rounded-xl object-cover shrink-0" />
-        <span className="font-semibold text-[#191c1e]">{row.name}</span>
+        {row.avatar_url ? (
+          <img src={row.avatar_url} alt="student avatar" className="w-12 h-12 rounded-xl object-cover shrink-0" />
+        ) : (
+          <User size={36} className="text-gray-300" />
+        )}
+        <span className="font-semibold text-[#191c1e]">{row?.first_name} {row?.last_name}</span>
       </div>
     ),
   },
   {
-    key: 'course',
-    header: 'Course',
-    render: row => <span className="text-[#191c1e]">{row.course}</span>,
-  },
-  {
-    key: 'enrollmentDate',
-    header: 'Enrollment Date',
-    render: row => <span className="text-[#767683]">{row.enrollmentDate}</span>,
+    key: 'Total Courses',
+    header: 'Total Courses',
+    render: row => <span className="text-[#191c1e]">{row.courses?.length}</span>,
   },
   {
     key: 'email',
@@ -142,7 +144,7 @@ const StudentsPage = () => {
       <motion.div className="mb-6 px-2 pt-2" {...fadeUp(0.04)}>
         <Heading className="text-[#000B60]">Enrolled Students</Heading>
         <Paragraph className="text-black font-bold mt-0.5">
-          {MOCK_STUDENTS.length.toLocaleString()} active learners.
+          {students?.data?.pagination?.total} active learners.
         </Paragraph>
       </motion.div>
 
