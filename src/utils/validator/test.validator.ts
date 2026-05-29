@@ -8,7 +8,6 @@ export const testSchema = Yup.object({
     course: Yup.string().required('Course is required'),
     // module: Yup.string().optional(),
     testType: Yup.string().required('Test type is required'),
-    totalMarks: Yup.string().required('Total marks is required'),
     duration: Yup.string().required('Duration is required'),
     instructions: Yup.string().optional(),
 })

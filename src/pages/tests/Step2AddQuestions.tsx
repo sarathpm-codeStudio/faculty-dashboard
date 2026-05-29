@@ -1,85 +1,40 @@
 
 
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Pencil, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
-import { Input, Textarea, Select, Paragraph, Checkbox } from '@/components/ui'
+import { Textarea, Select, Paragraph, Checkbox } from '@/components/ui'
 import Button from '@/components/ui/Button'
 import { IoRocketOutline } from 'react-icons/io5'
 import { useAddQuestion, useGetQuestionsByTestId, useUpdateQuestion, useDeleteQuestion, usePublishTest } from '@/hooks/test'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
-
-type Question = {
-  id: number
-  text: string
-  type: string
-  marks: number
-  optionA: string
-  optionB: string
-  optionC: string
-  optionD: string
-  correctAnswer: string
-}
+import { useGetAllContentInModule } from '@/hooks/useCourse'
 
 interface Props {
   // onPublish: () => void
   // onSaveDraft: () => void
   onBack: () => void
   testId: string
-}
-
-const questionTypeOptions = [
-  { value: 'mcq', label: 'Multiple Choice (MCQ)' },
-  { value: 'short', label: 'Short Answer' },
-  { value: 'long', label: 'Long Answer' },
-]
-
-const typeBadge: Record<string, string> = {
-  mcq: 'MCQ',
-  short: 'SHORT ANSWER',
-  long: 'LONG ANSWER',
+  moduleId: string
 }
 
 const questionSchema = Yup.object({
   text: Yup.string().trim().required('Question text is required'),
-  type: Yup.string().required('Question type is required'),
-  marks: Yup.number()
-    .min(1, 'Marks must be at least 1')
-    .required('Marks are required'),
-  optionA: Yup.string().when('type', {
-    is: 'mcq',
-    then: schema => schema.trim().required('Option A is required'),
-    otherwise: schema => schema.notRequired(),
-  }),
-  optionB: Yup.string().when('type', {
-    is: 'mcq',
-    then: schema => schema.trim().required('Option B is required'),
-    otherwise: schema => schema.notRequired(),
-  }),
-  optionC: Yup.string().when('type', {
-    is: 'mcq',
-    then: schema => schema.trim().required('Option C is required'),
-    otherwise: schema => schema.notRequired(),
-  }),
-  optionD: Yup.string().when('type', {
-    is: 'mcq',
-    then: schema => schema.trim().required('Option D is required'),
-    otherwise: schema => schema.notRequired(),
-  }),
-  correctAnswer: Yup.string().when('type', {
-    is: 'mcq',
-    then: schema => schema.required('Please select the correct answer'),
-    otherwise: schema => schema.notRequired(),
-  }),
+  materialId: Yup.string().required('Material is required'),
+  optionA: Yup.string().trim().required('Option A is required'),
+  optionB: Yup.string().trim().required('Option B is required'),
+  optionC: Yup.string().trim().required('Option C is required'),
+  optionD: Yup.string().trim().required('Option D is required'),
+  correctAnswer: Yup.string().required('Please select the correct answer'),
 })
 
 const INITIAL_VALUES = {
   text: '',
-  type: 'mcq',
-  marks: 5,
+  materialId: '',
+  materialTitle: '',
   optionA: '',
   optionB: '',
   optionC: '',
@@ -87,8 +42,7 @@ const INITIAL_VALUES = {
   correctAnswer: '',
 }
 
-const Step2AddQuestions = ({ onBack, testId }: Props) => {
-  const [questions, setQuestions] = useState<Question[]>([])
+const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
   const [randomize, setRandomize] = useState(false)
   const [isEditQuestion, setIsEditQuestion] = useState(false)
   const [editQuestionId, setEditQuestionId] = useState<any>(null)
@@ -97,19 +51,30 @@ const Step2AddQuestions = ({ onBack, testId }: Props) => {
 
 
   // queries
-  const { data: questionsData, isLoading: isLoadingQuestions, refetch: refetchQuestions } = useGetQuestionsByTestId(testId, true)
+  const { data: questionsData } = useGetQuestionsByTestId(testId, true)
+  const { data: contentData, isLoading: isLoadingContent } = useGetAllContentInModule(moduleId, true)
 
+  console.log('── Content Data ──', contentData)
 
 
   // mutations
   const { mutateAsync: addQuestion, isPending: isAddingQuestion } = useAddQuestion(testId)
   const { mutateAsync: updateQuestion, isPending: isUpdatingQuestion } = useUpdateQuestion(testId, editQuestionId)
-  const { mutateAsync: deleteQuestion, isPending: isDeletingQuestion } = useDeleteQuestion(testId)
+  const { mutateAsync: deleteQuestion } = useDeleteQuestion(testId)
   const { mutateAsync: publishTest, isPending: isPublishingTest } = usePublishTest()
 
 
 
   console.log('── Questions Data ──', questionsData)
+
+  const materialOptions = useMemo(() => {
+    const materials = contentData?.data ?? contentData?.json?.data ?? []
+
+    return materials.map((material: any) => ({
+      value: material.id,
+      label: material.title,
+    }))
+  }, [contentData])
 
 
   const formik = useFormik({
@@ -118,22 +83,22 @@ const Step2AddQuestions = ({ onBack, testId }: Props) => {
     validateOnChange: true,  // ✅ show errors as user types
     validateOnBlur: true,
     onSubmit: async (values, { resetForm }) => {
+      const selectedMaterial = materialOptions.find((option: { value: string; label: string }) => option.value === values.materialId)
       const questionPayload = {
         test_id: testId,
         question: values.text,
-        type: values.type,
-        marks: values.marks,
+        type: 'mcq',
+        marks: 5,
+        material_id: values.materialId,
+        material_title: selectedMaterial?.label || values.materialTitle,
       }
 
-      const optionsPayload =
-        values.type === 'mcq'
-          ? [
-            { label: 'A', text: values.optionA, is_correct: values.correctAnswer === 'A' },
-            { label: 'B', text: values.optionB, is_correct: values.correctAnswer === 'B' },
-            { label: 'C', text: values.optionC, is_correct: values.correctAnswer === 'C' },
-            { label: 'D', text: values.optionD, is_correct: values.correctAnswer === 'D' },
-          ]
-          : []
+      const optionsPayload = [
+        { label: 'A', text: values.optionA, is_correct: values.correctAnswer === 'A' },
+        { label: 'B', text: values.optionB, is_correct: values.correctAnswer === 'B' },
+        { label: 'C', text: values.optionC, is_correct: values.correctAnswer === 'C' },
+        { label: 'D', text: values.optionD, is_correct: values.correctAnswer === 'D' },
+      ]
 
       const payload = {
         ...questionPayload,
@@ -173,15 +138,11 @@ const Step2AddQuestions = ({ onBack, testId }: Props) => {
 
   const { values, errors, touched, handleBlur, setFieldValue, handleSubmit, setTouched } = formik
 
-  const removeQuestion = (id: number) =>
-    setQuestions(prev => prev.filter(q => q.id !== id))
-
   // ✅ Mark all fields touched so errors show on submit click
   const handleAddQuestion = () => {
     setTouched({
       text: true,
-      type: true,
-      marks: true,
+      materialId: true,
       optionA: true,
       optionB: true,
       optionC: true,
@@ -235,9 +196,7 @@ const Step2AddQuestions = ({ onBack, testId }: Props) => {
     console.log("editQuestionData", editQuestionData)
     setEditQuestionId(editQuestionData.id)
 
-    // Check if type is MCQ and has options
-    if (editQuestionData.type === 'mcq' && editQuestionData.options && editQuestionData.options.length > 0) {
-      // Map options by their label (A, B, C, D) instead of array position
+    if (editQuestionData.options && editQuestionData.options.length > 0) {
       const optionsByLabel = editQuestionData.options.reduce((acc: any, option: any) => {
         acc[option.label] = option.option_text;
         return acc;
@@ -245,8 +204,8 @@ const Step2AddQuestions = ({ onBack, testId }: Props) => {
 
       formik.setValues({
         text: editQuestionData.question,
-        type: editQuestionData.type,
-        marks: editQuestionData.marks,
+        materialId: editQuestionData.material_id || '',
+        materialTitle: editQuestionData.material_title || '',
         optionA: optionsByLabel['A'] || '',
         optionB: optionsByLabel['B'] || '',
         optionC: optionsByLabel['C'] || '',
@@ -254,11 +213,10 @@ const Step2AddQuestions = ({ onBack, testId }: Props) => {
         correctAnswer: editQuestionData.options.find((option: any) => option.is_correct)?.label || '',
       })
     } else {
-      // If no options or not MCQ type
       formik.setValues({
         text: editQuestionData.question,
-        type: editQuestionData.type,
-        marks: editQuestionData.marks,
+        materialId: editQuestionData.material_id || '',
+        materialTitle: editQuestionData.material_title || '',
         optionA: '',
         optionB: '',
         optionC: '',
@@ -355,97 +313,77 @@ const Step2AddQuestions = ({ onBack, testId }: Props) => {
             {err('text')}
           </div>
 
-          {/* Type + Marks */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Select
-                label="Question Type"
-                options={questionTypeOptions}
-                value={values.type}
-                onChange={e => {
-                  setFieldValue('type', e.target.value)
-                  if (e.target.value !== 'mcq') {
-                    setFieldValue('optionA', '')
-                    setFieldValue('optionB', '')
-                    setFieldValue('optionC', '')
-                    setFieldValue('optionD', '')
-                    setFieldValue('correctAnswer', '')
-                  }
-                }}
-                onBlur={handleBlur('type')}
-              />
-              {err('type')}
-            </div>
-            <div>
-              <Input
-                label="Weightage (Marks)"
-                type="number"
-                min={1}
-                value={String(values.marks)}
-                onChange={e => setFieldValue('marks', Number(e.target.value))}
-                onBlur={handleBlur('marks')}
-              />
-              {err('marks')}
-            </div>
+          {/* Material selector */}
+          <div>
+            <Select
+              label="Question related to Material"
+              placeholder={isLoadingContent ? 'Loading materials...' : 'Select material'}
+              options={materialOptions}
+              value={values.materialId}
+              onChange={e => {
+                const selectedMaterial = materialOptions.find((option: { value: string; label: string }) => option.value === e.target.value)
+                setFieldValue('materialId', e.target.value)
+                setFieldValue('materialTitle', selectedMaterial?.label || '')
+              }}
+              onBlur={handleBlur('materialId')}
+            />
+            {err('materialId')}
           </div>
 
           {/* MCQ options + correct answer */}
-          {values.type === 'mcq' && (
-            <div className="flex flex-col gap-3">
-              <Paragraph className="!text-sm font-bold text-gray-700">Options</Paragraph>
+          <div className="flex flex-col gap-3">
+            <Paragraph className="!text-sm font-bold text-gray-700">Options</Paragraph>
 
-              <div className="grid grid-cols-2 gap-3">
-                {(['A', 'B', 'C', 'D'] as const).map(letter => {
-                  const key = `option${letter}` as keyof typeof INITIAL_VALUES
-                  return (
-                    <div key={letter}>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
-                          {letter}
-                        </span>
-                        <input
-                          type="text"
-                          placeholder={`Add option ${letter}`}
-                          value={values[key] as string}
-                          onChange={e => setFieldValue(key, e.target.value)}
-                          onBlur={handleBlur(key)}
-                          className="w-full pl-8 pr-4 py-4 bg-[#F2F4F6] rounded-lg border border-gray-100 text-sm font-medium outline-none"
-                        />
-                      </div>
-                      {err(key)}
+            <div className="grid grid-cols-2 gap-3">
+              {(['A', 'B', 'C', 'D'] as const).map(letter => {
+                const key = `option${letter}` as keyof typeof INITIAL_VALUES
+                return (
+                  <div key={letter}>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
+                        {letter}
+                      </span>
+                      <input
+                        type="text"
+                        placeholder={`Add option ${letter}`}
+                        value={values[key] as string}
+                        onChange={e => setFieldValue(key, e.target.value)}
+                        onBlur={handleBlur(key)}
+                        className="w-full pl-8 pr-4 py-4 bg-[#F2F4F6] rounded-lg border border-gray-100 text-sm font-medium outline-none"
+                      />
                     </div>
-                  )
-                })}
-              </div>
-
-              {/* Correct answer selector */}
-              <div className="bg-[#F2F4F6] rounded-xl px-4 py-3 flex flex-col gap-2">
-                <Paragraph className="!text-xs font-bold text-[#000B60]">
-                  ✓ Correct Answer
-                </Paragraph>
-                <div className="flex gap-2">
-                  {(['A', 'B', 'C', 'D'] as const).map(letter => (
-                    <button
-                      key={letter}
-                      type="button"
-                      onClick={() => setFieldValue('correctAnswer', letter)}
-                      className={`flex-1 py-2 rounded-lg text-sm font-bold border transition-colors
-                        ${values.correctAnswer === letter
-                          ? 'bg-[#000B60] text-white border-[#000B60]'
-                          : 'bg-white text-[#000B60] border-[#000B60]/20 hover:bg-[#000B60]/10'
-                        }`}
-                    >
-                      {letter}
-                    </button>
-                  ))}
-                </div>
-                {/* ✅ correctAnswer error shows when touched (set on submit click) */}
-                {touched.correctAnswer && errors.correctAnswer && (
-                  <p className="text-[11px] text-red-500">{errors.correctAnswer}</p>
-                )}
-              </div>
+                    {err(key)}
+                  </div>
+                )
+              })}
             </div>
-          )}
+
+            {/* Correct answer selector */}
+            <div className="bg-[#F2F4F6] rounded-xl px-4 py-3 flex flex-col gap-2">
+              <Paragraph className="!text-xs font-bold text-[#000B60]">
+                ✓ Correct Answer
+              </Paragraph>
+              <div className="flex gap-2">
+                {(['A', 'B', 'C', 'D'] as const).map(letter => (
+                  <button
+                    key={letter}
+                    type="button"
+                    onClick={() => setFieldValue('correctAnswer', letter)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-bold border transition-colors
+                        ${values.correctAnswer === letter
+                        ? 'bg-[#000B60] text-white border-[#000B60]'
+                        : 'bg-white text-[#000B60] border-[#000B60]/20 hover:bg-[#000B60]/10'
+                      }`}
+                  >
+                    {letter}
+                  </button>
+                ))}
+              </div>
+              {touched.correctAnswer && errors.correctAnswer && (
+                <p className="text-[11px] text-red-500">{errors.correctAnswer}</p>
+              )}
+            </div>
+          </div>
 
           <div className="flex justify-end">
             <Button
@@ -477,12 +415,16 @@ const Step2AddQuestions = ({ onBack, testId }: Props) => {
                     <div>
                       <Paragraph className="!text-sm font-bold text-[#000B60]">{q.question}</Paragraph>
                       <div className="flex items-center gap-2 mt-1">
+                        {q.material_title && (
+                          <span className="text-[10px] font-bold text-[#767683] uppercase tracking-wide">
+                            {q.material_title}
+                          </span>
+                        )}
+                        {q.material_title && (
+                          <span className="text-[10px] text-[#767683]">•</span>
+                        )}
                         <span className="text-[10px] font-bold text-[#767683] uppercase tracking-wide">
-                          {typeBadge[q.type] ?? q.type}
-                        </span>
-                        <span className="text-[10px] text-[#767683]">•</span>
-                        <span className="text-[10px] font-bold text-[#767683] uppercase">
-                          {q.marks} Marks
+                          MCQ
                         </span>
                         {q.type === 'mcq' && q.correctAnswer && (
                           <>

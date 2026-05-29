@@ -134,6 +134,7 @@ export const useCreateMaterial = (courseId: string) => {
     mutationFn: (payload: any) => courseService.createMaterial(courseId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['content', courseId] })
+      qc.invalidateQueries({ queryKey: ['content-in-module'] })
     },
   })
 }
@@ -200,4 +201,13 @@ export const useGetAllFoldersInCourse = (courseId: string, enabled = true) =>
     queryFn: () => courseService.getAllFolders(courseId),
     enabled,
   })
+
+
+export const useGetAllContentInModule = (moduleId: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['content-in-module', moduleId],
+    queryFn: () => courseService.getAllContentInModule(moduleId),
+    enabled: !!moduleId,
+  })
+}
 

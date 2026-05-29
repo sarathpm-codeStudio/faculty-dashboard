@@ -14,7 +14,6 @@ export type TestFormData = {
   course: string
   module: string
   testType: string
-  totalMarks: string
   duration: string
   instructions: string
 
@@ -32,7 +31,6 @@ interface Props {
 
 // const courseOptions = [{ value: 'math301', label: 'Mathematics 301' }, { value: 'taxation', label: 'Taxation' }, { value: 'biz_laws', label: 'Business Laws' }]
 const testTypeOptions = [{ value: 'final', label: 'Final Examination' }, { value: 'midterm', label: 'Mid-Term' }, { value: 'quiz', label: 'Quiz' }]
-const marksOptions = [{ value: '', label: 'Select Marks' }, { value: '25', label: '25' }, { value: '50', label: '50' }, { value: '100', label: '100' }]
 const durationOptions = [{ value: '', label: 'Select Duration' }, { value: '30', label: '30 mins' }, { value: '60', label: '1 hour' }, { value: '90', label: '1h 30 mins' }, { value: '120', label: '2 hours' }]
 
 const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setIsDraft, testData }: Props) => {
@@ -48,7 +46,7 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
 
 
   // query
-  const { data: courses, isLoading: coursesLoading } = useGetAllCourses(false, "", true)
+  const { data: courses, isLoading: coursesLoading } = useGetAllCourses("all", "", true)
   const { data: folders, isLoading: foldersLoading } = useGetAllFoldersInCourse(courseId, !!courseId)
 
   console.log("courseId", courseId)
@@ -75,7 +73,6 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
         course: testData?.data?.course_id,
         module: testData?.data?.module_id,
         testType: testData?.data?.type,
-        totalMarks: testData?.data?.total_marks,
         duration: testData?.data?.duration_minutes,
         instructions: testData?.data?.instructions,
       })
@@ -156,7 +153,7 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
             /> */}
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <Select
               label="Test Type"
               options={testTypeOptions}
@@ -165,14 +162,6 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
               value={formik.values.testType}
               onChange={formik.handleChange}
               error={formik.touched.testType && formik.errors.testType ? formik.errors.testType : undefined}
-            />
-            <Select
-              label="Total Marks"
-              options={marksOptions}
-              name="totalMarks"
-              value={formik.values.totalMarks}
-              onChange={formik.handleChange}
-              error={formik.touched.totalMarks && formik.errors.totalMarks ? formik.errors.totalMarks : undefined}
             />
             <Select
               label="Duration"

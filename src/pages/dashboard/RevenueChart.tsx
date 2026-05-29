@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, LabelList } from 'recharts'
+import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, LabelList, Tooltip } from 'recharts'
 import { ChevronDown, TrendingUp } from 'lucide-react'
 import { Paragraph, Spinner, Subheading } from '@/components/ui'
 import { useGetRevenueTrend } from '@/hooks/dashboard'
@@ -58,8 +58,11 @@ const PERIODS: { key: Period; label: string }[] = [
 const RevenueChart = () => {
   const [period, setPeriod] = useState<Period>('week')
   const [chartData, setChartData] = useState<DataPoint[]>([])
-  const currentData = dataMap[period]
-  const peak = Math.max(...currentData.map(d => d.value))
+  const peak =
+    chartData.length > 0 ? Math.max(...chartData.map(d => d.value)) : 0
+
+  const formatRevenue = (value: number) =>
+    `₹${Number(value).toLocaleString('en-IN')}`
 
   // query
   const { data: revenueTrend, isLoading: revenueTrendLoading } = useGetRevenueTrend(period, true)
@@ -113,6 +116,19 @@ const RevenueChart = () => {
               axisLine={{ stroke: 'rgba(255,255,255,0.15)', strokeWidth: 1 }}
               tickLine={false}
             />
+            <Tooltip
+              cursor={{ fill: 'rgba(255,255,255,0.08)' }}
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null
+                const value = payload[0].value as number
+                return (
+                  <div className="rounded bg-white px-2.5 py-1.5 shadow-lg text-center">
+                    <p className="text-[10px] font-semibold text-brand-to/70">{label}</p>
+                    <p className="text-[10px] font-bold text-brand-to">{formatRevenue(value)}</p>
+                  </div>
+                )
+              }}
+            />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
               {chartData.map((entry, index) => (
                 <Cell
@@ -131,7 +147,7 @@ const RevenueChart = () => {
                 content={(props: any) => {
                   const { x, y, width, value } = props
                   if (value !== peak) return null
-                  const label = `₹${(value * 1000).toLocaleString('en-IN')}`
+                  const label = formatRevenue(value)
                   const cx = (x ?? 0) + (width ?? 0) / 2
                   const rectW = Math.max((width ?? 0) + 28, 72)
                   return (

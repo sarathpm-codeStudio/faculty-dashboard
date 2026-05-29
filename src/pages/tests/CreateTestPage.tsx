@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 
 const emptyForm = (): TestFormData => ({
   title: '', course: '', module: '',
-  testType: '', totalMarks: '', duration: '',
+  testType: '', duration: '',
   instructions: '',
 })
 
@@ -28,6 +28,7 @@ const CreateTestPage = () => {
   const [form, setForm] = useState<TestFormData>(emptyForm)
   const [isDraft, setIsDraft] = useState(false)
   const [testId, setTestId] = useState<string>("")
+  const [moduleId, setModuleId] = useState<string>("")
 
 
 
@@ -45,6 +46,7 @@ const CreateTestPage = () => {
 
     if (id) {
       setTestId(id)
+      setModuleId(testData?.data?.module_id)
 
       // edit test basic details
       setForm(values)
@@ -67,6 +69,7 @@ const CreateTestPage = () => {
 
       // create test basic details
       setForm(values)
+      setModuleId(values.module)
       console.log("values", values)
       // genarate unique id for test 
       const unique_id = generateUniqueId()
@@ -128,6 +131,7 @@ const CreateTestPage = () => {
           // onSaveDraft={() => navigate('/tests')}
           onBack={() => setStep(1)}
           testId={testId}
+          moduleId={moduleId}
         />
       )}
     </div>

@@ -391,6 +391,13 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
   // ── Content modal ──
   const openContentModal = (kind: ContentKind) => {
+
+    if(currentParentId===null){
+      toast.error('Please select a folder first')
+      return
+    }
+
+
     setEditingMaterialId(null)
     setContentUniqueId(generateUniqueId())
     setContentTitle('')
@@ -505,6 +512,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     const title = contentTitle.trim() || 'Untitled'
     const type = MATERIAL_TYPE_MAP[contentKind]
 
+    if(currentParentId===null){
+      toast.error('Please select a folder first')
+      return
+    }
+
     // if (contentKind === 'video' && !contentAssetId) {
     //   toast.error('Please wait for the video to finish uploading')
     //   return
@@ -574,13 +586,15 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         {/* Header row */}
         <div className="flex items-center justify-between">
           <Subheading className="text-black font-bold">Course Modules</Subheading>
-          <span
-            onClick={openFolderModal}
-            className="flex items-center gap-2 px-4 py-2 text-[#000B60] text-sm font-semibold cursor-pointer"
-          >
-            <IoAddCircleOutline size={20} />
-            Add New Folder
-          </span>
+          {navPath.length === 0 && (
+            <span
+              onClick={openFolderModal}
+              className="flex items-center gap-2 px-4 py-2 text-[#000B60] text-sm font-semibold cursor-pointer"
+            >
+              <IoAddCircleOutline size={20} />
+              Add New Folder
+            </span>
+          )}
         </div>
 
         {/* Breadcrumb + back */}
@@ -664,8 +678,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               <FolderSimple size={40} className="mb-2 text-gray-300" />
               <p className="text-sm">
                 {navPath.length === 0
-                  ? 'No content yet. Add a folder or use the content panel.'
-                  : 'This folder is empty. Add a folder or content using the panel.'}
+                  ? 'No content yet. Add a folder.'
+                  : 'This folder is empty. Add a content using the panel.'}
               </p>
             </div>
           )}
@@ -829,11 +843,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-3">
           <div>
             <Paragraph className="text-[#000B60] font-bold">Add Content</Paragraph>
-            <p className="text-xs text-gray-400 mt-0.5">
+            {/* <p className="text-xs text-gray-400 mt-0.5">
               {navPath.length > 0
                 ? <>Into: <span className="font-semibold text-[#000B60]">{navPath[navPath.length - 1].title}</span></>
                 : 'No folder open — adds to root'}
-            </p>
+            </p> */}
           </div>
           <div className="grid grid-cols-2 gap-2">
             {CONTENT_TYPES.map(({ kind, label }) => (

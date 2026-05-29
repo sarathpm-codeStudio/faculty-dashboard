@@ -180,4 +180,17 @@ export const courseService = {
   },
 
 
+  getAllContentInModule: async (moduleId: string): Promise<any> => {
+    try {
+      const { data } = await apiClient.get(`/courses/modules/${moduleId}/contents`)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
+  
+
+
 }
