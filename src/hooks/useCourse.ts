@@ -211,3 +211,12 @@ export const useGetAllContentInModule = (moduleId: string, enabled = true) => {
   })
 }
 
+
+export const useGetCourseReviews = (courseId: string,payload: any, enabled = true) => {
+  return useQuery({
+    queryKey: ['course-reviews', courseId],
+    queryFn: () => courseService.getCourseReviews(courseId, payload),
+    enabled: !!courseId,
+  })
+}
+

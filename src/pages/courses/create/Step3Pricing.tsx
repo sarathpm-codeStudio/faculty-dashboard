@@ -18,10 +18,10 @@ interface Props {
 }
 
 const validityOptions = [
-  { value: '1 month', label: '1 Month' },
-  { value: '3 month', label: '3 Months' },
-  { value: '6 month', label: '6 Months' },
-  { value: '1 year', label: '1 Year' },
+  { value: '1', label: '1 Month' },
+  { value: '3', label: '3 Months' },
+  { value: '6', label: '6 Months' },
+  { value: '12', label: '1 Year' },
   { value: 'lifetime', label: 'Lifetime' },
 ]
 

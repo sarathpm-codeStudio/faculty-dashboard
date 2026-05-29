@@ -10,16 +10,9 @@ import { ReviewCard, VideoPlayer } from '@/components/features'
 import man from '@/assets/images/man.jpg'
 import coverImge from "@/assets/images/cou1.png"
 import { useGetCourseById } from '@/hooks/useCourse'
+import formatNumber from '@/utils/helper/numberFormating'
+import { useGetCourseReviews } from '@/hooks/useCourse'
 
-const MOCK_STATS = [
-    { icon: <Clock size={15} className="text-[#00A6BF]" />, label: '6 Months Duration' },
-    { icon: <Layers size={15} className="text-[#00A6BF]" />, label: 'Intermediate Level' },
-    { icon: <BookOpen size={15} className="text-[#00A6BF]" />, label: '12 Modules + 40 Lessons' },
-    { icon: <Wallet size={15} className="text-[#00A6BF]" />, label: '22548 Revenue Earned' },
-    { icon: <Users size={15} className="text-[#00A6BF]" />, label: '458 Students Enrolled' },
-    { icon: <MousePointer2 size={15} className="text-[#00A6BF]" />, label: '45 Clicks' },
-    { icon: <Globe size={15} className="text-[#00A6BF]" />, label: 'English & Hindi Instruction' },
-]
 
 const MOCK_REVIEWS = [
     {
@@ -56,6 +49,18 @@ const CourseDetailPage = () => {
     // query
 
     const { data: course, isLoading, error } = useGetCourseById(id)
+    const { data: reviews, isLoading: reviewsLoading, error: reviewsError } = useGetCourseReviews(id, { page: 1, limit: 2 })
+
+    const MOCK_STATS = [
+    { icon: <Clock size={15} className="text-[#00A6BF]" />, label: course?.data?.validity === '1' ? '1 Month Validity' : course?.data?.validity === '3' ? '3 Months Validity' : course?.data?.validity === '6' ? '6 Months Validity' : course?.data?.validity === '12' ? '1 Year Validity' : 'Lifetime Validity' },
+    { icon: <Layers size={15} className="text-[#00A6BF]" />, label: `${course?.data?.level} Level` },
+    { icon: <BookOpen size={15} className="text-[#00A6BF]" />, label: `${course?.data?.total_folders} Modules + ${course?.data?.total_materials} Lessons`},
+    { icon: <Wallet size={15} className="text-[#00A6BF]" />, label: `₹${formatNumber(course?.data?.total_revenue)} Revenue Earned` },
+    { icon: <Users size={15} className="text-[#00A6BF]" />, label:  `${course?.data?.total_enrolled} Students Enrolled` },
+    { icon: <MousePointer2 size={15} className="text-[#00A6BF]" />, label: '45 Clicks' },
+    { icon: <Globe size={15} className="text-[#00A6BF]" />, label: `${course?.data?.languages.join(', ')} Instruction` },
+]
+
 
 
 
@@ -172,7 +177,7 @@ const CourseDetailPage = () => {
                         <div className="flex items-center justify-between mb-4 w-[1045px]">
                             <Subheading className="font-bold text-[#000b60]">Students Reviews</Subheading>
                             <button
-                                onClick={() => navigate('/courses/1/reviews')}
+                                onClick={() => navigate(`/courses/${id}/reviews`)}
                                 className="text-sm font-semibold text-[#000B60] hover:underline underline-offset-2"
                             >
                                 View All 124 Reviews
@@ -197,14 +202,14 @@ const CourseDetailPage = () => {
                     >
                         {/* Price row */}
                         <div className="flex items-baseline gap-2 mb-2">
-                            <Heading className="font-bold text-[#000b60]">₹3,500</Heading>
+                            <Heading className="font-bold text-[#000b60]">₹{formatNumber(course?.data?.final_price)}</Heading>
                             {/* <span className="text-3xl font-extrabold text-[#191c1e]">₹3,500</span> */}
-                            <Paragraph className="text-[#767683] line-through font-bold">₹4,500</Paragraph>
+                            <Paragraph className="text-[#767683] line-through font-bold">₹{formatNumber(course?.data?.price)}</Paragraph>
                             {/* <span className="text-sm text-[#767683] line-through">₹4,500</span> */}
                         </div>
 
                         {/* Stars */}
-                        <StarRating rating={4} />
+                        <StarRating rating={course?.data?.avg_rating} />
 
                         {/* Divider */}
                         <div className="border-t border-gray-100 my-4" />
@@ -212,6 +217,7 @@ const CourseDetailPage = () => {
                         {/* Stats */}
                         <ul className="space-y-3">
                             {MOCK_STATS.map((s, i) => (
+
                                 <li key={i} className="flex items-center gap-3">
                                     <span className="w-5 flex items-center justify-center">{s.icon}</span>
                                     <Paragraph className="text-black font-semibold !text-[14px]"> {s.label}  </Paragraph>

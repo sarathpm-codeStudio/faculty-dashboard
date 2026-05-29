@@ -3,14 +3,17 @@ import { Clock, Users, MoreVertical, BarChart2, Pencil, Trash2, Check } from 'lu
 import { motion } from 'framer-motion'
 import { Paragraph, Subheading } from '../ui'
 import { useNavigate } from 'react-router-dom'
+import formatNumber from '@/utils/helper/numberFormating'
 
 export type CourseCardProps = {
   id: any
   cover_image?: string
   title: string
   duration: string
+  validity: string
   students: string
   price: string
+  total_enrolled: number
   final_price: string
   originalPrice: string
   category?: string
@@ -30,6 +33,8 @@ const CourseCard = ({
   duration,
   students,
   price,
+  total_enrolled,
+  validity,
   originalPrice,
   final_price,
   category,
@@ -105,11 +110,13 @@ const CourseCard = ({
         <div className='flex items-center justify-start gap-8 mb-1.5'>
           <div className='flex items-center gap-1'>
             <Clock size={12} />
-            <span className="text-[12px] text-gray-500 font-medium">{duration}</span>
+            <span className="text-[12px] text-gray-500 font-medium">{
+              validity === '1' ? '1 Month' : validity === '3' ? '3 Months' : validity === '6' ? '6 Months' : validity === '12' ? '1 Year' : 'Lifetime'
+            }</span>
           </div>
           <div className='flex items-center gap-1'>
             <Users size={12} />
-            <span className="text-[12px] text-gray-500 font-medium">12K Students</span>
+            <span className="text-[12px] text-gray-500 font-medium">{formatNumber(total_enrolled || 0)} Students</span>
           </div>
         </div>
 
