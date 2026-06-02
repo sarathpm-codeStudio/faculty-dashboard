@@ -22,10 +22,25 @@ export const useGetAllTests = (payload: any) => {
     })
 }
 
+export const useGetTestsPageAnalytics = () => {
+    return useQuery({
+        queryKey: ['tests-page-analytics'],
+        queryFn: () => testService.getTestsPageAnalytics(),
+    })
+}
+
 export const useGetTestById = (id: any, isEnabled: boolean) => {
     return useQuery({
         queryKey: ['test', id],
         queryFn: () => testService.getTestById(id),
+        enabled: isEnabled,
+    })
+}
+
+export const useGetTestAnalytics = (test_id: any, isEnabled: boolean) => {
+    return useQuery({
+        queryKey: ['test-analytics', test_id],
+        queryFn: () => testService.getTestAnalytics(test_id),
         enabled: isEnabled,
     })
 }

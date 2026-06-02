@@ -5,6 +5,8 @@ import {
 } from 'recharts'
 import { ChevronDown } from 'lucide-react'
 import { SectionCard } from '@/components/features'
+import { Spinner } from '@/components/ui'
+import { useGetCourseEnrollmentCompletionChart } from '@/hooks/useCourse'
 
 type Period = 'week' | 'month' | 'year'
 
@@ -44,9 +46,12 @@ const PERIODS: { key: Period; label: string }[] = [
     { key: 'year', label: 'Year' },
 ]
 
-const EnrollmentCompletionChart = () => {
-    const [period, setPeriod] = useState<Period>('year')
+const EnrollmentCompletionChart = ({ courseId }: { courseId: string }) => {
+    const [period, setPeriod] = useState<Period>('week')
     const currentData = dataMap[period]
+
+    // query
+    const { data: enrollmentCompletionChart, isLoading: enrollmentCompletionChartLoading } = useGetCourseEnrollmentCompletionChart(courseId, period, true)
 
     const filter = (
         <div className="relative">
@@ -82,9 +87,14 @@ const EnrollmentCompletionChart = () => {
                 </div>
             }
         >
-            <div className="h-[300px]">
+            <div className="h-[300px] relative">
+                {enrollmentCompletionChartLoading && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-[1px] rounded-md">
+                        <Spinner size={44} label="Loading chart data..." />
+                    </div>
+                )}
                 <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={currentData} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="30%" barGap={4}>
+                    <BarChart data={enrollmentCompletionChart?.data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="30%" barGap={4}>
                         <CartesianGrid vertical={false} stroke="#f0f1f5" strokeDasharray="4 4" />
                         <XAxis
                             dataKey="label"

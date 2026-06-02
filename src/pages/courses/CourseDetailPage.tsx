@@ -5,13 +5,13 @@ import {
     ArrowLeft, Share2, Trash2, Pencil, Clock,
     Layers, BookOpen, Wallet, Users, MousePointer2, Globe, TrendingUp,
 } from 'lucide-react'
-import { Button, Heading, Paragraph, Spinner, Subheading, StarRating } from '@/components/ui'
+import { Button, Heading, Paragraph, Spinner, Subheading, StarRating, ConfirmDeleteModal } from '@/components/ui'
 import { ReviewCard, VideoPlayer } from '@/components/features'
 import man from '@/assets/images/man.jpg'
 import coverImge from "@/assets/images/cou1.png"
-import { useGetCourseById } from '@/hooks/useCourse'
+import { useGetCourseById, useGetCourseReviews, useDeleteCourse } from '@/hooks/useCourse'
 import formatNumber from '@/utils/helper/numberFormating'
-import { useGetCourseReviews } from '@/hooks/useCourse'
+import { toast } from 'sonner'
 
 
 const MOCK_REVIEWS = [
@@ -43,13 +43,24 @@ const fadeUp = (delay = 0) => ({
 const CourseDetailPage = () => {
     const navigate = useNavigate()
     const { id }: any = useParams()
-
-
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
     // query
-
     const { data: course, isLoading, error } = useGetCourseById(id)
     const { data: reviews, isLoading: reviewsLoading, error: reviewsError } = useGetCourseReviews(id, { page: 1, limit: 2 })
+    const { mutateAsync: deleteCourse, isPending: deleteCoursePending } = useDeleteCourse()
+
+    const confirmDeleteCourse = async () => {
+        const toastId = toast.loading('Deleting course...')
+        try {
+            await deleteCourse(String(id))
+            toast.success('Course deleted successfully', { id: toastId })
+            setDeleteModalOpen(false)
+            navigate('/courses')
+        } catch (error: any) {
+            toast.error(error?.message ?? 'Failed to delete course', { id: toastId })
+        }
+    }
 
     const MOCK_STATS = [
     { icon: <Clock size={15} className="text-[#00A6BF]" />, label: course?.data?.validity === '1' ? '1 Month Validity' : course?.data?.validity === '3' ? '3 Months Validity' : course?.data?.validity === '6' ? '6 Months Validity' : course?.data?.validity === '12' ? '1 Year Validity' : 'Lifetime Validity' },
@@ -110,7 +121,7 @@ const CourseDetailPage = () => {
                     </button> */}
                     <Button
                         variant="white"
-                        className="!h-10 !text-sm !px-4 !font-semibold"
+                        className="!h-10 !text-sm !px-4 !font-semibold cursor-pointer"
                         onClick={() => console.log('Create bundle')}
                     >
                         <Share2 size={14} />
@@ -122,19 +133,20 @@ const CourseDetailPage = () => {
                     </button> */}
                     <Button
                         variant="white"
-                        className="!h-10 !text-sm !px-4 !font-semibold !text-[#BA1A1A]"
-                        onClick={() => console.log('Create bundle')}
+                        className="!h-10 !text-sm !px-4 !font-semibold !text-[#BA1A1A] cursor-pointer"
+                        onClick={() => setDeleteModalOpen(true)}
                     >
                         <Trash2 size={14} />
                         Delete
                     </Button>
-                    <button
-                        className="inline-flex items-center gap-1.5 px-4 h-9 rounded-lg text-sm font-semibold text-white transition-colors"
-                        style={{ background: 'linear-gradient(to right, #000B60, #142283)' }}
+                    <Button
+                        variant="primary"
+                        className="!h-10 !text-sm !px-4 !font-semibold cursor-pointer"
+                        onClick={() => navigate(`/courses/${id}/edit`)}
                     >
                         <Pencil size={13} />
                         Edit Course
-                    </button>
+                    </Button>
                 </div>
             </motion.div>
 
@@ -176,17 +188,32 @@ const CourseDetailPage = () => {
                     <motion.div {...fadeUp(0.24)} className='w-[1000px]'>
                         <div className="flex items-center justify-between mb-4 w-[1045px]">
                             <Subheading className="font-bold text-[#000b60]">Students Reviews</Subheading>
-                            <button
+                            
+                            {
+                                reviews?.data?.total_reviews > 0 && (
+                                    <button
                                 onClick={() => navigate(`/courses/${id}/reviews`)}
                                 className="text-sm font-semibold text-[#000B60] hover:underline underline-offset-2"
                             >
-                                View All 124 Reviews
+                                View All {reviews?.data?.total_reviews} Reviews
                             </button>
+                                )
+
+                            }
+                            
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-                            {MOCK_REVIEWS.map((r, i) => (
-                                <ReviewCard key={i} {...r} />
-                            ))}
+                            {
+                                reviews?.data?.reviews?.length > 0 ? (
+                                    reviews?.data?.reviews?.map((r: any) => (
+                                        <ReviewCard key={r.id} {...r} />
+                                    ))
+                                ) : (
+                                    <div className="col-span-full flex items-center justify-center py-8">
+                                        <Paragraph className="text-[#767683] text-center">No reviews found</Paragraph>
+                                    </div>
+                                )
+                            }
                         </div>
                     </motion.div>
 
@@ -228,7 +255,7 @@ const CourseDetailPage = () => {
 
                     {/* View Analytics */}
                     <motion.div
-                        onClick={() => navigate('/courses/1/analytics')}
+                        onClick={() => navigate(`/courses/${id}/analytics`,{state: {course_title: course?.data?.title}})}
                         className="rounded-2xl p-5 cursor-pointer overflow-hidden"
                         style={{ background: 'linear-gradient(135deg, #000B60 0%, #1a2a9c 100%)' }}
                         {...fadeUp(0.22)}
@@ -247,6 +274,15 @@ const CourseDetailPage = () => {
 
                 </div>
             </div>
+
+            <ConfirmDeleteModal
+                open={deleteModalOpen}
+                onClose={() => !deleteCoursePending && setDeleteModalOpen(false)}
+                onConfirm={confirmDeleteCourse}
+                title="Delete Course"
+                itemName={course?.data?.title}
+                loading={deleteCoursePending}
+            />
         </div>
     )
 }

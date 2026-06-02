@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Download } from 'lucide-react'
 import { FaUsers } from 'react-icons/fa6'
 import { HiMiniCurrencyDollar } from 'react-icons/hi2'
 import { BsFillStarFill } from 'react-icons/bs'
-import { Button, Heading, Paragraph, Spinner } from '@/components/ui'
+import { Button, Heading, Spinner } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import EnrollmentCompletionChart from './EnrollmentCompletionChart'
-import RevenueChart from '@/pages/dashboard/RevenueChart'
+import RevenueChart, { type RevenuePeriod } from '@/pages/dashboard/RevenueChart'
 import { FaRegCircleCheck } from "react-icons/fa6";
+import { useGetCourseAnalytics } from '@/hooks/useCourse'
+import { useGetCourseRevenueTrend } from '@/hooks/useCourse'
 
 const fadeUp = (delay = 0) => ({
     initial: { opacity: 0, y: 18 },
@@ -19,7 +21,14 @@ const fadeUp = (delay = 0) => ({
 
 const CourseAnalyticsPage = () => {
     const navigate = useNavigate()
+    const { id }: any = useParams()
+    const { course_title } = useLocation().state
     const [loading, setLoading] = useState(true)
+    const [revenuePeriod, setRevenuePeriod] = useState<RevenuePeriod>('week')
+
+    // query
+    const { data: analytics, isLoading: analyticsLoading, error: analyticsError } = useGetCourseAnalytics(id , true)
+    const { data: revenueTrend, isLoading: revenueTrendLoading } = useGetCourseRevenueTrend(id, revenuePeriod, true)
 
     useEffect(() => {
         const t = setTimeout(() => setLoading(false), 800)
@@ -54,7 +63,7 @@ const CourseAnalyticsPage = () => {
                 <div>
                     <Heading className="text-black">
                         Course Performance:{' '}
-                        <span className="text-[#000b60]">Cost Accounting</span>
+                        <span className="text-[#000b60]">{course_title}</span>
                     </Heading>
                     {/* <Paragraph className="text-[#767683] mt-1">
                         Track enrollment trends, revenue, and student performance for this course.
@@ -74,15 +83,15 @@ const CourseAnalyticsPage = () => {
 
 
                     label="Total Revenue"
-                    value="1,24,500"
+                    value={analytics?.data?.totalRevenue || 0}
                     prefix="₹"
                 />
                 <StatCard
 
                     icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#000b60]" size={25} /></div>}
 
-                    label="Active Students"
-                    value="342"
+                    label="Total Students"
+                    value={analytics?.data?.activeStudents || 0}
                 />
                 <StatCard
                     icon={
@@ -91,7 +100,7 @@ const CourseAnalyticsPage = () => {
                         </div>
                     }
                     label="Completion Rate"
-                    value="68%"
+                    value={`${analytics?.data?.completionRate || 0}%`}
                 // valueColor="#00875A"
                 />
                 <StatCard
@@ -109,9 +118,15 @@ const CourseAnalyticsPage = () => {
             {/* Charts */}
             <motion.div className="grid grid-cols-1 lg:grid-cols-3 gap-4" {...fadeUp(0.16)}>
                 <div className="lg:col-span-2">
-                    <EnrollmentCompletionChart />
+                    <EnrollmentCompletionChart courseId={id} />
                 </div>
-                <RevenueChart />
+                <RevenueChart
+                    data={revenueTrend?.data?.data ?? []}
+                    trend={revenueTrend?.data?.trend}
+                    isLoading={revenueTrendLoading}
+                    period={revenuePeriod}
+                    onPeriodChange={setRevenuePeriod}
+                />
             </motion.div>
 
         </div>

@@ -4,7 +4,9 @@ import { motion } from 'framer-motion'
 import { MoreVertical, SlidersHorizontal, Download, User, ArrowLeft } from 'lucide-react'
 import { Heading, Paragraph, Spinner, DataTable } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
-import { StatCard, ProgressBar } from '@/components/features'
+import { StatCard } from '@/components/features'
+import { useGetTestById } from '@/hooks/test'
+import { useGetTestAnalytics } from '@/hooks/test'
 
 type Candidate = {
   id: number
@@ -112,6 +114,10 @@ const TestDetailPage = () => {
   const [loading, setLoading] = useState(true)
   const [rangeLabel, setRangeLabel] = useState('')
 
+// queries
+  const { data: test, isLoading: testLoading } = useGetTestById(id, !!id)
+  const { data: testAnalytics, isLoading: testAnalyticsLoading } = useGetTestAnalytics(id, !!id)
+
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 800)
     return () => clearTimeout(t)
@@ -120,11 +126,10 @@ const TestDetailPage = () => {
   const totalCandidates = MOCK_CANDIDATES.length
   const passed = MOCK_CANDIDATES.filter(c => c.result !== 'FAIL').length
   const completionRate = Math.round((passed / totalCandidates) * 100)
-  const avgScore = Math.round(MOCK_CANDIDATES.reduce((s, c) => s + c.score, 0) / totalCandidates)
   const topScore = Math.max(...MOCK_CANDIDATES.map(c => c.score))
   const topScorer = MOCK_CANDIDATES.find(c => c.score === topScore)
 
-  if (loading) {
+  if (loading || testLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <Spinner label="Loading test details..." />
@@ -144,44 +149,40 @@ const TestDetailPage = () => {
           <ArrowLeft size={16} />
           Back to Tests
         </button>
-        <Heading className="text-[#000B60]">Financial Accounting</Heading>
+        <Heading className="text-[#000B60]">{test?.data?.title ?? 'Test Details'}</Heading>
       </motion.div>
 
       {/* Stat Cards */}
-      <motion.div className="grid grid-cols-4 gap-4" {...fadeUp(0.08)}>
-        <StatCard
-          icon={null}
-          label="Score Average"
-          value={`${avgScore}.4%`}
-          valueColor='#000B60'
-        />
+      <motion.div className="grid grid-cols-3 gap-4" {...fadeUp(0.08)}>
         <StatCard
           icon={null}
           label="Completion Rate"
-          value={`${passed}/${totalCandidates}`}
-          valueColor='#000B60'
-
+          value={`${testAnalytics?.data?.completedCount}/${testAnalytics?.data?.totalAttempts}`}
+          valueColor="#000B60"
         >
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-[#767683]">{completionRate}%</span>
           </div>
-          <ProgressBar label="" value={completionRate} barColor="#000B60" />
+          <div className="h-1.5 w-full rounded-full bg-gray-200">
+            <div
+              className="h-full rounded-full bg-[#000B60]"
+              style={{ width: `${testAnalytics?.data?.completionRate}%` }}
+            />
+          </div>
         </StatCard>
         <StatCard
           icon={null}
           label="Avg. Duration"
-          value="1h 42m"
-          valueColor='#000B60'
-
+          value={testAnalytics?.data?.avgDuration?.display}
+          valueColor="#000B60"
         >
-          <Paragraph className="!text-xs text-[#767683]">Allocated: 2h 00m</Paragraph>
+          <Paragraph className="!text-xs text-[#767683]">Allocated: {testAnalytics?.data?.allocatedDuration?.display}</Paragraph>
         </StatCard>
         <StatCard
           icon={null}
-          label="Top Score"
+          label="Top Student"
           value={`${topScore}/100`}
-          valueColor='#000B60'
-
+          valueColor="#000B60"
         >
           {topScorer && (
             <div className="flex items-center gap-1.5">

@@ -63,7 +63,14 @@ export const courseService = {
   },
 
   delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/courses/${id}`)
+    
+    try {
+      const { data } = await apiClient.delete(`/courses/${id}`)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
   },
 
   publish: async (id: string): Promise<Course> => {
@@ -194,6 +201,37 @@ export const courseService = {
   getCourseReviews: async (courseId: string, payload: any): Promise<any> => {
     try {
       const { data } = await apiClient.get(`/courses/${courseId}/reviews`, { params: payload })
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
+  // get course analytics
+  getCourseAnalytics: async (courseId: string): Promise<any> => {
+    try {
+      const { data } = await apiClient.get(`/courses/${courseId}/analytics`)
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
+  getCourseEnrollmentCompletionChart: async (courseId: string,period: string): Promise<any> => {
+    try {
+      const { data } = await apiClient.get(`/courses/${courseId}/enrollment-vs-completion-chart`, { params: { period } })
+      return data
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+  },
+
+  getCourseRevenueTrend: async (courseId: string,period: string): Promise<any> => {
+    try {
+      const { data } = await apiClient.get(`/courses/${courseId}/revenue-trend`, { params: { period } })
       return data
     } catch (error: any) {
       const message = error?.response?.data?.message || error?.message || 'Something went wrong'

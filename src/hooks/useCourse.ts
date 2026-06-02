@@ -71,6 +71,7 @@ export const useDeleteCourse = () => {
     mutationFn: (id: string) => courseService.delete(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: courseKeys.all })
+      qc.invalidateQueries({ queryKey: ['my-courses'] })
     },
   })
 }
@@ -220,3 +221,28 @@ export const useGetCourseReviews = (courseId: string,payload: any, enabled = tru
   })
 }
 
+
+export const useGetCourseAnalytics = (courseId: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['course-analytics', courseId],
+    queryFn: () => courseService.getCourseAnalytics(courseId),
+    enabled: enabled && !!courseId,
+  })
+}
+
+export const useGetCourseEnrollmentCompletionChart = (courseId: string, period: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['course-enrollment-completion-chart', courseId, period],
+    queryFn: () => courseService.getCourseEnrollmentCompletionChart(courseId, period),
+    enabled: enabled && !!courseId,
+  })
+}
+
+
+export const useGetCourseRevenueTrend = (courseId: string, period: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['course-revenue-trend', courseId, period],
+    queryFn: () => courseService.getCourseRevenueTrend(courseId, period),
+    enabled: enabled && !!courseId,
+  })
+}

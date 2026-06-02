@@ -166,7 +166,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={formik.touched.description && formik.errors.description ? formik.errors.description : undefined}
-              maxLength={500}
+              maxLength={5000}
               showCount
               className="flex-1 min-h-[90px] h-[calc(100%-32px)]"
             />

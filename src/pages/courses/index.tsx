@@ -5,7 +5,7 @@ import { Package } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import { CourseCard, AddCourseCard } from '../../components/features'
 import type { CourseCardProps } from '../../components/features/CourseCard'
-import { Heading, Paragraph, Spinner } from '@/components/ui'
+import { Heading, Paragraph, Spinner, ConfirmDeleteModal } from '@/components/ui'
 import { IoAddCircleOutline } from "react-icons/io5";
 import courseImg from "@/assets/images/cou1.png"
 import courseImg2 from "@/assets/images/cou2.png"
@@ -13,7 +13,8 @@ import courseImg3 from "@/assets/images/cou3.png"
 import courseImg4 from "@/assets/images/cou4.png"
 import courseImg5 from "@/assets/images/cou5.png"
 import courseImg6 from "@/assets/images/cou6.png"
-import { useGetAllCourses } from "@/hooks/useCourse"
+import { useGetAllCourses, useDeleteCourse } from "@/hooks/useCourse"
+import { toast } from 'sonner'
 
 
 type Course = Omit<CourseCardProps, 'onViewAnalytics' | 'onEdit' | 'onDelete'> & {
@@ -41,8 +42,10 @@ const CoursesPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>('active')
   const [selectTab,setSelectTab] = useState<any>(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; title: string } | null>(null)
 
   const { data: courses, isLoading: coursesLoading } = useGetAllCourses(selectTab , "", true)
+  const { mutateAsync: deleteCourse, isPending: deleteCoursePending } = useDeleteCourse()
 
   useEffect(() => {
     setIsLoading(true)
@@ -57,7 +60,8 @@ const CoursesPage = () => {
   }, [activeTab])
 
   const handleViewAnalytics = (id: number | string) => {
-    console.log('View analytics for course', id)
+    
+       navigate(`/courses/${id}/analytics`,{state: {course_title: courses?.data?.find((course: any) => course.id === id)?.title}})
   }
 
   const handleEdit = (id: number | string) => {
@@ -65,7 +69,22 @@ const CoursesPage = () => {
   }
 
   const handleDelete = (id: number | string) => {
-    console.log('Delete course', id)
+    const course = courses?.data?.find((c: any) => c.id === id)
+    if (course) {
+      setDeleteTarget({ id: course.id, title: course.title })
+    }
+  }
+
+  const confirmDeleteCourse = async () => {
+    if (!deleteTarget) return
+    const toastId = toast.loading('Deleting course...')
+    try {
+      await deleteCourse(String(deleteTarget.id))
+      toast.success('Course deleted successfully', { id: toastId })
+      setDeleteTarget(null)
+    } catch (error: any) {
+      toast.error(error?.message ?? 'Failed to delete course', { id: toastId })
+    }
   }
 
   return (
@@ -166,6 +185,15 @@ const CoursesPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onClose={() => !deleteCoursePending && setDeleteTarget(null)}
+        onConfirm={confirmDeleteCourse}
+        title="Delete Course"
+        itemName={deleteTarget?.title}
+        loading={deleteCoursePending}
+      />
     </div>
   )
 }

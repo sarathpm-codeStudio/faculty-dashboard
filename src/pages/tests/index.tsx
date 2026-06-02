@@ -14,6 +14,7 @@ import { useGetAllTests, useDeleteTest } from '@/hooks/test'
 import { timeAgo } from '@/utils/helper/formatDate'
 import ActionsMenu from '@/components/features/ActionBtn'
 import { toast } from 'sonner'
+import { useGetTestsPageAnalytics } from '@/hooks/test'
 
 type Test = {
   id: number
@@ -155,6 +156,9 @@ const TestsPage = () => {
     setPage(1)
   }, [search])
 
+  // query
+  const { data: testsPageAnalytics, isLoading: testsPageAnalyticsLoading } = useGetTestsPageAnalytics()
+
   const { data: tests, isLoading: testsLoading } = useGetAllTests({
     page,
     limit: pageSize,
@@ -216,17 +220,17 @@ const TestsPage = () => {
       <motion.div className="grid grid-cols-3 gap-4" {...fadeUp(0.08)}>
         <StatCard
           icon={<CheckCircle2 size={28} className="text-[#000B60]" />}
-          value={String(activeCount)}
+          value={String(testsPageAnalytics?.data?.activeTests ?? 0)}
           label="Active Tests"
         />
         <StatCard
           icon={<FileText size={28} className="text-orange-400" />}
-          value={String(draftCount)}
+          value={String(testsPageAnalytics?.data?.draftTests ?? 0)}
           label="Drafts"
         />
         <StatCard
           icon={<BarChart2 size={28} className="text-green-500" />}
-          value={"0"}
+          value={String(testsPageAnalytics?.data?.totalCompletedAttempts ?? 0)}
           label="Total Completed Attempts"
         />
       </motion.div>

@@ -29,9 +29,31 @@ export const testService = {
         }
     },
 
+    getTestsPageAnalytics: async () => {
+        try {
+            const { data } = await apiClient.get('/test/analytics')
+            return data
+        } catch (error: any) {
+            const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+            console.log("error", error)
+            throw new Error(message)
+        }
+    },
+
     getTestById: async (id: string) => {
         try {
             const { data } = await apiClient.get(`/test/${id}`)
+            return data
+        } catch (error: any) {
+            const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+            console.log("error", error)
+            throw new Error(message)
+        }
+    },
+
+    getTestAnalytics: async (test_id: string) => {
+        try {
+            const { data } = await apiClient.get(`/test/${test_id}/analytics`)
             return data
         } catch (error: any) {
             const message = error?.response?.data?.message || error?.message || 'Something went wrong'

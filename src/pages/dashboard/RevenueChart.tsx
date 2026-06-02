@@ -1,77 +1,39 @@
-import { useEffect, useState } from 'react'
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, LabelList, Tooltip } from 'recharts'
 import { ChevronDown, TrendingUp } from 'lucide-react'
 import { Paragraph, Spinner, Subheading } from '@/components/ui'
-import { useGetRevenueTrend } from '@/hooks/dashboard'
 
-type Period = 'week' | 'month' | 'year'
+export type RevenuePeriod = 'week' | 'month' | 'year'
 
-type DataPoint = {
+export type RevenueDataPoint = {
   label: string
   value: number
 }
 
-const weekData: DataPoint[] = [
-  { label: 'MON', value: 12 },
-  { label: 'TUE', value: 18 },
-  { label: 'WED', value: 9 },
-  { label: 'THU', value: 24 },
-  { label: 'FRI', value: 30 },
-  { label: 'SAT', value: 16 },
-  { label: 'SUN', value: 8 },
-]
-
-const monthData: DataPoint[] = [
-  { label: 'Wk 1', value: 45 },
-  { label: 'Wk 2', value: 62 },
-  { label: 'Wk 3', value: 38 },
-  { label: 'Wk 4', value: 75 },
-]
-
-const yearData: DataPoint[] = [
-  { label: 'JAN', value: 40 },
-  { label: 'FEB', value: 60 },
-  { label: 'MAR', value: 30 },
-  { label: 'APR', value: 80 },
-  { label: 'MAY', value: 96 },
-  { label: 'JUN', value: 50 },
-]
-
-const dataMap: Record<Period, DataPoint[]> = {
-  week: weekData,
-  month: monthData,
-  year: yearData,
+type RevenueChartProps = {
+  data: RevenueDataPoint[]
+  trend?: string
+  isLoading?: boolean
+  period: RevenuePeriod
+  onPeriodChange: (period: RevenuePeriod) => void
 }
 
-const trendText: Record<Period, string> = {
-  week: '8.2% increase from last week',
-  month: '12.5% increase from last month',
-  year: '18.4% increase from last year',
-}
-
-const PERIODS: { key: Period; label: string }[] = [
+const PERIODS: { key: RevenuePeriod; label: string }[] = [
   { key: 'week', label: 'Week' },
   { key: 'month', label: 'Month' },
   { key: 'year', label: 'Year' },
 ]
 
-const RevenueChart = () => {
-  const [period, setPeriod] = useState<Period>('week')
-  const [chartData, setChartData] = useState<DataPoint[]>([])
-  const peak =
-    chartData.length > 0 ? Math.max(...chartData.map(d => d.value)) : 0
+const RevenueChart = ({
+  data,
+  trend = '',
+  isLoading = false,
+  period,
+  onPeriodChange,
+}: RevenueChartProps) => {
+  const peak = data.length > 0 ? Math.max(...data.map(d => d.value)) : 0
 
   const formatRevenue = (value: number) =>
     `₹${Number(value).toLocaleString('en-IN')}`
-
-  // query
-  const { data: revenueTrend, isLoading: revenueTrendLoading } = useGetRevenueTrend(period, true)
-
-  useEffect(() => {
-    if (revenueTrend) {
-      setChartData(revenueTrend.data?.data ?? [])
-    }
-  }, [period,revenueTrend])
 
   return (
     <div
@@ -84,7 +46,7 @@ const RevenueChart = () => {
         <div className="relative">
           <select
             value={period}
-            onChange={e => setPeriod(e.target.value as Period)}
+            onChange={e => onPeriodChange(e.target.value as RevenuePeriod)}
             className="h-7 w-[90px] appearance-none rounded-[6px] border border-white/20 bg-transparent pl-3 pr-7 text-sm font-semibold text-white focus:outline-none cursor-pointer"
           >
             {PERIODS.map(({ key, label }) => (
@@ -99,14 +61,14 @@ const RevenueChart = () => {
 
       {/* Chart */}
       <div className="mt-6 flex-1 min-h-[200px] relative">
-        {revenueTrendLoading && (
+        {isLoading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-brand-from/40 backdrop-blur-[1px] rounded-md">
             <Spinner size={44} color="#ffffff" label="Loading revenue data..." />
           </div>
         )}
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={chartData}
+            data={data}
             margin={{ top: 38, right: 8, left: 8, bottom: 0 }}
             barCategoryGap="28%"
           >
@@ -130,7 +92,7 @@ const RevenueChart = () => {
               }}
             />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-              {chartData.map((entry, index) => (
+              {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={
@@ -170,7 +132,6 @@ const RevenueChart = () => {
                       >
                         {label}
                       </text>
-                      {/* Downward pointer */}
                       <polygon
                         points={`${cx - 5},${(y ?? 0) - 8} ${cx + 5},${(y ?? 0) - 8} ${cx},${(y ?? 0) - 2}`}
                         fill="white"
@@ -187,7 +148,7 @@ const RevenueChart = () => {
       {/* Trend footer */}
       <div className="mt-4 flex items-center gap-2">
         <TrendingUp className="h-4 w-4 shrink-0 text-[#dfe0ff]" />
-        <Paragraph className="text-[#dfe0ff]">{revenueTrend?.data?.trend ?? ''}</Paragraph>
+        <Paragraph className="text-[#dfe0ff]">{trend}</Paragraph>
       </div>
     </div>
   )
