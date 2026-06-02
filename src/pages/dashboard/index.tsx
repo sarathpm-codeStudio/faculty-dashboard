@@ -158,7 +158,7 @@ const DashboardPage = () => {
                   </div>
                   <p className="text-sm font-bold text-[#1a237e]">Content Transcoding Status</p>
                 </div>
-                <div className='space-y-2'>
+                <div className='space-y-2 max-h-64 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0'>
   
                   {
                     uploads && uploads?.length < 1 ?
