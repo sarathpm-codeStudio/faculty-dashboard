@@ -4,7 +4,13 @@ import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft, ExamIcon } fro
 import { ArrowRight, ChevronRight, Download, FileText as FilePdfIcon, Home, Image as LucideImage, Link as LinkIcon, Loader2, MoreVertical, Pencil, StickyNote, Trash2, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import { storageService } from '@/services'
-import { Button, ConfirmDeleteModal, Input, Modal, Paragraph, Spinner, Subheading, Textarea } from '@/components/ui'
+import { Button, ConfirmDeleteModal, Input, Modal, Paragraph, Spinner, Subheading, Textarea, ImageCropperModal } from '@/components/ui'
+import {
+  ASPECT_RATIO_16_9,
+  dataUrlToFile,
+  getImageDimensions,
+  isAspectRatio16x9,
+} from '@/utils/imageAspectRatio'
 import type { CourseFormData, TreeNode, FolderNode, ContentNode, ContentKind } from './index'
 import { IoAddCircleOutline, } from 'react-icons/io5'
 import { FaFolder } from 'react-icons/fa'
@@ -98,11 +104,12 @@ interface UploadBoxProps {
   hint: string
   loading?: boolean
   videoBlockedMessage?: string | null
+  aspectRatio?: number
   onFile: (file: File) => void
   onClear: () => void
 }
 
-const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, title, hint, loading = false, videoBlockedMessage = null, onFile, onClear }: UploadBoxProps) => {
+const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, title, hint, loading = false, videoBlockedMessage = null, aspectRatio, onFile, onClear }: UploadBoxProps) => {
   const ref = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
 
@@ -119,8 +126,10 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
       onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
       onDragLeave={() => setDrag(false)}
       onDrop={handleDrop}
-      className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden h-[200px]
+      className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden w-full
+        ${aspectRatio ? 'min-h-[120px]' : 'h-[200px]'}
         ${drag ? 'border-[#000B60] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#000B60]/40'}`}
+      style={aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
     >
       {preview ? (
         <>
@@ -268,6 +277,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
   const closeContentModal = () => {
     resetContentModalVideoState()
+    setRawVideoCoverImage(null)
+    setVideoCoverCropperOpen(false)
     setShowContentModal(false)
     setEditingMaterialId(null)
   }
@@ -289,6 +300,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [contentVideoCoverImg, setContentVideoCoverImg] = useState<string | null>(null)
   const [contentVideoCoverName, setContentVideoCoverName] = useState<string | null>(null)
   const [contentVideoCoverUploading, setContentVideoCoverUploading] = useState(false)
+  const [rawVideoCoverImage, setRawVideoCoverImage] = useState<string | null>(null)
+  const [videoCoverCropperOpen, setVideoCoverCropperOpen] = useState(false)
 
   // Material preview modal
   const [previewItem, setPreviewItem] = useState<any | null>(null)
@@ -436,6 +449,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentVideoCoverImg(null)
     setContentVideoCoverName(null)
     setContentVideoCoverUploading(false)
+    setRawVideoCoverImage(null)
+    setVideoCoverCropperOpen(false)
     setShowContentModal(true)
   }
 
@@ -490,8 +505,65 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentVideoCoverImg(videoCoverImg)
     setContentVideoCoverName(videoCoverImg ? videoCoverImg.split('/').pop() ?? null : null)
     setContentVideoCoverUploading(false)
+    setRawVideoCoverImage(null)
+    setVideoCoverCropperOpen(false)
 
     setShowContentModal(true)
+  }
+
+  const handleVideoCoverFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload a JPEG, PNG, or WebP image')
+      return
+    }
+
+    try {
+      const { width, height } = await getImageDimensions(file)
+      if (!isAspectRatio16x9(width, height)) {
+        toast.info('Image is not 16:9. Crop it to fit the frame below.')
+      }
+    } catch {
+      toast.error('Could not read image file')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setRawVideoCoverImage(reader.result as string)
+      setVideoCoverCropperOpen(true)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleVideoCoverCropSave = async (cropped: string) => {
+    setVideoCoverCropperOpen(false)
+    setRawVideoCoverImage(null)
+    setContentVideoCoverImg(cropped)
+    setContentVideoCoverName('video-cover.jpg')
+    setContentVideoCoverUploading(true)
+
+    try {
+      const uploadFile = dataUrlToFile(cropped, `video-cover-${Date.now()}.jpg`)
+      const url = await storageService.uploadCourseCover(uploadFile)
+      setContentVideoCoverImg(url)
+      toast.success('Video cover image uploaded')
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to upload video cover image')
+      setContentVideoCoverImg(null)
+      setContentVideoCoverName(null)
+    } finally {
+      setContentVideoCoverUploading(false)
+    }
+  }
+
+  const handleVideoCoverCropCancel = () => {
+    setVideoCoverCropperOpen(false)
+    setRawVideoCoverImage(null)
+  }
+
+  const handleVideoCoverClear = () => {
+    setContentVideoCoverImg(null)
+    setContentVideoCoverName(null)
   }
 
   const handleContentFileUpload = async (file: File) => {
@@ -546,22 +618,6 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         })
       },
     })
-  }
-
-  const handleVideoCoverUpload = async (file: File) => {
-    setContentVideoCoverUploading(true)
-    setContentVideoCoverName(file.name)
-    try {
-      const url = await storageService.uploadCourseCover(file)
-      setContentVideoCoverImg(url)
-      toast.success('Video cover image uploaded')
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to upload video cover image')
-      setContentVideoCoverImg(null)
-      setContentVideoCoverName(null)
-    } finally {
-      setContentVideoCoverUploading(false)
-    }
   }
 
   const MATERIAL_TYPE_MAP: Record<ContentKind, 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES'> = {
@@ -1060,16 +1116,14 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                 accept="image/jpeg,image/png,image/webp"
                 preview={contentVideoCoverImg}
                 previewType="image"
+                aspectRatio={ASPECT_RATIO_16_9}
                 fileName={contentVideoCoverName}
                 icon={<LucideImage size={20} />}
                 title="Upload Video Cover Image"
-                hint="JPEG, PNG or WebP"
+                hint="JPEG or PNG — 16:9 required (e.g. 1920×1080)"
                 loading={contentVideoCoverUploading}
-                onFile={handleVideoCoverUpload}
-                onClear={() => {
-                  setContentVideoCoverImg(null)
-                  setContentVideoCoverName(null)
-                }}
+                onFile={handleVideoCoverFile}
+                onClear={handleVideoCoverClear}
               />
             </div>
 
@@ -1167,6 +1221,19 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         )}
       </Modal>
 
+      <ImageCropperModal
+        open={videoCoverCropperOpen}
+        image={rawVideoCoverImage}
+        onClose={handleVideoCoverCropCancel}
+        onSave={handleVideoCoverCropSave}
+        title="Crop video cover image (16:9)"
+        aspect={ASPECT_RATIO_16_9}
+        cropShape="rect"
+        outputType="image/jpeg"
+        saveLabel="Use cover image"
+        hint="Position and zoom your image. The frame is fixed to 16:9 — same as the preview."
+      />
+
       {/* ── Material Preview Modal ── */}
       {
         previewItem && (() => {
@@ -1237,7 +1304,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                   }
                   return (
                     <div className="w-full">
-                      <VideoPlayer src={videoEmbed} />
+                      <VideoPlayer
+                        embed
+                        src={videoEmbed}
+                        poster={previewItem.video_cover_img ?? undefined}
+                      />
                     </div>
                   )
                 })()}

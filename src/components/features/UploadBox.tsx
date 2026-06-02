@@ -12,11 +12,25 @@ interface UploadBoxProps {
     hint: string
     loading?: boolean
     videoBlockedMessage?: string | null
+    /** e.g. 16/9 — preview container uses this aspect ratio */
+    aspectRatio?: number
     onFile: (file: File) => void
     onClear: () => void
 }
 
-export const UploadBox = ({ accept, preview, previewType, icon, title, hint, loading = false, videoBlockedMessage = null, onFile, onClear }: UploadBoxProps) => {
+export const UploadBox = ({
+    accept,
+    preview,
+    previewType,
+    icon,
+    title,
+    hint,
+    loading = false,
+    videoBlockedMessage = null,
+    aspectRatio,
+    onFile,
+    onClear,
+}: UploadBoxProps) => {
     const ref = useRef<HTMLInputElement>(null)
     const [drag, setDrag] = useState(false)
 
@@ -33,8 +47,10 @@ export const UploadBox = ({ accept, preview, previewType, icon, title, hint, loa
             onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
             onDragLeave={() => setDrag(false)}
             onDrop={handleDrop}
-            className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden h-[200px]
+            className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden w-full
+        ${aspectRatio ? 'min-h-[120px]' : 'h-[200px]'}
         ${drag ? 'border-[#000B60] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#000B60]/40'}`}
+            style={aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
         >
             {preview ? (
                 <>

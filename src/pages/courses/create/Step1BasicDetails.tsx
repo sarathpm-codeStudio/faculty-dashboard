@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, ChevronDown, ArrowRight, Image, Video, Upload, Loader2 } from 'lucide-react'
-import { Button, Input, Textarea, Select } from '@/components/ui'
+import { Button, Input, Textarea, Select, ImageCropperModal } from '@/components/ui'
 import type { CourseFormData } from './index'
 import { useFormik } from 'formik'
 import { courseBasicDetailsSchema } from '@/utils/validator/course.validator'
@@ -9,6 +9,12 @@ import { toast } from 'sonner'
 import { courseService } from "@/services/courseService"
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService' // ← ADD THIS
 import { UploadBox } from '@/components/features/UploadBox'
+import {
+  ASPECT_RATIO_16_9,
+  dataUrlToFile,
+  getImageDimensions,
+  isAspectRatio16x9,
+} from '@/utils/imageAspectRatio'
 
 interface Props {
   form: CourseFormData
@@ -33,6 +39,8 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   const [imgPreview, setImgPreview] = useState<string | null>(
     form.cover_image ? URL.createObjectURL(form.cover_image) : null
   )
+  const [rawCoverImage, setRawCoverImage] = useState<string | null>(null)
+  const [coverCropperOpen, setCoverCropperOpen] = useState(false)
   const [vidPreview, setVidPreview] = useState<string | null>(vidPreviewUrl ?? null)
   const [videoTranscodeStatus, setVideoTranscodeStatus] = useState<string | null>(null)
   const [langOpen, setLangOpen] = useState(false)
@@ -110,8 +118,73 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
       if (assetId) {
         formik.setFieldValue('intro_video_asset_id', assetId)
       }
+      if (courseDetails?.data?.cover_image) {
+        setImgPreview(courseDetails.data.cover_image)
+      }
     }
   }, [courseDetails])
+
+  const coverPreview =
+    imgPreview ?? formik.values.cover_image_url ?? courseDetails?.data?.cover_image ?? null
+
+  const handleCoverFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload a JPEG, PNG, or WebP image')
+      return
+    }
+
+    try {
+      const { width, height } = await getImageDimensions(file)
+      if (!isAspectRatio16x9(width, height)) {
+        toast.info('Image is not 16:9. Crop it to fit the frame below.')
+      }
+    } catch {
+      toast.error('Could not read image file')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setRawCoverImage(reader.result as string)
+      setCoverCropperOpen(true)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleCoverCropSave = async (cropped: string) => {
+    setCoverCropperOpen(false)
+    setRawCoverImage(null)
+    setImgPreview(cropped)
+
+    const file = dataUrlToFile(cropped, `cover-${Date.now()}.jpg`)
+    formik.setFieldValue('cover_image', file)
+    setCoverUploading(true)
+
+    try {
+      const url = await storageService.uploadCourseCover(file)
+      formik.setFieldValue('cover_image_url', url)
+      toast.success('Cover image uploaded')
+    } catch (error) {
+      console.log('file uploading error', error)
+      toast.error('Failed to upload cover image')
+      formik.setFieldValue('cover_image_url', null)
+      formik.setFieldValue('cover_image', null)
+      setImgPreview(null)
+    } finally {
+      setCoverUploading(false)
+    }
+  }
+
+  const handleCoverCropCancel = () => {
+    setCoverCropperOpen(false)
+    setRawCoverImage(null)
+  }
+
+  const handleCoverClear = () => {
+    formik.setFieldValue('cover_image', null)
+    formik.setFieldValue('cover_image_url', null)
+    setImgPreview(null)
+  }
 
   if (isEdit && isLoadingCourseDetails) {
     return (
@@ -259,34 +332,15 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
           {/* Cover Image */}
           <UploadBox
             accept="image/jpeg,image/png,image/webp"
-            preview={isEdit ? courseDetails?.data?.cover_image : imgPreview}
+            preview={coverPreview}
             previewType="image"
+            aspectRatio={ASPECT_RATIO_16_9}
             icon={<Image size={20} />}
             title="Cover Image"
-            hint="High resolution JPEG or PNG (16:9)"
+            hint="JPEG or PNG — 16:9 required (e.g. 1920×1080)"
             loading={coverUploading}
-            onFile={async (f) => {
-              setImgPreview(URL.createObjectURL(f))
-              formik.setFieldValue('cover_image', f)
-              setCoverUploading(true)
-              try {
-                const url = await storageService.uploadCourseCover(f)
-                formik.setFieldValue('cover_image_url', url)
-                toast.success('Cover image uploaded')
-              } catch (error) {
-                console.log("file uploading error", error)
-                toast.error('Failed to upload cover image')
-                formik.setFieldValue('cover_image_url', null)
-                setImgPreview(null)
-              } finally {
-                setCoverUploading(false)
-              }
-            }}
-            onClear={() => {
-              formik.setFieldValue('cover_image', null)
-              formik.setFieldValue('cover_image_url', null)
-              setImgPreview(null)
-            }}
+            onFile={handleCoverFile}
+            onClear={handleCoverClear}
           />
 
           {/* ── Intro Video Upload ── */}
@@ -391,6 +445,19 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
           </div>
         </div>
       </div>
+
+      <ImageCropperModal
+        open={coverCropperOpen}
+        image={rawCoverImage}
+        onClose={handleCoverCropCancel}
+        onSave={handleCoverCropSave}
+        title="Crop cover image (16:9)"
+        aspect={ASPECT_RATIO_16_9}
+        cropShape="rect"
+        outputType="image/jpeg"
+        saveLabel="Use cover image"
+        hint="Position and zoom your image. The frame is fixed to 16:9 — same as the course card preview."
+      />
     </form>
   )
 }

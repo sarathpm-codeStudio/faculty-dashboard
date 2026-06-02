@@ -28,6 +28,10 @@ const VideoPlayer = ({ src, embed, type = 'video/mp4', poster, className = '' }:
   const useIframe = embed ?? isEmbedUrl(src)
 
   useEffect(() => {
+    setPlaying(false)
+  }, [src, poster])
+
+  useEffect(() => {
     if (useIframe) return
     if (!containerRef.current) return
 
@@ -52,37 +56,41 @@ const VideoPlayer = ({ src, embed, type = 'video/mp4', poster, className = '' }:
     }
   }, [src, type, poster, useIframe])
 
-  /* ── iframe mode ── */
+  /* ── iframe mode — cover/poster first, embed loads only after play ── */
   if (useIframe) {
     return (
-      <div className={`w-full h-[400px] relative ${className}`}>
-        {/* Thumbnail overlay — shown until user clicks play */}
-        {poster && !playing && (
-          <div
-            className="absolute inset-0 z-10 cursor-pointer group"
+      <div
+        className={`w-full aspect-video relative bg-[#F8F9FB] overflow-hidden ${className}`}
+      >
+        {!playing && (
+          <button
+            type="button"
+            className="absolute inset-0 z-10 cursor-pointer group w-full h-full border-0 p-0"
             onClick={() => setPlaying(true)}
+            aria-label="Play video"
           >
-            <img
-              src={poster}
-              alt="Video thumbnail"
-              className="absolute inset-0 w-full h-full object-cover rounded-t-2xl"
-            />
-            {/* Dark overlay on hover */}
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition-colors rounded-t-2xl" />
-            {/* Play button */}
+            {poster ? (
+              <img
+                src={poster}
+                alt="Video cover"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 w-full h-full bg-[#E8EBFF]" />
+            )}
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition-colors" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-16 h-16 rounded-full bg-white/90 group-hover:bg-white group-hover:scale-110 flex items-center justify-center shadow-lg transition-all duration-200">
                 <Play size={26} className="text-[#000B60] fill-[#000B60] ml-1" />
               </div>
             </div>
-          </div>
+          </button>
         )}
 
-        {/* Iframe — mounted only after play clicked, with autoplay */}
-        {(!poster || playing) && (
+        {playing && (
           <iframe
             src={src.includes('?') ? `${src}&autoplay=1` : `${src}?autoplay=1`}
-            className="w-full h-full rounded-t-2xl border-0"
+            className="absolute inset-0 w-full h-full border-0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
             allowFullScreen
             title="Course video"
