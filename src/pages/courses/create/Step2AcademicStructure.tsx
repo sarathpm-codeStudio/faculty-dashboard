@@ -250,6 +250,27 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [contentUploadStatus, setContentUploadStatus] = useState<'idle' | 'uploading' | 'saving' | 'done' | 'failed'>('idle')
   const [contentUploadProgress, setContentUploadProgress] = useState(0)
   const [videoTranscodeStatus, setVideoTranscodeStatus] = useState<string | null>(null)
+  const contentVidPreviewRef = useRef<string | null>(null)
+  const contentUploadSessionRef = useRef<string | null>(null)
+
+  const resetContentModalVideoState = () => {
+    contentUploadSessionRef.current = null
+    if (contentVidPreviewRef.current?.startsWith('blob:')) {
+      URL.revokeObjectURL(contentVidPreviewRef.current)
+    }
+    contentVidPreviewRef.current = null
+    setContentVidPreview(null)
+    setContentAssetId(null)
+    setContentUploadStatus('idle')
+    setContentUploadProgress(0)
+    setVideoTranscodeStatus(null)
+  }
+
+  const closeContentModal = () => {
+    resetContentModalVideoState()
+    setShowContentModal(false)
+    setEditingMaterialId(null)
+  }
 
   const getVideoBlockedMessage = (status: string | null | undefined) => {
     if (!status) return null
@@ -265,6 +286,9 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [contentFileUrl, setContentFileUrl] = useState<string | null>(null)
   const [contentFileName, setContentFileName] = useState<string | null>(null)
   const [contentFileUploading, setContentFileUploading] = useState(false)
+  const [contentVideoCoverImg, setContentVideoCoverImg] = useState<string | null>(null)
+  const [contentVideoCoverName, setContentVideoCoverName] = useState<string | null>(null)
+  const [contentVideoCoverUploading, setContentVideoCoverUploading] = useState(false)
 
   // Material preview modal
   const [previewItem, setPreviewItem] = useState<any | null>(null)
@@ -405,14 +429,13 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentKind(kind)
     setVideoAccess(true)
     setHh('00'); setMm('00'); setSs('00')
-    setContentVidPreview(null)
-    setContentAssetId(null)
-    setContentUploadStatus('idle')
-    setContentUploadProgress(0)
-    setVideoTranscodeStatus(null)
+    resetContentModalVideoState()
     setContentFileUrl(null)
     setContentFileName(null)
     setContentFileUploading(false)
+    setContentVideoCoverImg(null)
+    setContentVideoCoverName(null)
+    setContentVideoCoverUploading(false)
     setShowContentModal(true)
   }
 
@@ -439,14 +462,18 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
     // Video preview from existing asset
     const assetId: string | undefined = material.video_asset_id
+    contentUploadSessionRef.current = null
     if (assetId) {
       const orgId = import.meta.env.VITE_TPSTREAMS_ORG_ID
       const accessToken = import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN
-      setContentVidPreview(`https://app.tpstreams.com/embed/${orgId}/${assetId}/?access_token=${accessToken}`)
+      const embedUrl = `https://app.tpstreams.com/embed/${orgId}/${assetId}/?access_token=${accessToken}`
+      contentVidPreviewRef.current = embedUrl
+      setContentVidPreview(embedUrl)
       setContentAssetId(assetId)
       setContentUploadStatus('done')
       setVideoTranscodeStatus(material.video_uploading_status || null)
     } else {
+      contentVidPreviewRef.current = null
       setContentVidPreview(null)
       setContentAssetId(null)
       setContentUploadStatus('idle')
@@ -459,6 +486,10 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentFileUrl(fileUrl)
     setContentFileName(fileUrl ? fileUrl.split('/').pop() ?? null : null)
     setContentFileUploading(false)
+    const videoCoverImg: string | null = material.video_cover_img ?? null
+    setContentVideoCoverImg(videoCoverImg)
+    setContentVideoCoverName(videoCoverImg ? videoCoverImg.split('/').pop() ?? null : null)
+    setContentVideoCoverUploading(false)
 
     setShowContentModal(true)
   }
@@ -480,25 +511,57 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   }
 
   const handleContentVideoFile = (file: File) => {
+    const uploadSessionId = contentUniqueId
+    contentUploadSessionRef.current = uploadSessionId
+
+    if (contentVidPreviewRef.current?.startsWith('blob:')) {
+      URL.revokeObjectURL(contentVidPreviewRef.current)
+    }
     const previewUrl = URL.createObjectURL(file)
+    contentVidPreviewRef.current = previewUrl
     setContentVidPreview(previewUrl)
     setContentUploadStatus('uploading')
     setContentUploadProgress(0)
     setVideoTranscodeStatus(null)
 
-    tpstreamsUploadService.upload(file, contentUniqueId, 'module', {
-      onProgress: (percentage) => setContentUploadProgress(percentage),
-      onStatus: (status) => setContentUploadStatus(status as any),
+    const applyIfActiveSession = (fn: () => void) => {
+      if (contentUploadSessionRef.current !== uploadSessionId) return
+      fn()
+    }
+
+    tpstreamsUploadService.upload(file, uploadSessionId, 'module', {
+      onProgress: (percentage) => applyIfActiveSession(() => setContentUploadProgress(percentage)),
+      onStatus: (status) => applyIfActiveSession(() => setContentUploadStatus(status as any)),
       onSuccess: (assetId) => {
-        setContentAssetId(assetId)
-        setContentUploadStatus('done')
-        toast.success('Video uploaded successfully')
+        applyIfActiveSession(() => {
+          setContentAssetId(assetId)
+          setContentUploadStatus('done')
+          toast.success('Video uploaded successfully')
+        })
       },
       onError: () => {
-        setContentUploadStatus('failed')
-        toast.error('Video upload failed')
+        applyIfActiveSession(() => {
+          setContentUploadStatus('failed')
+          toast.error('Video upload failed')
+        })
       },
     })
+  }
+
+  const handleVideoCoverUpload = async (file: File) => {
+    setContentVideoCoverUploading(true)
+    setContentVideoCoverName(file.name)
+    try {
+      const url = await storageService.uploadCourseCover(file)
+      setContentVideoCoverImg(url)
+      toast.success('Video cover image uploaded')
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to upload video cover image')
+      setContentVideoCoverImg(null)
+      setContentVideoCoverName(null)
+    } finally {
+      setContentVideoCoverUploading(false)
+    }
   }
 
   const MATERIAL_TYPE_MAP: Record<ContentKind, 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES'> = {
@@ -521,6 +584,10 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     //   toast.error('Please wait for the video to finish uploading')
     //   return
     // }
+    if (contentKind === 'video' && contentVideoCoverUploading) {
+      toast.error('Please wait for the video cover image to finish uploading')
+      return
+    }
 
     if ((contentKind === 'image' || contentKind === 'document') && !contentFileUrl) {
       toast.error('Please upload a file first')
@@ -536,6 +603,9 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         const payload: any = { title, type }
         if (contentKind === 'video' && contentAssetId) {
           payload.video_asset_id = contentAssetId
+        }
+        if (contentKind === 'video') {
+          payload.video_cover_img = contentVideoCoverImg
         }
         if ((contentKind === 'image' || contentKind === 'document') && contentFileUrl) {
           payload.file_url = contentFileUrl
@@ -558,6 +628,9 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         if (contentKind === 'video' && contentAssetId) {
           payload.video_asset_id = contentAssetId
         }
+        if (contentKind === 'video') {
+          payload.video_cover_img = contentVideoCoverImg
+        }
         if ((contentKind === 'image' || contentKind === 'document') && contentFileUrl) {
           payload.file_url = contentFileUrl
         }
@@ -567,8 +640,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         if (data) toast.success('Material created successfully')
       }
 
-      setShowContentModal(false)
-      setEditingMaterialId(null)
+      closeContentModal()
     } catch (err: any) {
       console.error('Failed to save material', err)
       toast.error(err?.message || 'Failed to save material')
@@ -944,15 +1016,12 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       {/* ── Add Content Modal ── */}
       <Modal
         open={showContentModal}
-        onClose={() => { setShowContentModal(false); setEditingMaterialId(null) }}
+        onClose={closeContentModal}
         title={`${editingMaterialId ? 'Edit' : 'Add'} ${CONTENT_TYPES.find(t => t.kind === contentKind)?.label ?? 'Content'}`}
         footer={
           <>
             <Button variant="white" className='!h-10'
-              onClick={() => {
-                setShowContentModal(false);
-                setEditingMaterialId(null)
-              }}
+              onClick={closeContentModal}
               disabled={isMaterialSaving}>
               Cancel
             </Button>
@@ -984,49 +1053,75 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         />
 
         {contentKind === 'video' && (
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-gray-700">Video</label>
-            <UploadBox
-              accept="video/mp4,video/webm,video/mov"
-              preview={contentVidPreview}
-              icon={<Video size={20} />}
-              title="Upload Video"
-              hint="MP4, WebM or MOV — max 200 MB"
-              loading={contentUploadStatus === 'uploading' || contentUploadStatus === 'saving'}
-              videoBlockedMessage={getVideoBlockedMessage(videoTranscodeStatus)}
-              onFile={handleContentVideoFile}
-              onClear={() => {
-                setContentVidPreview(null)
-                setContentAssetId(null)
-                setContentUploadStatus('idle')
-                setContentUploadProgress(0)
-                setVideoTranscodeStatus(null)
-              }}
-            />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-gray-700">Video Cover Image</label>
+              <UploadBox
+                accept="image/jpeg,image/png,image/webp"
+                preview={contentVideoCoverImg}
+                previewType="image"
+                fileName={contentVideoCoverName}
+                icon={<LucideImage size={20} />}
+                title="Upload Video Cover Image"
+                hint="JPEG, PNG or WebP"
+                loading={contentVideoCoverUploading}
+                onFile={handleVideoCoverUpload}
+                onClear={() => {
+                  setContentVideoCoverImg(null)
+                  setContentVideoCoverName(null)
+                }}
+              />
+            </div>
 
-            {contentUploadStatus === 'uploading' && (
-              <div className="mt-1">
-                <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>Uploading video...</span>
-                  <span>{contentUploadProgress}%</span>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-gray-700">Video</label>
+              <UploadBox
+                accept="video/mp4,video/webm,video/mov"
+                preview={contentVidPreview}
+                icon={<Video size={20} />}
+                title="Upload Video"
+                hint="MP4, WebM or MOV — max 200 MB"
+                loading={contentUploadStatus === 'uploading' || contentUploadStatus === 'saving'}
+                videoBlockedMessage={getVideoBlockedMessage(videoTranscodeStatus)}
+                onFile={handleContentVideoFile}
+                onClear={() => {
+                  contentUploadSessionRef.current = null
+                  if (contentVidPreviewRef.current?.startsWith('blob:')) {
+                    URL.revokeObjectURL(contentVidPreviewRef.current)
+                  }
+                  contentVidPreviewRef.current = null
+                  setContentVidPreview(null)
+                  setContentAssetId(null)
+                  setContentUploadStatus('idle')
+                  setContentUploadProgress(0)
+                  setVideoTranscodeStatus(null)
+                }}
+              />
+
+              {contentUploadStatus === 'uploading' && (
+                <div className="mt-1">
+                  <div className="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Uploading video...</span>
+                    <span>{contentUploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-lg h-1.5">
+                    <div
+                      className="h-1.5 rounded-lg bg-[#000B60] transition-all"
+                      style={{ width: `${contentUploadProgress}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-lg h-1.5">
-                  <div
-                    className="h-1.5 rounded-lg bg-[#000B60] transition-all"
-                    style={{ width: `${contentUploadProgress}%` }}
-                  />
-                </div>
-              </div>
-            )}
-            {contentUploadStatus === 'saving' && (
-              <p className="text-xs text-gray-500">⚙️ Saving video info...</p>
-            )}
-            {contentUploadStatus === 'done' && (
-              <p className="text-xs text-emerald-500">✅ Video uploaded! Processing in background.</p>
-            )}
-            {contentUploadStatus === 'failed' && (
-              <p className="text-xs text-red-500">❌ Upload failed — please try again.</p>
-            )}
+              )}
+              {contentUploadStatus === 'saving' && (
+                <p className="text-xs text-gray-500">⚙️ Saving video info...</p>
+              )}
+              {contentUploadStatus === 'done' && (
+                <p className="text-xs text-emerald-500">✅ Video uploaded! Processing in background.</p>
+              )}
+              {contentUploadStatus === 'failed' && (
+                <p className="text-xs text-red-500">❌ Upload failed — please try again.</p>
+              )}
+            </div>
           </div>
         )}
 

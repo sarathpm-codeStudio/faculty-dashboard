@@ -291,7 +291,8 @@ class TPStreamsUploadService {
                 await videoService.createVideoUploadProgress(
                     this.courseUniqueId,
                     data.asset_id,
-                    this.type
+                    this.type,
+                    "uploaded"
                 )
 
                 updateUpload(data.asset_id, {
@@ -304,16 +305,42 @@ class TPStreamsUploadService {
                 setTimeout(() => removeUpload(data.asset_id), 3000)
 
             } catch (err) {
+                if (data.asset_id && this.courseUniqueId) {
+                    try {
+                        await videoService.createVideoUploadProgress(
+                            this.courseUniqueId,
+                            data.asset_id,
+                            this.type,
+                            'FAILED'
+                        )
+                    } catch (apiErr) {
+                        console.error('Failed to record upload failure:', apiErr)
+                    }
+                }
+
                 updateUpload(data.asset_id, { status: 'failed' })
                 toast.error('Failed to save video info')
             }
         })
 
-        this.uploader.on('uploadError', (data: any) => {
+        this.uploader.on('uploadError', async (data: any) => {
             console.error('Upload error:', data.error)
             const { updateUpload } = useUploadStore.getState()
             updateUpload(data.asset_id, { status: 'failed' })
             toast.error('Video upload failed')
+
+            if (data.asset_id && this.courseUniqueId) {
+                try {
+                    await videoService.createVideoUploadProgress(
+                        this.courseUniqueId,
+                        data.asset_id,
+                        this.type,
+                        'FAILED'
+                    )
+                } catch (apiErr) {
+                    console.error('Failed to record upload failure:', apiErr)
+                }
+            }
         })
 
         this.isReady = true
