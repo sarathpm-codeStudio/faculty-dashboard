@@ -1,189 +1,3 @@
-
-
-
-// import { videoService } from '@/services/videoService'
-// import { useUploadStore } from '@/store/uploadStore'
-// import { toast } from 'sonner'
-
-// type UploadStatus = 'uploading' | 'saving' | 'done' | 'failed'
-
-// type UploadCallback = {
-//     onProgress?: (percentage: number) => void
-//     onStatus?: (status: UploadStatus) => void
-//     onSuccess?: (assetId: string) => void
-//     onError?: () => void
-// }
-
-// class TPStreamsUploadService {
-//     private uploader: any = null
-//     private isReady: boolean = false
-//     private courseUniqueId: string = ''
-//     private type: string = ''
-
-//     // ─── Load SDK once ──────────────────────────────────
-//     init() {
-//         if ((window as any).TpStreamsUploaderSDK) {
-//             this._initSDK()
-//             return
-//         }
-
-//         const existing = document.querySelector(
-//             'script[src*="tpstreams-uploader"]'
-//         ) as HTMLScriptElement | null
-
-//         if (existing) {
-//             existing.addEventListener('load', () => this._initSDK())
-//             return
-//         }
-
-//         const script = document.createElement('script')
-//         script.src = 'https://static.testpress.in/static/js/tpstreams-uploader.min.js'
-//         script.async = true
-//         script.onload = () => this._initSDK()
-//         document.head.appendChild(script)
-//     }
-
-//     // ─── Initialize SDK ─────────────────────────────────
-//     private _initSDK() {
-//         this.uploader = new (window as any).TpStreamsUploaderSDK(
-//             import.meta.env.VITE_TPSTREAMS_AUTH_TOKEN,
-//             import.meta.env.VITE_TPSTREAMS_ORG_ID,
-//             {
-//                 contentProtectionType: "drm",
-//                 resolutions: ['240p', '360p', '480p', '720p'],
-//                 generateSubtitle: false,
-//             }
-//         )
-
-//         const { addUpload, updateUpload, removeUpload } = useUploadStore.getState()
-
-//         // ─── Progress ────────────────────────────────────
-//         this.uploader.on('uploadProgress', (data: any) => {
-//             updateUpload(data.asset_id, {
-//                 progress: data.progress_percentage,
-//                 status: 'uploading',
-//             })
-//         })
-
-//         // ─── Success ─────────────────────────────────────
-//         this.uploader.on('uploadSuccess', async (data: any) => {
-//             console.log('Upload success, asset_id:', data.asset_id)
-
-//             updateUpload(data.asset_id, { status: 'saving' })
-
-//             try {
-//                 // ✅ Auto calls API even if user navigated away
-//                 await videoService.createVideoUploadProgress(
-//                     this.courseUniqueId,
-//                     data.asset_id,
-//                     this.type
-
-//                 )
-
-//                 updateUpload(data.asset_id, {
-//                     status: 'done',
-//                     progress: 100,
-//                 })
-
-//                 toast.success('Video uploaded successfully!')
-
-//                 // Remove from indicator after 3s
-//                 setTimeout(() => removeUpload(data.asset_id), 3000)
-
-//             } catch (err) {
-//                 updateUpload(data.asset_id, { status: 'failed' })
-//                 toast.error('Failed to save video info')
-//             }
-//         })
-
-//         // ─── Error ───────────────────────────────────────
-//         this.uploader.on('uploadError', (data: any) => {
-//             console.error('Upload error:', data.error)
-//             const { updateUpload } = useUploadStore.getState()
-//             updateUpload(data.asset_id, { status: 'failed' })
-//             toast.error('Video upload failed')
-//         })
-
-//         this.isReady = true
-//     }
-
-//     // ─── Start upload ────────────────────────────────────
-//     upload(
-//         file: File,
-//         uniqueId: string,
-//         type: string,
-//         callbacks: UploadCallback = {}
-//     ) {
-//         if (!this.uploader) {
-//             toast.error('Uploader not ready. Please try again.')
-//             return
-//         }
-
-        
-
-//         const { addUpload, updateUpload } = useUploadStore.getState()
-
-//         // Save courseId for uploadSuccess callback
-//         this.courseUniqueId = uniqueId
-//         this.type = type
-
-//         // Add to global indicator
-//         const tempId = `temp_${Date.now()}`
-//         addUpload(tempId, {
-//             id: tempId,
-//             fileName: file.name,
-//             progress: 0,
-//             status: 'uploading',
-//         })
-
-//         // Update tempId to real asset_id on first progress
-//         this.uploader.on('uploadProgress', (data: any) => {
-//             // Move from tempId to real asset_id
-//             const { uploads, removeUpload } = useUploadStore.getState()
-//             if (uploads[tempId]) {
-//                 removeUpload(tempId)
-//                 addUpload(data.asset_id, {
-//                     id: data.asset_id,
-//                     fileName: file.name,
-//                     progress: data.progress_percentage,
-//                     status: 'uploading',
-//                 })
-//             }
-//             callbacks.onProgress?.(data.progress_percentage)
-//             callbacks.onStatus?.('uploading')
-//         })
-
-//         this.uploader.on('uploadSuccess', (data: any) => {
-//             callbacks.onSuccess?.(data.asset_id)
-//             callbacks.onStatus?.('done')
-//         })
-
-//         this.uploader.on('uploadError', () => {
-//             callbacks.onStatus?.('failed')
-//             callbacks.onError?.()
-//         })
-
-//         // ✅ Correct SDK usage
-//         this.uploader.selectFiles([file])
-//         this.uploader.upload()
-//     }
-
-//     isUploaderReady() {
-//         return this.isReady
-//     }
-// }
-
-// // ✅ Single global instance
-// export const tpstreamsUploadService = new TPStreamsUploadService()
-
-
-
-
-
-
-
-
-
 import { videoService } from '@/services/videoService'
 import { useUploadStore } from '@/store/uploadStore'
 import { toast } from 'sonner'
@@ -197,16 +11,34 @@ type UploadCallback = {
     onError?: () => void
 }
 
+type UploadMeta = {
+    uniqueId: string
+    type: string
+    fileName: string
+    tempId: string
+    callbacks: UploadCallback
+    assetId?: string
+}
+
+type QueuedUpload = {
+    file: File
+    meta: UploadMeta
+}
+
 class TPStreamsUploadService {
     private uploader: any = null
-    private isReady: boolean = false
-    private courseUniqueId: string = ''
-    private type: string = ''
+    private isReady = false
+    private sdkProtectionType: 'disabled' | 'drm' | null = null
+    private eventsBoundUploader: any = null
 
-    // ─── Load SDK once ──────────────────────────────────
+    private uploadQueue: QueuedUpload[] = []
+    private isProcessing = false
+    private activeMeta: UploadMeta | null = null
+    private uploadMetaByAssetId = new Map<string, UploadMeta>()
+
     init() {
         if ((window as any).TpStreamsUploaderSDK) {
-            this._initSDK()
+            this.ensureSDK('module')
             return
         }
 
@@ -215,155 +47,266 @@ class TPStreamsUploadService {
         ) as HTMLScriptElement | null
 
         if (existing) {
-            existing.addEventListener('load', () => this._initSDK())
+            existing.addEventListener('load', () => this.ensureSDK('module'))
             return
         }
 
         const script = document.createElement('script')
         script.src = 'https://static.testpress.in/static/js/tpstreams-uploader.min.js'
         script.async = true
-        script.onload = () => this._initSDK()
+        script.onload = () => this.ensureSDK('module')
         document.head.appendChild(script)
     }
 
-    // ─── Initialize SDK (default DRM) ───────────────────
-    private _initSDK() {
+    private getProtectionType(type: string): 'disabled' | 'drm' {
+        return type === 'intro' ? 'disabled' : 'drm'
+    }
+
+    private createUploader(protection: 'disabled' | 'drm') {
         this.uploader = new (window as any).TpStreamsUploaderSDK(
             import.meta.env.VITE_TPSTREAMS_AUTH_TOKEN,
             import.meta.env.VITE_TPSTREAMS_ORG_ID,
             {
-                contentProtectionType: 'drm',
+                contentProtectionType: protection,
                 resolutions: ['240p', '360p', '480p', '720p'],
                 generateSubtitle: false,
             }
         )
-
+        this.sdkProtectionType = protection
+        this.eventsBoundUploader = null
         this._bindEvents()
         this.isReady = true
     }
 
-    // ─── Reinitialise SDK with type and wait until ready ─
-    private _initSDKWithType(type: string): Promise<void> {
-        return new Promise((resolve) => {
-            // ✅ Log env vars to catch undefined early
-            console.log('TPSTREAMS token:', import.meta.env.VITE_TPSTREAMS_AUTH_TOKEN)
-            console.log('TPSTREAMS orgId:', import.meta.env.VITE_TPSTREAMS_ORG_ID)
+    private async ensureSDK(type: string): Promise<void> {
+        const protection = this.getProtectionType(type)
 
-            this.uploader = new (window as any).TpStreamsUploaderSDK(
-                import.meta.env.VITE_TPSTREAMS_AUTH_TOKEN,
-                import.meta.env.VITE_TPSTREAMS_ORG_ID,
-                {
-                    contentProtectionType: type === 'intro' ? 'disabled' : 'drm', // ✅ fixed
-                    resolutions: ['240p', '360p', '480p', '720p'],
-                    generateSubtitle: false,
+        if (this.uploader && this.sdkProtectionType === protection) {
+            return
+        }
+
+        if (!(window as any).TpStreamsUploaderSDK) {
+            await new Promise<void>((resolve) => {
+                const check = () => {
+                    if ((window as any).TpStreamsUploaderSDK) resolve()
+                    else setTimeout(check, 100)
                 }
-            )
+                check()
+            })
+        }
 
-            this._bindEvents()
+        this.createUploader(protection)
 
-            // ✅ Wait for SDK ready event, fallback to 1000ms
+        await new Promise<void>((resolve) => {
             if (this.uploader?.on) {
                 this.uploader.on('ready', () => resolve())
             }
-
-            // Fallback — resolve after 1s regardless
-            setTimeout(() => resolve(), 1000)
+            setTimeout(resolve, 500)
         })
     }
 
-    // ─── Bind all SDK global store events ───────────────
+    private linkAssetToMeta(assetId: string): UploadMeta | undefined {
+        const existing = this.uploadMetaByAssetId.get(assetId)
+        if (existing) return existing
+
+        if (!this.activeMeta || this.activeMeta.assetId) return undefined
+
+        this.activeMeta.assetId = assetId
+        this.uploadMetaByAssetId.set(assetId, this.activeMeta)
+        return this.activeMeta
+    }
+
+    private removeMeta(assetId: string) {
+        const meta = this.uploadMetaByAssetId.get(assetId)
+        if (meta) {
+            this.uploadMetaByAssetId.delete(assetId)
+        }
+        if (this.activeMeta?.assetId === assetId) {
+            this.activeMeta = null
+        }
+    }
+
+    private finishActiveUpload() {
+        this.activeMeta = null
+        this.isProcessing = false
+        void this.processQueue()
+    }
+
+    private async processQueue() {
+        if (this.isProcessing || this.uploadQueue.length === 0) return
+
+        const job = this.uploadQueue.shift()
+        if (!job) return
+
+        this.isProcessing = true
+        this.activeMeta = job.meta
+
+        try {
+            await this.ensureSDK(job.meta.type)
+
+            if (!this.uploader) {
+                throw new Error('Uploader not ready')
+            }
+
+            job.meta.callbacks.onStatus?.('uploading')
+            this.uploader.selectFiles([job.file])
+            this.uploader.upload()
+        } catch (err) {
+            console.error('Failed to start upload:', err)
+            const { removeUpload } = useUploadStore.getState()
+            removeUpload(job.meta.tempId)
+            job.meta.callbacks.onStatus?.('failed')
+            job.meta.callbacks.onError?.()
+            toast.error(
+                err instanceof Error && err.message.includes('Cannot add more files')
+                    ? 'Please wait for the current upload to finish'
+                    : 'Failed to start video upload'
+            )
+            this.finishActiveUpload()
+        }
+    }
+
     private _bindEvents() {
-        const { addUpload, updateUpload, removeUpload } = useUploadStore.getState()
+        if (!this.uploader || this.eventsBoundUploader === this.uploader) return
+        this.eventsBoundUploader = this.uploader
+
+        const { updateUpload, removeUpload } = useUploadStore.getState()
 
         this.uploader.on('uploadProgress', (data: any) => {
-            updateUpload(data.asset_id, {
-                progress: data.progress_percentage,
-                status: 'uploading',
-            })
+            const assetId = data.asset_id
+            if (!assetId) return
+
+            const meta = this.linkAssetToMeta(assetId)
+            if (!meta) return
+
+            const { addUpload, removeUpload: remove } = useUploadStore.getState()
+            if (useUploadStore.getState().uploads[meta.tempId]) {
+                remove(meta.tempId)
+                addUpload(assetId, {
+                    id: assetId,
+                    fileName: meta.fileName,
+                    progress: data.progress_percentage,
+                    status: 'uploading',
+                })
+            } else {
+                updateUpload(assetId, {
+                    progress: data.progress_percentage,
+                    status: 'uploading',
+                })
+            }
+
+            meta.callbacks.onProgress?.(data.progress_percentage)
+            meta.callbacks.onStatus?.('uploading')
         })
 
         this.uploader.on('uploadSuccess', async (data: any) => {
-            console.log('Upload success, asset_id:', data.asset_id)
+            const assetId = data.asset_id
+            const meta = this.uploadMetaByAssetId.get(assetId) ?? this.linkAssetToMeta(assetId)
 
-            updateUpload(data.asset_id, { status: 'saving' })
+            if (!meta) {
+                console.error('No upload metadata for asset_id:', assetId)
+                this.finishActiveUpload()
+                return
+            }
+
+            updateUpload(assetId, { status: 'saving' })
+            meta.callbacks.onStatus?.('saving')
 
             try {
                 await videoService.createVideoUploadProgress(
-                    this.courseUniqueId,
-                    data.asset_id,
-                    this.type,
-                    "uploaded"
+                    meta.uniqueId,
+                    assetId,
+                    meta.type,
+                    'uploaded'
                 )
 
-                updateUpload(data.asset_id, {
-                    status: 'done',
-                    progress: 100,
-                })
+                updateUpload(assetId, { status: 'done', progress: 100 })
+                meta.callbacks.onSuccess?.(assetId)
+                meta.callbacks.onStatus?.('done')
 
                 toast.success('Video uploaded successfully!')
-
-                setTimeout(() => removeUpload(data.asset_id), 3000)
-
+                setTimeout(() => removeUpload(assetId), 3000)
             } catch (err) {
-                if (data.asset_id && this.courseUniqueId) {
-                    try {
-                        await videoService.createVideoUploadProgress(
-                            this.courseUniqueId,
-                            data.asset_id,
-                            this.type,
-                            'FAILED'
-                        )
-                    } catch (apiErr) {
-                        console.error('Failed to record upload failure:', apiErr)
-                    }
-                }
-
-                updateUpload(data.asset_id, { status: 'failed' })
-                toast.error('Failed to save video info')
-            }
-        })
-
-        this.uploader.on('uploadError', async (data: any) => {
-            console.error('Upload error:', data.error)
-            const { updateUpload } = useUploadStore.getState()
-            updateUpload(data.asset_id, { status: 'failed' })
-            toast.error('Video upload failed')
-
-            if (data.asset_id && this.courseUniqueId) {
                 try {
                     await videoService.createVideoUploadProgress(
-                        this.courseUniqueId,
-                        data.asset_id,
-                        this.type,
+                        meta.uniqueId,
+                        assetId,
+                        meta.type,
                         'FAILED'
                     )
                 } catch (apiErr) {
                     console.error('Failed to record upload failure:', apiErr)
                 }
+
+                updateUpload(assetId, { status: 'failed' })
+                meta.callbacks.onStatus?.('failed')
+                toast.error('Failed to save video info')
+            } finally {
+                this.removeMeta(assetId)
+                this.finishActiveUpload()
             }
         })
 
-        this.isReady = true
+        this.uploader.on('uploadError', async (data: any) => {
+            const assetId = data.asset_id
+            console.error('Upload error:', data?.error)
+
+            const meta = assetId
+                ? (this.uploadMetaByAssetId.get(assetId) ?? this.linkAssetToMeta(assetId))
+                : this.activeMeta
+
+            if (assetId) {
+                updateUpload(assetId, { status: 'failed' })
+            } else if (meta) {
+                useUploadStore.getState().removeUpload(meta.tempId)
+            }
+
+            if (meta && assetId) {
+                try {
+                    await videoService.createVideoUploadProgress(
+                        meta.uniqueId,
+                        assetId,
+                        meta.type,
+                        'FAILED'
+                    )
+                } catch (apiErr) {
+                    console.error('Failed to record upload failure:', apiErr)
+                }
+                this.removeMeta(assetId)
+            }
+
+            meta?.callbacks.onStatus?.('failed')
+            meta?.callbacks.onError?.()
+            toast.error('Video upload failed')
+
+            this.finishActiveUpload()
+        })
     }
 
-    // ─── Start upload ────────────────────────────────────
     async upload(
         file: File,
         uniqueId: string,
         type: string,
         callbacks: UploadCallback = {}
     ) {
-        // Save for uploadSuccess callback
-        this.courseUniqueId = uniqueId
-        this.type = type
+        await this.ensureSDK(type)
 
-        // ✅ Reinitialise SDK and wait until fully ready
-        await this._initSDKWithType(type)
+        if (!this.uploader) {
+            toast.error('Uploader not ready. Please try again.')
+            return
+        }
 
-        const { addUpload, removeUpload } = useUploadStore.getState()
+        const { addUpload } = useUploadStore.getState()
+        const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`
 
-        // Add to global indicator with temp id
-        const tempId = `temp_${Date.now()}`
+        const meta: UploadMeta = {
+            uniqueId,
+            type,
+            fileName: file.name,
+            tempId,
+            callbacks,
+        }
+
         addUpload(tempId, {
             id: tempId,
             fileName: file.name,
@@ -371,35 +314,17 @@ class TPStreamsUploadService {
             status: 'uploading',
         })
 
-        // ─── Per-upload callback events ──────────────────
-        this.uploader.on('uploadProgress', (data: any) => {
-            const { uploads } = useUploadStore.getState()
-            if (uploads[tempId]) {
-                removeUpload(tempId)
-                addUpload(data.asset_id, {
-                    id: data.asset_id,
-                    fileName: file.name,
-                    progress: data.progress_percentage,
-                    status: 'uploading',
-                })
-            }
-            callbacks.onProgress?.(data.progress_percentage)
-            callbacks.onStatus?.('uploading')
-        })
+        const position = this.uploadQueue.length + (this.isProcessing ? 1 : 0)
+        if (position > 0) {
+            // toast.info(
+            //     position === 1
+            //         ? `"${file.name}" queued — waiting for current upload`
+            //         : `"${file.name}" queued — ${position + 1} videos in line`
+            // )
+        }
 
-        this.uploader.on('uploadSuccess', (data: any) => {
-            callbacks.onSuccess?.(data.asset_id)
-            callbacks.onStatus?.('done')
-        })
-
-        this.uploader.on('uploadError', () => {
-            callbacks.onStatus?.('failed')
-            callbacks.onError?.()
-        })
-
-        // ✅ SDK is ready — safe to upload now
-        this.uploader.selectFiles([file])
-        this.uploader.upload()
+        this.uploadQueue.push({ file, meta })
+        void this.processQueue()
     }
 
     isUploaderReady() {
@@ -407,5 +332,4 @@ class TPStreamsUploadService {
     }
 }
 
-// ✅ Single global instance
 export const tpstreamsUploadService = new TPStreamsUploadService()
