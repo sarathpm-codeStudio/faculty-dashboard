@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useUploadStore } from '@/store/uploadStore'
+
+type Position = { x: number; y: number }
+
+const clamp = (value: number, min: number, max: number) =>
+    Math.min(Math.max(value, min), max)
 
 const GlobalUploadIndicator = () => {
     const uploads = useUploadStore((state) => state.uploads)
@@ -7,6 +12,10 @@ const GlobalUploadIndicator = () => {
 
     const [mounted, setMounted] = useState(false)
     const [visible, setVisible] = useState(false)
+    const [position, setPosition] = useState<Position | null>(null)
+    const [dragging, setDragging] = useState(false)
+    const dragOffsetRef = useRef<Position>({ x: 0, y: 0 })
+    const cardRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
         if (active.length > 0) {
@@ -20,12 +29,98 @@ const GlobalUploadIndicator = () => {
         }
     }, [active.length, mounted])
 
+    useEffect(() => {
+        if (!mounted) return
+
+        const id = requestAnimationFrame(() => {
+            if (!cardRef.current) return
+
+            const cardWidth = cardRef.current.offsetWidth
+            const cardHeight = cardRef.current.offsetHeight
+
+            setPosition((prev) => {
+                if (prev) return prev
+                return {
+                    x: Math.max((window.innerWidth - cardWidth) / 2, 8),
+                    y: Math.max(window.innerHeight - cardHeight - 24, 8),
+                }
+            })
+        })
+
+        return () => cancelAnimationFrame(id)
+    }, [mounted])
+
+    useEffect(() => {
+        if (!position) return
+
+        const handleResize = () => {
+            if (!cardRef.current) return
+            const cardWidth = cardRef.current.offsetWidth
+            const cardHeight = cardRef.current.offsetHeight
+
+            setPosition((prev) => {
+                if (!prev) return prev
+                return {
+                    x: clamp(prev.x, 8, Math.max(window.innerWidth - cardWidth - 8, 8)),
+                    y: clamp(prev.y, 8, Math.max(window.innerHeight - cardHeight - 8, 8)),
+                }
+            })
+        }
+
+        window.addEventListener('resize', handleResize)
+        return () => window.removeEventListener('resize', handleResize)
+    }, [position])
+
+    useEffect(() => {
+        if (!dragging) return
+
+        const handlePointerMove = (event: PointerEvent) => {
+            if (!cardRef.current) return
+            const cardWidth = cardRef.current.offsetWidth
+            const cardHeight = cardRef.current.offsetHeight
+
+            const maxX = Math.max(window.innerWidth - cardWidth - 8, 8)
+            const maxY = Math.max(window.innerHeight - cardHeight - 8, 8)
+
+            setPosition({
+                x: clamp(event.clientX - dragOffsetRef.current.x, 8, maxX),
+                y: clamp(event.clientY - dragOffsetRef.current.y, 8, maxY),
+            })
+        }
+
+        const handlePointerUp = () => setDragging(false)
+
+        window.addEventListener('pointermove', handlePointerMove)
+        window.addEventListener('pointerup', handlePointerUp)
+
+        return () => {
+            window.removeEventListener('pointermove', handlePointerMove)
+            window.removeEventListener('pointerup', handlePointerUp)
+        }
+    }, [dragging])
+
+    const onDragStart = (event: React.PointerEvent<HTMLDivElement>) => {
+        if (!position) return
+        dragOffsetRef.current = {
+            x: event.clientX - position.x,
+            y: event.clientY - position.y,
+        }
+        setDragging(true)
+    }
+
     if (!mounted) return null
 
     return (
         <div
-            className={`fixed z-[9999] bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white rounded-2xl w-72 shadow-2xl select-none transition-all duration-300 ease-out
-                ${visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+            ref={cardRef}
+            onPointerDown={onDragStart}
+            className={`fixed z-9999 bg-gray-900 text-white rounded-2xl w-72 shadow-2xl select-none touch-none transition-all duration-300 ease-out
+                ${dragging ? 'cursor-grabbing' : 'cursor-grab'}
+                ${visible ? 'opacity-100' : 'opacity-0'}`}
+            style={{
+                left: position?.x ?? 8,
+                top: position?.y ?? 8,
+            }}
         >
             <div className="px-4 pt-4 pb-2">
                 <p className="text-sm font-semibold">

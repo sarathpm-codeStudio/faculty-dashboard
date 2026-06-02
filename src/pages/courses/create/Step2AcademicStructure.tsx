@@ -934,7 +934,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           placeholder="Brief summary of what this folder contains..."
           value={folderDescription}
           onChange={e => setFolderDescription(e.target.value)}
-          maxLength={500}
+          maxLength={5000}
           showCount
           rows={4}
           className="min-h-[100px]"
