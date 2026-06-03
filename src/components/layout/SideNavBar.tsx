@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
     LayoutDashboard, BookOpen, Package, MessageCircle,
@@ -23,25 +23,20 @@ const navLinks = [
     { to: '/coupon-management', label: 'Coupon Management', icon: RiCoupon2Line },
 ]
 
-const MIN_WIDTH = 72
-const MAX_WIDTH = 280
-const DEFAULT_WIDTH = 280
-const ICON_ONLY_THRESHOLD = 120
+const COLLAPSED_WIDTH = 72
+const EXPANDED_WIDTH = 280
 const WIDTH_TRANSITION = 'width 0.4s cubic-bezier(0.33, 1, 0.68, 1)'
-const LABEL_TRANSITION = 'opacity 0.35s cubic-bezier(0.33, 1, 0.68, 1), max-width 0.4s cubic-bezier(0.33, 1, 0.68, 1), margin 0.35s ease'
+const LABEL_TRANSITION = 'opacity 0.35s cubic-bezier(0.33, 1, 0.68, 1), max-width 0.4s cubic-bezier(0.33, 1, 0.68, 1)'
 
 const SideNavBar = () => {
-    const [width, setWidth] = useState(DEFAULT_WIDTH)
-    const [isDragging, setIsDragging] = useState(false)
+    const [isHovered, setIsHovered] = useState(false)
     const [accountOpen, setAccountOpen] = useState(false)
     const accountRef = useRef<HTMLDivElement>(null)
-    const dragRef = useRef({ startX: 0, startWidth: DEFAULT_WIDTH })
-    const rafRef = useRef<number | null>(null)
-    const pendingWidthRef = useRef(DEFAULT_WIDTH)
     const navigate = useNavigate()
     const { user, logout, isPending } = useAuthStore()
 
-    const collapsed = width < ICON_ONLY_THRESHOLD
+    const expanded = isHovered || accountOpen
+    const collapsed = !expanded
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -52,58 +47,6 @@ const SideNavBar = () => {
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
-
-    const handleResizeStart = useCallback((e: React.MouseEvent) => {
-        e.preventDefault()
-        dragRef.current = { startX: e.clientX, startWidth: width }
-        pendingWidthRef.current = width
-        setIsDragging(true)
-    }, [width])
-
-    useEffect(() => {
-        if (!isDragging) return
-
-        const handleMouseMove = (e: MouseEvent) => {
-            const delta = e.clientX - dragRef.current.startX
-            pendingWidthRef.current = Math.min(
-                MAX_WIDTH,
-                Math.max(MIN_WIDTH, dragRef.current.startWidth + delta),
-            )
-            if (rafRef.current !== null) return
-            rafRef.current = requestAnimationFrame(() => {
-                setWidth(pendingWidthRef.current)
-                rafRef.current = null
-            })
-        }
-
-        const handleMouseUp = () => {
-            if (rafRef.current !== null) {
-                cancelAnimationFrame(rafRef.current)
-                rafRef.current = null
-            }
-            const snapWidth = pendingWidthRef.current < ICON_ONLY_THRESHOLD
-                ? MIN_WIDTH
-                : pendingWidthRef.current
-            setIsDragging(false)
-            requestAnimationFrame(() => setWidth(snapWidth))
-        }
-
-        document.addEventListener('mousemove', handleMouseMove)
-        document.addEventListener('mouseup', handleMouseUp)
-        document.body.style.cursor = 'col-resize'
-        document.body.style.userSelect = 'none'
-
-        return () => {
-            if (rafRef.current !== null) {
-                cancelAnimationFrame(rafRef.current)
-                rafRef.current = null
-            }
-            document.removeEventListener('mousemove', handleMouseMove)
-            document.removeEventListener('mouseup', handleMouseUp)
-            document.body.style.cursor = ''
-            document.body.style.userSelect = ''
-        }
-    }, [isDragging])
 
     const handleLogout = async () => {
         await authService.signOut()
@@ -122,14 +65,18 @@ const SideNavBar = () => {
         `overflow-hidden whitespace-nowrap shrink-0 ${extra} ${collapsed ? 'max-w-0 opacity-0 pointer-events-none' : 'max-w-[200px] opacity-100'}`
 
     return (
-        <aside
-            style={{
-                width,
-                transition: isDragging ? 'none' : WIDTH_TRANSITION,
-                willChange: isDragging ? 'width' : 'auto',
-            }}
-            className="relative h-screen bg-input-bg border-r border-gray-100 flex flex-col py-6 shrink-0 overflow-hidden"
-        >
+        <div className="shrink-0 h-screen" style={{ width: COLLAPSED_WIDTH }}>
+            <aside
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                style={{
+                    width: expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH,
+                    transition: WIDTH_TRANSITION,
+                }}
+                className={`fixed left-0 top-0 h-screen bg-input-bg border-r border-gray-100 flex flex-col py-6 overflow-hidden z-50 ${
+                    expanded ? 'shadow-[4px_0_24px_rgba(0,11,96,0.1)]' : ''
+                }`}
+            >
             {/* Logo */}
             <div
                 className={`flex items-center border-b border-gray-100 pb-6 transition-[padding,gap] duration-300 ease-out ${collapsed ? 'justify-center px-2' : 'gap-3 px-6'}`}
@@ -257,21 +204,8 @@ const SideNavBar = () => {
                     </button>
                 </div>
             </div>
-
-            {/* Drag handle on right border */}
-            <div
-                role="separator"
-                aria-orientation="vertical"
-                aria-valuenow={width}
-                aria-valuemin={MIN_WIDTH}
-                aria-valuemax={MAX_WIDTH}
-                aria-label="Resize sidebar"
-                onMouseDown={handleResizeStart}
-                className={`absolute top-0 -right-1 h-full w-3 z-20 touch-none transition-colors duration-200 ${
-                    isDragging ? 'bg-[#000B60]/25' : 'hover:bg-[#000B60]/10'
-                } cursor-col-resize`}
-            />
-        </aside>
+            </aside>
+        </div>
     )
 }
 
