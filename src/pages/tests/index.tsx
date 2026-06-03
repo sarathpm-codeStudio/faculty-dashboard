@@ -107,7 +107,7 @@ const TestsPage = () => {
     {
       key: 'attempts',
       header: 'Attempts',
-      render: row => <span className="text-[#191c1e] text-sm font-medium">100</span>,
+      render: row => <span className="text-[#191c1e] text-sm font-medium">{row?.attempt_count}</span>,
     },
     {
       key: 'status',

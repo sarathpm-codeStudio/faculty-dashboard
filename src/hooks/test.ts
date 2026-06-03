@@ -29,6 +29,14 @@ export const useGetTestsPageAnalytics = () => {
     })
 }
 
+export const useGetAllAttemptsByTestId = (test_id: any, payload: any, isEnabled: boolean) => {
+    return useQuery({
+        queryKey: ['testattempts', test_id, payload],
+        queryFn: () => testService.getAllAttemptsByTestId(test_id, payload),
+        enabled: isEnabled,
+    })
+}
+
 export const useGetTestById = (id: any, isEnabled: boolean) => {
     return useQuery({
         queryKey: ['test', id],
@@ -116,6 +124,8 @@ export const usePublishTest = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['tests'] })
             queryClient.invalidateQueries({ queryKey: ['content'] })
+            queryClient.invalidateQueries({ queryKey: ['tests-page-analytics'] })
+
 
         },
     })

@@ -62,6 +62,17 @@ export const testService = {
         }
     },
 
+    getAllAttemptsByTestId: async (test_id: string, payload: any) => {
+        try {
+            const { data } = await apiClient.get(`/test/${test_id}/attempts`, { params: payload })
+            return data
+        } catch (error: any) {
+            const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+            console.log("error", error)
+            throw new Error(message)
+        }
+    },
+
     updateTest: async (id: string, payload: any) => {
         try {
             const { data } = await apiClient.patch(`/test/${id}`, payload)

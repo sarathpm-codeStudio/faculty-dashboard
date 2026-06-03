@@ -7,6 +7,7 @@ import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import { useGetTestById } from '@/hooks/test'
 import { useGetTestAnalytics } from '@/hooks/test'
+import { useGetAllAttemptsByTestId } from '@/hooks/test'
 
 type Candidate = {
   id: number
@@ -38,69 +39,7 @@ const resultStyle: Record<string, { bg: string; text: string }> = {
   FAIL: { bg: '#FEE2E2', text: '#EF4444' },
 }
 
-const COLUMNS: TableColumn<Candidate>[] = [
-  {
-    key: 'student',
-    header: 'Students',
-    render: row => (
-      <div className="flex items-center gap-3">
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-          style={{ backgroundColor: row.avatarColor }}
-        >
-          {row.initials}
-        </div>
-        <div>
-          <p className="font-semibold text-[#191c1e] text-sm">{row.name}</p>
-          <p className="text-[11px] text-[#767683]">ID: {row.studentId}</p>
-        </div>
-      </div>
-    ),
-  },
-  {
-    key: 'timing',
-    header: 'Timing (Start/End)',
-    render: row => (
-      <div>
-        <p className="text-sm text-[#191c1e] font-medium">{row.startTime} – {row.endTime}</p>
-        <p className="text-[11px] text-[#767683]">{row.duration}</p>
-      </div>
-    ),
-  },
-  {
-    key: 'score',
-    header: 'Score Detail',
-    render: row => (
-      <span className="text-sm font-semibold text-[#191c1e]">{row.score} / {row.total}</span>
-    ),
-  },
-  {
-    key: 'result',
-    header: 'Result',
-    render: row => {
-      const style = resultStyle[row.result]
-      return (
-        <span
-          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
-          style={{ backgroundColor: style.bg, color: style.text }}
-        >
-          {row.result} • {row.resultPct}%
-        </span>
-      )
-    },
-  },
-  {
-    key: 'actions',
-    header: 'Actions',
-    headerClassName: 'text-right',
-    cellClassName: 'text-right',
-    render: () => (
-      <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-        <MoreVertical size={16} className="text-[#767683]" />
-      </button>
-    ),
-  },
-]
+
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 18 },
@@ -113,10 +52,83 @@ const TestDetailPage = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [rangeLabel, setRangeLabel] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
 
+
+  
 // queries
   const { data: test, isLoading: testLoading } = useGetTestById(id, !!id)
   const { data: testAnalytics, isLoading: testAnalyticsLoading } = useGetTestAnalytics(id, !!id)
+  const { data: attempts, isLoading: attemptsLoading } = useGetAllAttemptsByTestId(id, { page, limit: pageSize }, !!id)
+
+
+  const COLUMNS: TableColumn<Candidate>[] = [
+    {
+      key: 'student',
+      header: 'Students',
+      render: row => (
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+            style={{ backgroundColor: row.avatarColor }}
+          >
+            {row.initials}
+          </div>
+          <div>
+            <p className="font-semibold text-[#191c1e] text-sm">{row.name}</p>
+            <p className="text-[11px] text-[#767683]">ID: {row.studentId}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'timing',
+      header: 'Timing (Start/End)',
+      render: row => (
+        <div>
+          <p className="text-sm text-[#191c1e] font-medium">{row.startTime} – {row.endTime}</p>
+          <p className="text-[11px] text-[#767683]">{row.duration}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'score',
+      header: 'Score Detail',
+      render: row => (
+        <span className="text-sm font-semibold text-[#191c1e]">{row.score} / {row.total}</span>
+      ),
+    },
+    {
+      key: 'result',
+      header: 'Result',
+      render: row => {
+        const style = resultStyle[row.result]
+        return (
+          <span
+            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
+            style={{ backgroundColor: style.bg, color: style.text }}
+          >
+            {row.result} • {row.resultPct}%
+          </span>
+        )
+      },
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      headerClassName: 'text-right',
+      cellClassName: 'text-right',
+      render: () => (
+        <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+          <MoreVertical size={16} className="text-[#767683]" />
+        </button>
+      ),
+    },
+  ]
+
+
+
 
   useEffect(() => {
     const t = setTimeout(() => setLoading(false), 800)
@@ -161,7 +173,7 @@ const TestDetailPage = () => {
           valueColor="#000B60"
         >
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-[#767683]">{completionRate}%</span>
+            <span className="text-xs font-bold text-[#767683]">{testAnalytics?.data?.completionRate}%</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-gray-200">
             <div
@@ -181,13 +193,13 @@ const TestDetailPage = () => {
         <StatCard
           icon={null}
           label="Top Student"
-          value={`${topScore}/100`}
+          value={`${testAnalytics?.data?.topStudent?.score}/${testAnalytics?.data?.topStudent?.totalQuestions}`}
           valueColor="#000B60"
         >
           {topScorer && (
             <div className="flex items-center gap-1.5">
               <User size={13} className="text-[#000B60]" />
-              <Paragraph className="!text-xs text-[#000B60]">{topScorer.name}</Paragraph>
+              <Paragraph className="!text-xs text-[#000B60]">{testAnalytics?.data?.topStudent?.name}</Paragraph>
             </div>
           )}
         </StatCard>
@@ -212,9 +224,18 @@ const TestDetailPage = () => {
         <div className="flex-1 min-h-0">
           <DataTable
             columns={COLUMNS}
-            data={MOCK_CANDIDATES}
-            defaultPageSize={4}
+            data={attempts?.data?.data ?? []}
+            total={attempts?.data?.total ?? 0}
+            page={page}
+            loading={attemptsLoading}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size)
+              setPage(1)
+            }}
             onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
+            
           />
         </div>
 
