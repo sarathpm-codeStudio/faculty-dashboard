@@ -25,9 +25,19 @@ type DataTableProps<T> = {
   loading?: boolean
   onRangeChange?: (start: number, end: number, total: number) => void
   onRowClick?: (row: T) => void
+  /** Keeps the scroll area at a fixed height for this many rows (min + max), even with fewer rows. */
+  fixedBodyRows?: number
 }
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50]
+/** Matches thead py-4 + header text (~49px). */
+const TABLE_HEAD_HEIGHT_PX = 49
+/** Matches tbody py-4 + typical cell content (~62px). */
+const TABLE_ROW_HEIGHT_PX = 62
+
+function bodyScrollHeight(rows: number) {
+  return `${TABLE_HEAD_HEIGHT_PX + rows * TABLE_ROW_HEIGHT_PX}px`
+}
 
 function DataTable<T>({
   columns,
@@ -42,14 +52,24 @@ function DataTable<T>({
   loading = false,
   onRangeChange,
   onRowClick,
+  fixedBodyRows,
 }: DataTableProps<T>) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
-  const start = (page - 1) * pageSize + 1
-  const end = Math.min(page * pageSize, total)
+  const bodyScrollStyle = fixedBodyRows
+    ? { minHeight: bodyScrollHeight(fixedBodyRows), maxHeight: bodyScrollHeight(fixedBodyRows) }
+    : undefined
+  const rowCount = data?.length ?? 0
+  const safeTotal =
+    typeof total === 'number' && !Number.isNaN(total) ? total : rowCount
+  const totalPages = Math.max(1, Math.ceil(safeTotal / pageSize))
+  const start = safeTotal === 0 ? 0 : (page - 1) * pageSize + 1
+  const end =
+    safeTotal === 0
+      ? 0
+      : Math.min(page * pageSize, safeTotal, start + rowCount - 1)
 
   useEffect(() => {
-    onRangeChange?.(start, end, total)
-  }, [start, end, total])
+    onRangeChange?.(start, end, safeTotal)
+  }, [start, end, safeTotal])
 
   const getPageNumbers = (): (number | '...')[] => {
     if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -58,9 +78,17 @@ function DataTable<T>({
     return [1, '...', page - 1, page, page + 1, '...', totalPages]
   }
 
+  const emptyRowCount =
+    fixedBodyRows && !loading && rowCount > 0
+      ? Math.max(0, fixedBodyRows - rowCount)
+      : 0
+
   return (
     <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden ${className}`}>
-      <div className="flex-1 min-h-0 overflow-auto scrollbar-hide">
+      <div
+        className={`min-h-0 overflow-auto scrollbar-hide ${fixedBodyRows ? '' : 'flex-1'}`}
+        style={bodyScrollStyle}
+      >
         <table className="w-full">
           <thead className="sticky top-0 z-10 bg-[#F2F4F6]">
             <tr className="border-b border-gray-100">
@@ -92,19 +120,30 @@ function DataTable<T>({
                 </td>
               </tr>
             ) : (
-              data?.map((row, i) => (
-                <tr
-                  key={i}
-                  onClick={() => onRowClick?.(row)}
-                  className={`hover:bg-gray-50/60 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
-                >
-                  {columns.map(col => (
-                    <td key={col.key} className={`px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
-                      {col.render(row)}
-                    </td>
-                  ))}
-                </tr>
-              ))
+              <>
+                {data?.map((row, i) => (
+                  <tr
+                    key={i}
+                    onClick={() => onRowClick?.(row)}
+                    className={`hover:bg-gray-50/60 transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  >
+                    {columns.map(col => (
+                      <td key={col.key} className={`px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
+                        {col.render(row)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                {Array.from({ length: emptyRowCount }).map((_, i) => (
+                  <tr key={`empty-${i}`} aria-hidden>
+                    {columns.map(col => (
+                      <td key={col.key} className={`px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
+                        {'\u00A0'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </>
             )}
           </tbody>
         </table>

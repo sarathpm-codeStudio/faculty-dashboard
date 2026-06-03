@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Mail, Phone, Calendar, User, Clock, MoreVertical } from 'lucide-react'
 import { MdOutlineMenuBook } from 'react-icons/md'
@@ -7,101 +7,20 @@ import { BsPencilFill } from 'react-icons/bs'
 import { HiMiniCurrencyDollar } from 'react-icons/hi2'
 import { Button, Heading, Spinner, DataTable, Subheading } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
-import { StatCard } from '@/components/features'
+import { StatCard, ProgressBar } from '@/components/features'
 import man from '@/assets/images/man.jpg'
+import { useGetStudentAnalytics, useGetStudentCourses } from '@/hooks/student'
 
 type EnrolledCourse = {
     id: number
-    name: string
-    subtitle: string
+    title: string
     progress: number
-    progressLabel: string
-    avgScore: string
+    test_score: number
+    completed:boolean
     status: 'Completed' | 'Active'
 }
 
-const ENROLLED_COURSES: EnrolledCourse[] = [
-    {
-        id: 1,
-        name: 'Advanced Microeconomics',
-        subtitle: 'ECON-401 • Prof. Sinclair',
-        progress: 100,
-        progressLabel: 'Completed',
-        avgScore: '92%',
-        status: 'Completed',
-    },
-    {
-        id: 2,
-        name: 'Data Science 101',
-        subtitle: 'DS-101 • Prof. Zhang',
-        progress: 90,
-        progressLabel: '90% Complete',
-        avgScore: '50%',
-        status: 'Active',
-    },
-    {
-        id: 3,
-        name: 'Statistical Modelling',
-        subtitle: 'MATH-315 • Prof. Gauthier',
-        progress: 40,
-        progressLabel: '40% Complete',
-        avgScore: '—',
-        status: 'Active',
-    },
-]
 
-const COURSE_COLUMNS: TableColumn<EnrolledCourse>[] = [
-    {
-        key: 'details',
-        header: 'Course Details',
-        render: row => (
-            <div>
-                <p className="font-bold text-[#191c1e] text-sm">{row.name}</p>
-                <p className="text-xs text-[#767683] mt-0.5">{row.subtitle}</p>
-            </div>
-        ),
-    },
-    {
-        key: 'progress',
-        header: 'Current Progress',
-        render: row => (
-            <div className="min-w-[180px]">
-                <div className="h-1.5 w-full rounded-full bg-gray-200 mb-1.5">
-                    <div
-                        className="h-full rounded-full bg-[#1a237e]"
-                        style={{ width: `${row.progress}%` }}
-                    />
-                </div>
-                <p className="text-xs text-[#767683]">{row.progressLabel}</p>
-            </div>
-        ),
-    },
-    {
-        key: 'avgScore',
-        header: 'Avg Test Score',
-        render: row => <span className="text-sm text-[#767683] font-medium">{row.avgScore}</span>,
-    },
-    {
-        key: 'status',
-        header: 'Status',
-        render: row => (
-            <span className={`text-xs font-bold ${row.status === 'Completed' ? 'text-[#00875A]' : 'text-[#B49C00]'}`}>
-                {row.status}
-            </span>
-        ),
-    },
-    {
-        key: 'actions',
-        header: 'Actions',
-        render: () => (
-            <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-                <MoreVertical size={15} className="text-[#767683]" />
-            </button>
-        ),
-        headerClassName: 'text-right',
-        cellClassName: 'text-right',
-    },
-]
 
 const fadeUp = (delay = 0) => ({
     initial: { opacity: 0, y: 18 },
@@ -111,7 +30,77 @@ const fadeUp = (delay = 0) => ({
 
 const StudentDetailPage = () => {
     const navigate = useNavigate()
+    const { id } = useParams()
     const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(5)
+  const [rangeLabel, setRangeLabel] = useState('')
+
+
+    
+    
+    const COURSE_COLUMNS: TableColumn<EnrolledCourse>[] = [
+        {
+            key: 'details',
+            header: 'Course Details',
+            render: row => (
+                <div>
+                    <p className="font-bold text-[#191c1e] text-sm">{row.title}</p>
+                    {/* <p className="text-xs text-[#767683] mt-0.5">{row.subtitle}</p> */}
+                </div>
+            ),
+        },
+        {
+            key: 'progress',
+            header: 'Current Progress',
+            render: row => (
+                <div className="min-w-[180px] flex items-center justify-center gap-2">
+                                        <p className="text-xs text-[#767683]">{row.progress}%</p>
+
+                    <div className="h-1.5 w-full rounded-full bg-gray-200 mb-1.5">
+                        <div
+                            className="h-full rounded-full bg-[#1a237e]"
+                            style={{ width: `${row.progress}%` }}
+                        />
+                    </div>
+
+                </div>
+            ),
+        },
+        {
+            key: 'avgScore',
+            header: 'Avg Test Score',
+            render: row => <span className="text-sm text-[#767683] font-medium">{row.test_score}%</span>,
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            render: row => (
+                <span className={`text-xs font-bold ${row.status === 'Completed' ? 'text-[#00875A]' : 'text-[#B49C00]'}`}>
+                    {row.status.toUpperCase()}
+                </span>
+            ),
+        },
+        // {
+        //     key: 'actions',
+        //     header: 'Actions',
+        //     render: () => (
+        //         <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+        //             <MoreVertical size={15} className="text-[#767683]" />
+        //         </button>
+        //     ),
+        //     headerClassName: 'text-right',
+        //     cellClassName: 'text-right',
+        // },
+    ]
+
+    // query
+
+    const { data: studentCourses, isLoading: studentCoursesLoading } = useGetStudentCourses(id,{
+        page,
+        limit: pageSize,
+      } ,!!id)
+    const { data: studentAnalytics, isLoading: studentAnalyticsLoading } = useGetStudentAnalytics(id, !!id)
 
     useEffect(() => {
         const t = setTimeout(() => setLoading(false), 800)
@@ -120,19 +109,19 @@ const StudentDetailPage = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
+            <div className="flex items-center justify-center h-full bg-gray-50">
                 <Spinner label="Loading student..." />
             </div>
         )
     }
 
     return (
-        <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="flex flex-col h-full overflow-hidden bg-gray-50">
 
             {/* Back */}
             <motion.button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-5 transition-colors"
+                className="flex shrink-0 items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-5 px-2 transition-colors"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.28 }}
@@ -143,19 +132,19 @@ const StudentDetailPage = () => {
             </motion.button>
 
             {/* Profile card */}
-            <motion.div className=" p-6 mb-5" {...fadeUp(0.05)}>
+            <motion.div className="shrink-0 px-2 pb-5" {...fadeUp(0.05)}>
                 <div className="flex items-start justify-between gap-6">
 
                     {/* Avatar + info */}
                     <div className="flex items-start gap-5">
                         <div className="relative shrink-0">
-                            <img src={man} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
+                            <img src={studentAnalytics?.data?.student?.avatar_url} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
                             {/* <span className="absolute -bottom-2.5 left-2/2 -translate-x-1/2 bg-[#00A6BF] text-white text-[9px] font-bold px-3.5 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
                                 Active
                             </span> */}
                         </div>
                         <div className="mt-1">
-                            <Heading className="text-[#000B60] mb-3">Elena Rodriguez</Heading>
+                            <Heading className="text-[#000B60] mb-3">{studentAnalytics?.data?.student?.first_name} {studentAnalytics?.data?.student?.last_name}</Heading>
                             <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
                                 <span className="flex items-center gap-1.5 text-xs text-black font-medium">
                                     <Clock className='text-[#00A6BF]' size={12} /> Recent Active: Today 11:40 pm
@@ -180,18 +169,18 @@ const StudentDetailPage = () => {
             </motion.div>
 
             {/* Stat cards */}
-            <motion.div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6" {...fadeUp(0.1)}>
+            <motion.div className="grid shrink-0 grid-cols-2 lg:grid-cols-3 gap-4 mb-5 px-2" {...fadeUp(0.1)}>
                 <StatCard
 
                     icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
 
                     label="Course Enrolled"
-                    value="03"
+                    value={studentAnalytics?.data?.totalCourseCount ?? 0}
                 />
                 <StatCard
                     icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><BsPencilFill className="text-[#00875A]" size={18} /></div>}
                     label="Test Score"
-                    value="94.8%"
+                    value={`${studentAnalytics?.data?.testScoreRate ?? 0}%`}
                 // valueColor="#00875A"
                 />
                 <StatCard
@@ -199,16 +188,33 @@ const StudentDetailPage = () => {
                     icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
 
                     label="Total Spend"
-                    value="12500"
+                    value={studentAnalytics?.data?.totalAmountSpent ?? 0}
                     prefix="₹"
                 // valueColor="#00875A"
                 />
             </motion.div>
 
-            {/* Enrolled Courses */}
-            <motion.div {...fadeUp(0.15)}>
-                <Subheading className='text-[#000B60] font-bold' >Enrolled Courses</Subheading>
-                <DataTable columns={COURSE_COLUMNS} data={ENROLLED_COURSES} defaultPageSize={10} />
+            {/* Enrolled Courses — flex-1 + min-h-0: scroll only inside table */}
+            <motion.div className="flex min-h-0 flex-1 flex-col px-2" {...fadeUp(0.15)}>
+                <Subheading className="mb-3 shrink-0 text-[#000B60] font-bold">Enrolled Courses</Subheading>
+                <div className="min-h-0 flex-1">
+                <DataTable
+                    className="h-full"
+                    columns={COURSE_COLUMNS}
+                    data={studentCourses?.data?.data ?? []}
+                    total={studentCourses?.data?.total ?? 0}
+                    page={page}
+                    loading={studentCoursesLoading}
+                    pageSize={pageSize}
+                    onPageChange={setPage}
+                    onPageSizeChange={(size) => {
+                        setPageSize(size)
+                        setPage(1)
+                    }}
+                    onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
+                    fixedBodyRows={5}
+                />
+                </div>
             </motion.div>
 
         </div>

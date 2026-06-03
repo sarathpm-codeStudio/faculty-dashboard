@@ -11,3 +11,20 @@ export const useGetStudents = (payload: any, enabled: boolean = true) => {
         enabled,
     })
 }
+
+export const useGetStudentCourses = (id: any, payload: any, enabled: boolean = true) => {
+    return useQuery({
+        queryKey: ['student-courses', id, payload],
+        queryFn: () => studentServices.getStudentCourses(id, payload),
+        enabled,
+    })
+}
+
+export const useGetStudentAnalytics = (id: any, enabled: boolean = true) => {
+    return useQuery({
+        queryKey: ['student-analytics', id],
+        queryFn: () => studentServices.getStudentAnalytics(id),
+        enabled,
+    })
+}
+

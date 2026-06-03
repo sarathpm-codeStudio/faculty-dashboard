@@ -36,57 +36,7 @@ type Student = {
 //   { id: 12, avatar: man, name: 'Hana Kobayashi', course: 'Data Structures', enrollmentDate: 'Sep 08, 2024', email: 'h.kobayashi@academy.edu', status: 'Active' },
 // ]
 
-const COLUMNS: TableColumn<Student>[] = [
-  {
-    key: 'name',
-    header: 'Student Name',
-    render: row => (
-      <div className="flex items-center gap-3">
-        {row.avatar_url ? (
-          <img src={row.avatar_url} alt="student avatar" className="w-12 h-12 rounded-xl object-cover shrink-0" />
-        ) : (
-          <User size={36} className="text-gray-300" />
-        )}
-        <span className="font-semibold text-[#191c1e]">{row?.first_name} {row?.last_name}</span>
-      </div>
-    ),
-  },
-  {
-    key: 'Total Courses',
-    header: 'Total Courses',
-    render: row => <span className="text-[#191c1e]">{row.courses?.length}</span>,
-  },
-  {
-    key: 'email',
-    header: 'Email Address',
-    render: row => <span className="text-[#767683]">{row.email}</span>,
-  },
-  {
-    key: 'status',
-    header: 'Status',
-    render: row => (
-      <span
-        className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-bold ${row.status === 'Active'
-          ? ' text-[#00875A]'
-          : ' text-[#BA1A1A]'
-          }`}
-      >
-        {row.status}
-      </span>
-    ),
-  },
-  {
-    key: 'actions',
-    header: 'Actions',
-    render: () => (
-      <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-        <MoreHorizontal size={16} className="text-[#767683]" />
-      </button>
-    ),
-    headerClassName: 'text-right',
-    cellClassName: 'text-right',
-  },
-]
+
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 18 },
@@ -100,9 +50,55 @@ const StudentsPage = () => {
   const [department, setDepartment] = useState<{ value: string, label: string }[]>([]);
   const [filterDate, setFilterDate] = useState('')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(5)
+  const [pageSize, setPageSize] = useState(10)
   const [rangeLabel, setRangeLabel] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
+
+
+  const COLUMNS: TableColumn<Student>[] = [
+    {
+      key: 'name',
+      header: 'Student Name',
+      render: row => (
+        <div className="flex items-center gap-3">
+          {row.avatar_url ? (
+            <img src={row.avatar_url} alt="student avatar" className="w-12 h-12 rounded-xl object-cover shrink-0" />
+          ) : (
+            <User size={36} className="text-gray-300" />
+          )}
+          <span className="font-semibold text-[#191c1e] cursor-pointer" onClick={() => navigate(`/students/${row.id}`)} >{row?.first_name} {row?.last_name}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'Total Courses',
+      header: 'Total Courses',
+      render: row => <span className="text-[#191c1e]">{row.courses?.length}</span>,
+    },
+    {
+      key: 'Joined Date',
+      header: 'Joined Date',
+      render: row => <span className="text-[#767683]">2 Jan 2026</span>,
+    },
+    {
+      key: 'recentActive',
+      header: 'Recent Active',
+      render: row => (
+        <span className="text-[#767683]">Today 11:40 pm</span>
+      ),
+    },
+    // {
+    //   key: 'actions',
+    //   header: 'Actions',
+    //   render: () => (
+    //     <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+    //       <MoreHorizontal size={16} className="text-[#767683]" />
+    //     </button>
+    //   ),
+    //   headerClassName: 'text-right',
+    //   cellClassName: 'text-right',
+    // },
+  ]
 
 
 
@@ -144,7 +140,7 @@ const StudentsPage = () => {
       <motion.div className="mb-6 px-2 pt-2" {...fadeUp(0.04)}>
         <Heading className="text-[#000B60]">Enrolled Students</Heading>
         <Paragraph className="text-black font-bold mt-0.5">
-          {students?.data?.pagination?.total} active learners.
+          {students?.data?.pagination?.total} Total Students
         </Paragraph>
       </motion.div>
 

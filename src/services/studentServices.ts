@@ -16,9 +16,9 @@ export const studentServices = {
         }
     },
 
-    getStudentById: async (id: string) => {
+    getStudentCourses: async (id: string, payload: any) => {
         try {
-            const { data: response } = await apiClient.get(`/students/${id}`);
+            const { data: response } = await apiClient.get(`/students/${id}/courses`, { params: payload });
             return response;
         } catch (error: any) {
             const message = error?.response?.data?.message || error?.message || 'Something went wrong'
@@ -26,4 +26,14 @@ export const studentServices = {
         }
     },
 
+    getStudentAnalytics: async (id: string) => {
+        try {
+            const { data: response } = await apiClient.get(`/students/${id}/analytics`);
+            return response;
+        } catch (error: any) {
+            const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+            throw new Error(message)
+
+        }
+    },
 }
