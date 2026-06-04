@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, MoreVertical, CheckCircle2, FileText, BarChart2, SlidersHorizontal, Download } from 'lucide-react'
-import { Heading, Paragraph, Spinner, DataTable, Input } from '@/components/ui'
+import { Heading, Paragraph, DataTable, Input, SkeletonStatCard } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import Button from '@/components/ui/Button'
@@ -218,6 +218,14 @@ const TestsPage = () => {
 
       {/* Stat Cards */}
       <motion.div className="grid grid-cols-3 gap-4" {...fadeUp(0.08)}>
+        {testsPageAnalyticsLoading ? (
+          <>
+            <SkeletonStatCard showIcon />
+            <SkeletonStatCard showIcon />
+            <SkeletonStatCard showIcon />
+          </>
+        ) : (
+          <>
         <StatCard
           icon={<CheckCircle2 size={28} className="text-[#000B60]" />}
           value={String(testsPageAnalytics?.data?.activeTests ?? 0)}
@@ -233,6 +241,8 @@ const TestsPage = () => {
           value={String(testsPageAnalytics?.data?.totalCompletedAttempts ?? 0)}
           label="Total Completed Attempts"
         />
+          </>
+        )}
       </motion.div>
 
       {/* Assessment Registry */}

@@ -9,7 +9,7 @@ import { profileService, type AcademicProfile } from '@/services/profileService'
 import { onBoardingService } from '@/services/onBoardingService'
 import { formatDate, graduationDateToInput } from '@/utils/helper/formatDate'
 import { useAuthStore } from '@/store/authStore'
-import { Spinner } from '@/components/ui'
+import { Skeleton } from '@/components/ui'
 
 const isoToInputDate = (iso?: string): string => {
     if (!iso) return ''
@@ -222,8 +222,12 @@ const EditProfilePage = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-[#F8F9FB]">
-                <Spinner label="Loading profile..." />
+            <div className="min-h-screen p-8 space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-12 w-full max-w-md" />
+                <Skeleton className="h-12 w-full max-w-md" />
+                <Skeleton className="h-32 w-full max-w-lg" />
+                <Skeleton className="h-28 w-28 rounded-full" />
             </div>
         )
     }

@@ -5,7 +5,7 @@ import {
     ArrowLeft, Share2, Trash2, Pencil, Clock,
     Layers, BookOpen, Wallet, Users, MousePointer2, Globe, TrendingUp,
 } from 'lucide-react'
-import { Button, Heading, Paragraph, Spinner, Subheading, StarRating, ConfirmDeleteModal } from '@/components/ui'
+import { Button, Heading, Paragraph, Skeleton, Subheading, StarRating, ConfirmDeleteModal } from '@/components/ui'
 import { ReviewCard, VideoPlayer } from '@/components/features'
 import man from '@/assets/images/man.jpg'
 import coverImge from "@/assets/images/cou1.png"
@@ -79,8 +79,35 @@ const CourseDetailPage = () => {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <Spinner label="Loading course..." />
+            <div className="p-8 bg-gray-50 min-h-screen">
+                <Skeleton className="h-4 w-32 mb-4" />
+                <div className="flex items-start justify-between gap-6 mb-6">
+                    <div className="space-y-2 flex-1">
+                        <Skeleton className="h-8 w-96" />
+                        <Skeleton className="h-4 w-80" />
+                    </div>
+                    <div className="flex gap-2">
+                        <Skeleton className="h-10 w-24" />
+                        <Skeleton className="h-10 w-24" />
+                        <Skeleton className="h-10 w-28" />
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-5">
+                    <div className="space-y-5">
+                        <Skeleton className="aspect-video w-full rounded-2xl" />
+                        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
+                            <Skeleton className="h-5 w-40" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <Skeleton key={i} className="h-20 w-full rounded-2xl" />
+                        ))}
+                    </div>
+                </div>
             </div>
         )
     }

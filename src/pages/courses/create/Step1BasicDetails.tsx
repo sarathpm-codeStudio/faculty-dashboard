@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, ChevronDown, ArrowRight, Image, Video, Upload, Loader2 } from 'lucide-react'
-import { Button, Input, Textarea, Select, ImageCropperModal } from '@/components/ui'
+import { Button, Input, Textarea, Select, ImageCropperModal, Skeleton } from '@/components/ui'
 import type { CourseFormData } from './index'
 import { useFormik } from 'formik'
 import { courseBasicDetailsSchema } from '@/utils/validator/course.validator'
@@ -188,8 +188,12 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
 
   if (isEdit && isLoadingCourseDetails) {
     return (
-      <div className="flex flex-1 items-center justify-center py-24">
-        <Loader2 size={32} className="text-[#000B60] animate-spin" />
+      <div className="space-y-4 py-8">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-12 w-full max-w-md" />
+        <Skeleton className="h-12 w-full max-w-md" />
+        <Skeleton className="aspect-video w-full max-w-xl rounded-2xl" />
+        <Skeleton className="h-32 w-full max-w-xl" />
       </div>
     )
   }

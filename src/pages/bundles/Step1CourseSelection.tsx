@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Search, ArrowRight, Loader2 } from 'lucide-react'
-import { Subheading, Paragraph, Input, Spinner } from '@/components/ui'
+import { Subheading, Paragraph, Input, Skeleton } from '@/components/ui'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 
 import Button from '@/components/ui/Button'
@@ -93,18 +93,16 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
           {
 
             coursesLoading || bundleLoading ? (
-              <div className="flex col-span-2 items-center justify-center h-[500px]">
-                {/* <Loader2 className="w-8 h-8 animate-spin" /> */}
-                <motion.div
-                  key="spinner"
-                  className="flex items-center justify-center min-h-[50vh] w-full"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Spinner size={44} label="Loading courses..." />
-                </motion.div>
+              <div className="grid col-span-2 grid-cols-2 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+                    <Skeleton className="h-36 w-full rounded-none" />
+                    <div className="p-4 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) :
 

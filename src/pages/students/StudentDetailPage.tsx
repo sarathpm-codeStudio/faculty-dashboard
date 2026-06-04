@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Mail, Phone, Calendar, User, Clock, MoreVertical } from 'lucide-react'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsPencilFill } from 'react-icons/bs'
 import { HiMiniCurrencyDollar } from 'react-icons/hi2'
-import { Button, Heading, Spinner, DataTable, Subheading } from '@/components/ui'
+import { Button, Heading, DataTable, Subheading, Skeleton, SkeletonStatCard } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { StatCard, ProgressBar } from '@/components/features'
 import man from '@/assets/images/man.jpg'
@@ -31,7 +31,6 @@ const fadeUp = (delay = 0) => ({
 const StudentDetailPage = () => {
     const navigate = useNavigate()
     const { id } = useParams()
-    const [loading, setLoading] = useState(true)
     const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(5)
   const [rangeLabel, setRangeLabel] = useState('')
@@ -102,19 +101,6 @@ const StudentDetailPage = () => {
       } ,!!id)
     const { data: studentAnalytics, isLoading: studentAnalyticsLoading } = useGetStudentAnalytics(id, !!id)
 
-    useEffect(() => {
-        const t = setTimeout(() => setLoading(false), 800)
-        return () => clearTimeout(t)
-    }, [])
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full bg-gray-50">
-                <Spinner label="Loading student..." />
-            </div>
-        )
-    }
-
     return (
         <div className="flex flex-col h-full overflow-hidden bg-gray-50">
 
@@ -138,19 +124,28 @@ const StudentDetailPage = () => {
                     {/* Avatar + info */}
                     <div className="flex items-start gap-5">
                         <div className="relative shrink-0">
-                            <img src={studentAnalytics?.data?.student?.avatar_url} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
-                            {/* <span className="absolute -bottom-2.5 left-2/2 -translate-x-1/2 bg-[#00A6BF] text-white text-[9px] font-bold px-3.5 py-1 rounded-full uppercase tracking-wider whitespace-nowrap">
-                                Active
-                            </span> */}
+                            {studentAnalyticsLoading ? (
+                                <Skeleton className="w-30 h-30 rounded-2xl" />
+                            ) : (
+                                <img src={studentAnalytics?.data?.student?.avatar_url} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
+                            )}
                         </div>
-                        <div className="mt-1">
+                        <div className="mt-1 flex-1">
+                            {studentAnalyticsLoading ? (
+                                <div className="space-y-3 mb-3">
+                                    <Skeleton className="h-8 w-48" />
+                                    <Skeleton className="h-4 w-40" />
+                                </div>
+                            ) : (
+                                <>
                             <Heading className="text-[#000B60] mb-3">{studentAnalytics?.data?.student?.first_name} {studentAnalytics?.data?.student?.last_name}</Heading>
                             <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
                                 <span className="flex items-center gap-1.5 text-xs text-black font-medium">
                                     <Clock className='text-[#00A6BF]' size={12} /> Recent Active: Today 11:40 pm
                                 </span>
-                               
                             </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -170,6 +165,14 @@ const StudentDetailPage = () => {
 
             {/* Stat cards */}
             <motion.div className="grid shrink-0 grid-cols-2 lg:grid-cols-3 gap-4 mb-5 px-2" {...fadeUp(0.1)}>
+                {studentAnalyticsLoading ? (
+                    <>
+                        <SkeletonStatCard showIcon showFooter={false} />
+                        <SkeletonStatCard showIcon showFooter={false} />
+                        <SkeletonStatCard showIcon showFooter={false} />
+                    </>
+                ) : (
+                    <>
                 <StatCard
 
                     icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
@@ -192,6 +195,8 @@ const StudentDetailPage = () => {
                     prefix="₹"
                 // valueColor="#00875A"
                 />
+                    </>
+                )}
             </motion.div>
 
             {/* Enrolled Courses — flex-1 + min-h-0: scroll only inside table */}

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, ChevronDown } from 'lucide-react'
-import { Button, Heading, Paragraph, Spinner, StarRating } from '@/components/ui'
+import { Button, Heading, Paragraph, Skeleton, StarRating } from '@/components/ui'
 import { ReviewListCard } from '@/components/features'
 import man from '@/assets/images/man.jpg'
 
@@ -102,8 +102,27 @@ const ReviewPage = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <Spinner label="Loading reviews..." />
+            <div className="p-8 bg-gray-50 min-h-screen">
+                <Skeleton className="h-4 w-16 mb-5" />
+                <div className="space-y-2 mb-7">
+                    <Skeleton className="h-8 w-64" />
+                    <Skeleton className="h-4 w-96" />
+                </div>
+                <div className="space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-3">
+                            <div className="flex items-center gap-3">
+                                <Skeleton className="h-12 w-12 rounded-full" />
+                                <div className="space-y-2 flex-1">
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-3 w-24" />
+                                </div>
+                            </div>
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-5/6" />
+                        </div>
+                    ))}
+                </div>
             </div>
         )
     }

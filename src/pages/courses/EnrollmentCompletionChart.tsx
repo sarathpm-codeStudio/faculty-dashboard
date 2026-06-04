@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { ChevronDown } from 'lucide-react'
 import { SectionCard } from '@/components/features'
-import { Spinner } from '@/components/ui'
+import { SkeletonChart } from '@/components/ui'
 import { useGetCourseEnrollmentCompletionChart } from '@/hooks/useCourse'
 
 type Period = 'week' | 'month' | 'year'
@@ -88,11 +88,9 @@ const EnrollmentCompletionChart = ({ courseId }: { courseId: string }) => {
             }
         >
             <div className="h-[300px] relative">
-                {enrollmentCompletionChartLoading && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-[1px] rounded-md">
-                        <Spinner size={44} label="Loading chart data..." />
-                    </div>
-                )}
+                {enrollmentCompletionChartLoading ? (
+                    <SkeletonChart className="h-full" />
+                ) : (
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={enrollmentCompletionChart?.data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="30%" barGap={4}>
                         <CartesianGrid vertical={false} stroke="#f0f1f5" strokeDasharray="4 4" />
@@ -129,6 +127,7 @@ const EnrollmentCompletionChart = ({ courseId }: { courseId: string }) => {
                         <Bar dataKey="completions" name="Completions" fill="#00C6DE" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
+                )}
             </div>
         </SectionCard>
     )

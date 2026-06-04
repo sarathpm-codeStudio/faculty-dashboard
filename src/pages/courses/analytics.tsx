@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Download } from 'lucide-react'
 import { FaUsers } from 'react-icons/fa6'
 import { HiMiniCurrencyDollar } from 'react-icons/hi2'
 import { BsFillStarFill } from 'react-icons/bs'
-import { Button, Heading, Spinner } from '@/components/ui'
+import { Button, Heading, Skeleton, SkeletonStatCard } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import EnrollmentCompletionChart from './EnrollmentCompletionChart'
 import RevenueChart, { type RevenuePeriod } from '@/pages/dashboard/RevenueChart'
@@ -23,25 +23,11 @@ const CourseAnalyticsPage = () => {
     const navigate = useNavigate()
     const { id }: any = useParams()
     const { course_title } = useLocation().state
-    const [loading, setLoading] = useState(true)
     const [revenuePeriod, setRevenuePeriod] = useState<RevenuePeriod>('week')
 
     // query
-    const { data: analytics, isLoading: analyticsLoading, error: analyticsError } = useGetCourseAnalytics(id , true)
+    const { data: analytics, isLoading: analyticsLoading } = useGetCourseAnalytics(id , true)
     const { data: revenueTrend, isLoading: revenueTrendLoading } = useGetCourseRevenueTrend(id, revenuePeriod, true)
-
-    useEffect(() => {
-        const t = setTimeout(() => setLoading(false), 800)
-        return () => clearTimeout(t)
-    }, [])
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <Spinner label="Loading analytics..." />
-            </div>
-        )
-    }
 
     return (
         <div className="p-8 bg-gray-50 min-h-screen">
@@ -77,6 +63,15 @@ const CourseAnalyticsPage = () => {
 
             {/* Stat Cards */}
             <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5" {...fadeUp(0.1)}>
+                {analyticsLoading ? (
+                    <>
+                        <SkeletonStatCard showIcon showFooter={false} />
+                        <SkeletonStatCard showIcon showFooter={false} />
+                        <SkeletonStatCard showIcon showFooter={false} />
+                        <SkeletonStatCard showIcon showFooter={false} />
+                    </>
+                ) : (
+                    <>
                 <StatCard
                     icon={
                         <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
@@ -113,6 +108,8 @@ const CourseAnalyticsPage = () => {
                     value="4.8/5"
                 // valueColor="#E6A800"
                 />
+                    </>
+                )}
             </motion.div>
 
             {/* Charts */}

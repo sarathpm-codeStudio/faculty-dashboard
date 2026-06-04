@@ -10,7 +10,7 @@ import {
 } from 'recharts'
 import { ChevronDown } from 'lucide-react'
 import { SectionCard } from '@/components/features'
-import { Spinner } from '@/components/ui'
+import { SkeletonChart } from '@/components/ui'
 import { useGetEnrollmentTrend } from '@/hooks/dashboard'
 
 type Period = 'week' | 'month' | 'year'
@@ -106,11 +106,9 @@ const EnrollmentChart = () => {
       className="h-full"
     >
       <div className="h-[340px] relative">
-        {enrollmentTrendLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 backdrop-blur-[1px] rounded-md">
-            <Spinner size={44} label="Loading enrollment data..." />
-          </div>
-        )}
+        {enrollmentTrendLoading ? (
+          <SkeletonChart className="h-full" />
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             key={period}
@@ -213,6 +211,7 @@ const EnrollmentChart = () => {
             />
           </AreaChart>
         </ResponsiveContainer>
+        )}
       </div>
     </SectionCard>
   )

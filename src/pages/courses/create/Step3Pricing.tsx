@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { useFormik } from 'formik'
-import { Input, Select, Button, Subheading, Paragraph } from '@/components/ui'
+import { Input, Select, Button, Subheading, Paragraph, Skeleton } from '@/components/ui'
 import type { CourseFormData } from './index'
 import { RiCoupon2Fill } from "react-icons/ri";
 import { coursePricingSchema } from '@/utils/validator/course.validator'
@@ -104,8 +104,13 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
 
   if (courseId && (isLoadingCourseDetails || !courseDetails?.data)) {
     return (
-      <div className="flex flex-1 items-center justify-center py-24">
-        <Loader2 size={32} className="text-[#000B60] animate-spin" />
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-8 space-y-4">
+          <Skeleton className="h-64 w-full rounded-2xl" />
+        </div>
+        <div className="col-span-4 space-y-4">
+          <Skeleton className="h-48 w-full rounded-2xl" />
+        </div>
       </div>
     )
   }

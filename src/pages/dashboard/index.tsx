@@ -17,7 +17,7 @@ import {
 } from '@/components/features'
 import EnrollmentChart from './EnrollmentChart'
 import RevenueChart, { type RevenuePeriod } from './RevenueChart'
-import { Heading, Paragraph } from '@/components/ui'
+import { Heading, Paragraph, SkeletonStatCard } from '@/components/ui'
 import formatNumber from '@/utils/helper/numberFormating';
 const courses = [
   { id: 1, title: 'Advanced Macroeconomics', students: '1,240', revenue: '₹62,000.00' },
@@ -77,27 +77,38 @@ const DashboardPage = () => {
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-4 gap-4">
-        <StatCard
-          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#000b60]" size={25} /></div>}
-          label="Total Students"
-          value={formatNumber(dashboardCounters?.data?.total_students ?? 0)}
-        />
-        <StatCard
-          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
-          label="Active Courses"
-          value={formatNumber(dashboardCounters?.data?.active_courses ?? 0)}
-        />
-        <StatCard
-          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFDAD6]"><Tag className="text-[#BA1A1A]" size={25} /></div>}
-          label="Active Coupons"
-          value={formatNumber(dashboardCounters?.data?.active_coupons ?? 0)}
-        />
-        <StatCard
-          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
-          label="Total Revenue"
-          value={formatNumber(dashboardCounters?.data?.total_revenue ?? 0)}
-          prefix="₹"
-        />
+        {dashboardCountersLoading ? (
+          <>
+            <SkeletonStatCard showIcon showFooter={false} />
+            <SkeletonStatCard showIcon showFooter={false} />
+            <SkeletonStatCard showIcon showFooter={false} />
+            <SkeletonStatCard showIcon showFooter={false} />
+          </>
+        ) : (
+          <>
+            <StatCard
+              icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#000b60]" size={25} /></div>}
+              label="Total Students"
+              value={formatNumber(dashboardCounters?.data?.total_students ?? 0)}
+            />
+            <StatCard
+              icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
+              label="Active Courses"
+              value={formatNumber(dashboardCounters?.data?.active_courses ?? 0)}
+            />
+            <StatCard
+              icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFDAD6]"><Tag className="text-[#BA1A1A]" size={25} /></div>}
+              label="Active Coupons"
+              value={formatNumber(dashboardCounters?.data?.active_coupons ?? 0)}
+            />
+            <StatCard
+              icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
+              label="Total Revenue"
+              value={formatNumber(dashboardCounters?.data?.total_revenue ?? 0)}
+              prefix="₹"
+            />
+          </>
+        )}
       </div>
 
       {/* ── Charts Row ── */}

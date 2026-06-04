@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Clock, ShieldCheck, CheckCircle } from 'lucide-react'
 import { VideoCamera, FileText, Image as ImageIcon, PencilSimpleLine } from '@phosphor-icons/react'
-import { Button, Heading, Paragraph, Subheading, Spinner, ConfirmDeleteModal } from '@/components/ui'
+import { Button, Heading, Paragraph, Subheading, Skeleton, Spinner, ConfirmDeleteModal } from '@/components/ui'
 import type { CourseFormData, TreeNode, ContentNode } from './index'
 import img from '@/assets/images/cou1.png'
 import { MdVideoLibrary } from "react-icons/md";
@@ -94,8 +94,16 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Spinner />
+      <div className="space-y-4 py-8">
+        <Skeleton className="h-8 w-56" />
+        <Skeleton className="aspect-video w-full max-w-2xl rounded-2xl" />
+        <div className="grid grid-cols-2 gap-4 max-w-2xl">
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+          <Skeleton className="h-24 rounded-xl" />
+        </div>
+        <Skeleton className="h-12 w-40" />
       </div>
     )
   }

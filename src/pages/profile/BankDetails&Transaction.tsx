@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Landmark, Pencil, Mail, Phone, ChevronRight } from 'lucide-react'
-import { Heading, Paragraph, Spinner, DataTable, Subheading } from '@/components/ui'
+import { Heading, Paragraph, DataTable, Subheading, Skeleton, SkeletonStatCard } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import Button from '@/components/ui/Button'
@@ -80,8 +80,21 @@ const BankDetailsAndTransaction = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <Spinner label="Loading bank details..." />
+            <div className="flex flex-col h-full overflow-y-auto scrollbar-hide gap-5 pb-6">
+                <div className="space-y-2">
+                    <Skeleton className="h-8 w-72" />
+                    <Skeleton className="h-4 w-96" />
+                </div>
+                <div className="grid grid-cols-12 gap-5">
+                    <div className="col-span-8 space-y-5">
+                        <Skeleton className="h-48 w-full rounded-2xl" />
+                        <Skeleton className="h-80 w-full rounded-2xl" />
+                    </div>
+                    <div className="col-span-4 space-y-4">
+                        <Skeleton className="h-56 w-full rounded-2xl" />
+                        <SkeletonStatCard showFooter={false} />
+                    </div>
+                </div>
             </div>
         )
     }

@@ -5,7 +5,7 @@ import { Package } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import { CourseCard, AddCourseCard } from '../../components/features'
 import type { CourseCardProps } from '../../components/features/CourseCard'
-import { Heading, Paragraph, Spinner, ConfirmDeleteModal } from '@/components/ui'
+import { Heading, Paragraph, Skeleton, ConfirmDeleteModal } from '@/components/ui'
 import { IoAddCircleOutline } from "react-icons/io5";
 import courseImg from "@/assets/images/cou1.png"
 import courseImg2 from "@/assets/images/cou2.png"
@@ -150,14 +150,26 @@ const CoursesPage = () => {
       <AnimatePresence mode="wait">
         {coursesLoading ? (
           <motion.div
-            key="spinner"
-            className="flex items-center justify-center min-h-[50vh] w-full"
+            key="skeleton"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 w-full"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <Spinner size={44} label="Loading courses..." />
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+                <Skeleton className="h-44 w-full rounded-none" />
+                <div className="p-4 space-y-3">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                  <div className="flex gap-3">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </motion.div>
         ) : (
           <motion.div

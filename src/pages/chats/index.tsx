@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Search, Paperclip, Mic, Send, FileText, Download, Check } from 'lucide-react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
-import { Heading, Input, Paragraph, Spinner } from '@/components/ui'
+import { Heading, Input, Paragraph, Skeleton } from '@/components/ui'
 import courseImg from '@/assets/images/cou1.png'
 import courseImg2 from '@/assets/images/cou2.png'
 import courseImg3 from '@/assets/images/cou3.png'
@@ -113,13 +113,21 @@ const ChatsPage = () => {
           <AnimatePresence mode="wait">
             {leftLoading ? (
               <motion.div
-                key="left-spinner"
-                className="flex items-center justify-center h-40"
+                key="left-skeleton"
+                className="space-y-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <Spinner size={36} label="Loading..." />
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="flex items-start gap-3 px-5 py-3.5">
+                    <Skeleton className="h-15 w-15 rounded-xl shrink-0" />
+                    <div className="flex-1 space-y-2 pt-1">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-full" />
+                    </div>
+                  </div>
+                ))}
               </motion.div>
             ) : (
               <motion.div
@@ -191,14 +199,18 @@ const ChatsPage = () => {
           <AnimatePresence mode="wait">
             {chatLoading ? (
               <motion.div
-                key="chat-spinner"
-                className="flex items-center justify-center flex-1 h-full"
+                key="chat-skeleton"
+                className="flex flex-col gap-4 flex-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Spinner size={40} label="Loading messages..." />
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
+                    <Skeleton className={`h-16 rounded-2xl ${i % 2 === 0 ? 'w-3/5' : 'w-2/3'}`} />
+                  </div>
+                ))}
               </motion.div>
             ) : (
               <motion.div

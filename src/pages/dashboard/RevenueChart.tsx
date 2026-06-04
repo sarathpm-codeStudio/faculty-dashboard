@@ -1,6 +1,6 @@
 import { BarChart, Bar, XAxis, ResponsiveContainer, Cell, LabelList, Tooltip } from 'recharts'
 import { ChevronDown, TrendingUp } from 'lucide-react'
-import { Paragraph, Spinner, Subheading } from '@/components/ui'
+import { Paragraph, SkeletonChart, Subheading } from '@/components/ui'
 
 export type RevenuePeriod = 'week' | 'month' | 'year'
 
@@ -61,11 +61,9 @@ const RevenueChart = ({
 
       {/* Chart */}
       <div className="mt-6 flex-1 min-h-[200px] relative">
-        {isLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-brand-from/40 backdrop-blur-[1px] rounded-md">
-            <Spinner size={44} color="#ffffff" label="Loading revenue data..." />
-          </div>
-        )}
+        {isLoading ? (
+          <SkeletonChart className="h-full min-h-[200px]" variant="dark" />
+        ) : (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
@@ -143,6 +141,7 @@ const RevenueChart = ({
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        )}
       </div>
 
       {/* Trend footer */}

@@ -2,7 +2,8 @@
 
 
 import { useEffect, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import Skeleton from './Skeleton'
 
 export type TableColumn<T> = {
   key: string
@@ -104,13 +105,25 @@ function DataTable<T>({
           </thead>
           <tbody className="divide-y divide-gray-50">
             {loading ? (
-              <tr>
-                <td colSpan={columns.length}>
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 size={28} className="text-[#000B60] animate-spin" />
-                  </div>
-                </td>
-              </tr>
+              Array.from({ length: fixedBodyRows ?? pageSize }).map((_, rowIndex) => (
+                <tr key={`skeleton-${rowIndex}`}>
+                  {columns.map((col, colIndex) => (
+                    <td key={col.key} className={`px-6 py-4 text-sm ${col.cellClassName ?? ''}`}>
+                      {colIndex === 0 ? (
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                          <div className="flex-1 space-y-2">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-20" />
+                          </div>
+                        </div>
+                      ) : (
+                        <Skeleton className={`h-4 ${colIndex === columns.length - 1 ? 'ml-auto w-6' : 'w-24'}`} />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : data?.length === 0 ? (
               <tr>
                 <td colSpan={columns.length}>

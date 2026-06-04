@@ -4,7 +4,7 @@ import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft, ExamIcon } fro
 import { ArrowRight, ChevronRight, Download, FileText as FilePdfIcon, Home, Image as LucideImage, Link as LinkIcon, Loader2, MoreVertical, Pencil, StickyNote, Trash2, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import { storageService } from '@/services'
-import { Button, ConfirmDeleteModal, Input, Modal, Paragraph, Spinner, Subheading, Textarea, ImageCropperModal } from '@/components/ui'
+import { Button, ConfirmDeleteModal, Input, Modal, Paragraph, Skeleton, Subheading, Textarea, ImageCropperModal } from '@/components/ui'
 import {
   ASPECT_RATIO_16_9,
   dataUrlToFile,
@@ -795,8 +795,10 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
           {/* Loading state */}
           {contentLoading && (
-            <div className="flex items-center justify-center py-16">
-              <Spinner size={32} label="" />
+            <div className="space-y-3 py-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full rounded-xl" />
+              ))}
             </div>
           )}
 

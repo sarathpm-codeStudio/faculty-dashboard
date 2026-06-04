@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { MoreVertical, SlidersHorizontal, Download, User, ArrowLeft } from 'lucide-react'
-import { Heading, Paragraph, Spinner, DataTable } from '@/components/ui'
+import { Heading, Paragraph, DataTable, Skeleton, SkeletonStatCard } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import { useGetTestById } from '@/hooks/test'
@@ -50,7 +50,6 @@ const fadeUp = (delay = 0) => ({
 const TestDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
   const [rangeLabel, setRangeLabel] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(5)
@@ -61,6 +60,8 @@ const TestDetailPage = () => {
   const { data: test, isLoading: testLoading } = useGetTestById(id, !!id)
   const { data: testAnalytics, isLoading: testAnalyticsLoading } = useGetTestAnalytics(id, !!id)
   const { data: attempts, isLoading: attemptsLoading } = useGetAllAttemptsByTestId(id, { page, limit: pageSize }, !!id)
+
+  const statsLoading = testLoading || testAnalyticsLoading
 
 
   const COLUMNS: TableColumn<Candidate>[] = [
@@ -130,24 +131,11 @@ const TestDetailPage = () => {
 
 
 
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 800)
-    return () => clearTimeout(t)
-  }, [id])
-
   const totalCandidates = MOCK_CANDIDATES.length
   const passed = MOCK_CANDIDATES.filter(c => c.result !== 'FAIL').length
   const completionRate = Math.round((passed / totalCandidates) * 100)
   const topScore = Math.max(...MOCK_CANDIDATES.map(c => c.score))
   const topScorer = MOCK_CANDIDATES.find(c => c.score === topScore)
-
-  if (loading || testLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Spinner label="Loading test details..." />
-      </div>
-    )
-  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden gap-5">
@@ -161,11 +149,23 @@ const TestDetailPage = () => {
           <ArrowLeft size={16} />
           Back to Tests
         </button>
-        <Heading className="text-[#000B60]">{test?.data?.title ?? 'Test Details'}</Heading>
+        {testLoading ? (
+          <Skeleton className="h-8 w-64" />
+        ) : (
+          <Heading className="text-[#000B60]">{test?.data?.title ?? 'Test Details'}</Heading>
+        )}
       </motion.div>
 
       {/* Stat Cards */}
       <motion.div className="grid grid-cols-3 gap-4" {...fadeUp(0.08)}>
+        {statsLoading ? (
+          <>
+            <SkeletonStatCard />
+            <SkeletonStatCard showFooter={false} />
+            <SkeletonStatCard showFooter={false} />
+          </>
+        ) : (
+          <>
         <StatCard
           icon={null}
           label="Completion Rate"
@@ -203,6 +203,8 @@ const TestDetailPage = () => {
             </div>
           )}
         </StatCard>
+          </>
+        )}
       </motion.div>
 
       {/* Candidate Performance */}

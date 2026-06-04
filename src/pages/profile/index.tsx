@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Pencil, ChevronRight, FileText, GraduationCap, Eye, Download, User } from 'lucide-react'
 import { HiOutlineBadgeCheck } from 'react-icons/hi'
-import { Heading, Paragraph, Spinner, Button2, Modal, Button } from '@/components/ui'
+import { Heading, Paragraph, Skeleton, SkeletonStatCard, Button2, Modal, Button } from '@/components/ui'
 import { useAuthStore } from '@/store/authStore'
 import { profileService, type AcademicProfile, type FacultyProfile } from '@/services/profileService'
 import { toast } from 'sonner'
@@ -97,8 +97,41 @@ const ProfilePage = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <Spinner label="Loading profile..." />
+            <div className="flex flex-col gap-5 pb-6">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2 flex-1">
+                        <Skeleton className="h-8 w-56" />
+                        <Skeleton className="h-4 w-96" />
+                    </div>
+                    <Skeleton className="h-11 w-32" />
+                </div>
+                <div className="grid grid-cols-12 gap-5">
+                    <div className="col-span-12 lg:col-span-8 flex flex-col gap-5">
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                            <div className="flex gap-6">
+                                <Skeleton className="w-28 h-28 rounded-xl shrink-0" />
+                                <div className="flex-1 space-y-3">
+                                    <Skeleton className="h-6 w-48" />
+                                    <Skeleton className="h-4 w-32" />
+                                    <div className="flex gap-3">
+                                        <Skeleton className="h-14 w-32 rounded-lg" />
+                                        <Skeleton className="h-14 w-32 rounded-lg" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+                            <Skeleton className="h-5 w-40" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-3/4" />
+                        </div>
+                    </div>
+                    <div className="col-span-12 lg:col-span-4 flex flex-col gap-4">
+                        <SkeletonStatCard showFooter={false} />
+                        <Skeleton className="h-48 w-full rounded-2xl" />
+                    </div>
+                </div>
             </div>
         )
     }

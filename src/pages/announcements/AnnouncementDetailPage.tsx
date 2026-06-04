@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Archive, Send, Info, Eye, Pencil, Trash2 } from 'lucide-react'
 import { RocketLaunch } from '@phosphor-icons/react'
-import { Button, Heading, Paragraph, Subheading, Spinner } from '@/components/ui'
+import { Button, Heading, Paragraph, Subheading, Skeleton } from '@/components/ui'
 import { useParams } from 'react-router-dom'
 import { useGetAnnouncementById, useDeleteAnnouncement } from '@/hooks/announcement'
 import { calculateDays, formatDateTime } from '@/utils/helper/formatDate'
@@ -27,8 +27,19 @@ const AnnouncementDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Spinner label="Loading announcement..." />
+      <div className="p-8 bg-gray-50 min-h-screen">
+        <Skeleton className="h-4 w-56 mb-5" />
+        <div className="space-y-3 mb-6">
+          <Skeleton className="h-8 w-96" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <div className="grid grid-cols-3 gap-5">
+          <div className="col-span-2 space-y-4">
+            <Skeleton className="h-64 w-full rounded-2xl" />
+            <Skeleton className="h-32 w-full rounded-2xl" />
+          </div>
+          <Skeleton className="h-80 w-full rounded-2xl" />
+        </div>
       </div>
     )
   }

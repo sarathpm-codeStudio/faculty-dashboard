@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Search, Download, Upload, TrendingUp, Calendar } from 'lucide-react'
-import { Heading, Paragraph, Spinner, DataTable, Input, Select } from '@/components/ui'
+import { Heading, Paragraph, DataTable, Input, Select, Skeleton, SkeletonStatCard } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import Button from '@/components/ui/Button'
@@ -95,8 +95,21 @@ const FullTransactionHistory = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-50">
-                <Spinner label="Loading transactions..." />
+            <div className="flex flex-col h-full overflow-hidden gap-5">
+                <div className="space-y-2">
+                    <Skeleton className="h-8 w-64" />
+                    <Skeleton className="h-4 w-96" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <SkeletonStatCard showIcon />
+                    <SkeletonStatCard showIcon showFooter={false} />
+                </div>
+                <div className="flex gap-3">
+                    <Skeleton className="h-10 flex-1" />
+                    <Skeleton className="h-10 w-44" />
+                    <Skeleton className="h-10 w-36" />
+                </div>
+                <Skeleton className="flex-1 min-h-[400px] rounded-2xl" />
             </div>
         )
     }
