@@ -80,7 +80,7 @@ const App = () => {
               <Route path="/account" element={<ProfilePage />} />
               <Route path="/account/edit" element={<EditProfilePage />} />
               <Route path="/account/bank" element={<BankDetailsAndTransaction />} />
-              <Route path="/account/bank/update" element={<UpdateBankDetails />} />
+              <Route path="/account/bank/add-bank-details" element={<UpdateBankDetails />} />
               <Route path="/account/bank/history" element={<FullTransactionHistory />} />
             </Route>
           </Route>

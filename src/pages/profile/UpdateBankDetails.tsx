@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Landmark, Zap } from 'lucide-react'
-import { Heading, Paragraph, Input, Subheading } from '@/components/ui'
+import { useFormik } from 'formik'
+import { toast } from 'sonner'
+import { Heading, Paragraph, Input } from '@/components/ui'
 import Button from '@/components/ui/Button'
-import img from "@/assets/images/sc.png"
+import img from '@/assets/images/sc.png'
+import { saveBankDetailsSchema, type SaveBankDetailsInput } from '@/utils/validator/bank.validator'
+import { useCreateBankDetails } from '@/hooks/bank'
 
 const fadeUp = (delay = 0) => ({
     initial: { opacity: 0, y: 18 },
@@ -12,25 +16,68 @@ const fadeUp = (delay = 0) => ({
     transition: { duration: 0.36, delay, ease: 'easeOut' as const },
 })
 
+const toTitleCase = (value: string) =>
+    value.trim().toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
+
+const initialValues: SaveBankDetailsInput = {
+    bank_name: '',
+    account_holder_name: '',
+    account_number: '',
+    confirm_account_number: '',
+    ifsc_code: '',
+    pan_number: '',
+}
+
 const UpdateBankDetails = () => {
     const navigate = useNavigate()
-    const [form, setForm] = useState({
-        bankName: '',
-        accountHolderName: '',
-        accountNumber: '',
-        confirmAccountNumber: '',
-        ifscCode: '',
-        panNumber: '',
+
+
+    // mutation
+    const { mutateAsync: createBankDetails, isPending: isCreatingBankDetails } = useCreateBankDetails()
+
+    const formik = useFormik<SaveBankDetailsInput>({
+        initialValues,
+        validationSchema: saveBankDetailsSchema,
+        onSubmit: async (_values) => {
+            try {
+
+                const payload = {
+                    bank_name: _values.bank_name,
+                    account_holder_name: _values.account_holder_name,
+                    account_number: _values.account_number,
+                    confirm_account_number: _values.confirm_account_number,
+                    ifsc_code: _values.ifsc_code,
+                    pan_number: _values.pan_number,
+                }
+                await createBankDetails(payload)
+                toast.success("Bank details created successfully")
+                navigate('/account/bank')
+            } catch (error: any) {
+                toast.error("Could not create bank details")
+                console.log("error", error)
+            }
+        },
     })
 
-    const update = (f: Partial<typeof form>) => setForm(prev => ({ ...prev, ...f }))
+    const err = (field: keyof SaveBankDetailsInput) =>
+        formik.touched[field] && formik.errors[field] ? formik.errors[field] : undefined
+
+    const titleCaseOnChange = (field: 'bank_name') => (e: ChangeEvent<HTMLInputElement>) => {
+        formik.setFieldValue(field, toTitleCase(e.target.value))
+    }
+
+    const uppercaseOnChange = (field: 'account_holder_name' | 'ifsc_code' | 'pan_number') => (
+        e: ChangeEvent<HTMLInputElement>,
+    ) => {
+        formik.setFieldValue(field, e.target.value.toUpperCase())
+    }
 
     return (
         <div className="flex flex-col h-full overflow-y-auto scrollbar-hide gap-5 pb-6">
 
             {/* Header */}
             <motion.div {...fadeUp(0.04)}>
-                <Heading className="text-[#000B60]">Update Bank Details</Heading>
+                <Heading className="text-[#000B60]">Add Bank Details</Heading>
                 <Paragraph className="text-[#767683] mt-1">
                     Manage your disbursement methods and secure financial information.
                 </Paragraph>
@@ -40,62 +87,99 @@ const UpdateBankDetails = () => {
 
                 {/* ── Left form ── */}
                 <motion.div {...fadeUp(0.08)} className="col-span-8">
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
+                    <form
+                        onSubmit={formik.handleSubmit}
+                        noValidate
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5"
+                    >
 
                         <div className="grid grid-cols-2 gap-4">
                             <Input
                                 label="Bank Name"
+                                name="bank_name"
                                 placeholder="e.g. International Federal Bank"
-                                value={form.bankName}
-                                onChange={e => update({ bankName: e.target.value })}
+                                value={formik.values.bank_name}
+                                onChange={titleCaseOnChange('bank_name')}
+                                onBlur={formik.handleBlur}
+                                error={err('bank_name')}
                             />
                             <Input
                                 label="Account Holder Name"
-                                placeholder="Dr. Elena Vance"
-                                value={form.accountHolderName}
-                                onChange={e => update({ accountHolderName: e.target.value })}
+                                name="account_holder_name"
+                                placeholder="DR. ELENA VANCE"
+                                autoCapitalize="characters"
+                                value={formik.values.account_holder_name}
+                                onChange={uppercaseOnChange('account_holder_name')}
+                                onBlur={formik.handleBlur}
+                                error={err('account_holder_name')}
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <Input
                                 label="Account Number"
+                                name="account_number"
                                 placeholder="•••• •••• •••• 4590"
-                                value={form.accountNumber}
-                                onChange={e => update({ accountNumber: e.target.value })}
+                                inputMode="numeric"
+                                value={formik.values.account_number}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={err('account_number')}
                             />
                             <Input
                                 label="Confirm Account Number"
+                                name="confirm_account_number"
                                 placeholder="•••• •••• •••• 4590"
-                                value={form.confirmAccountNumber}
-                                onChange={e => update({ confirmAccountNumber: e.target.value })}
+                                inputMode="numeric"
+                                value={formik.values.confirm_account_number}
+                                onChange={formik.handleChange}
+                                onBlur={formik.handleBlur}
+                                error={err('confirm_account_number')}
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <Input
                                 label="IFSC Code"
-                                placeholder="IFSC0001234"
-                                value={form.ifscCode}
-                                onChange={e => update({ ifscCode: e.target.value })}
+                                name="ifsc_code"
+                                placeholder="SBIN0001234"
+                                autoCapitalize="characters"
+                                value={formik.values.ifsc_code}
+                                onChange={uppercaseOnChange('ifsc_code')}
+                                onBlur={formik.handleBlur}
+                                error={err('ifsc_code')}
                             />
                             <Input
                                 label="PAN Number"
+                                name="pan_number"
                                 placeholder="ABCDE1234F"
-                                value={form.panNumber}
-                                onChange={e => update({ panNumber: e.target.value })}
+                                autoCapitalize="characters"
+                                value={formik.values.pan_number}
+                                onChange={uppercaseOnChange('pan_number')}
+                                onBlur={formik.handleBlur}
+                                error={err('pan_number')}
                             />
                         </div>
 
                         <div className="flex items-center gap-3 pt-2">
-                            <Button variant="primary" className="!h-11 !text-sm !px-6">
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                className="!h-11 !text-sm !px-6"
+                                disabled={formik.isSubmitting || isCreatingBankDetails}
+                            >
                                 Save Changes
                             </Button>
-                            <Button variant="white" className="!h-11 !text-sm !px-6" onClick={() => navigate('/account/bank')}>
+                            <Button
+                                type="button"
+                                variant="white"
+                                className="!h-11 !text-sm !px-6"
+                                onClick={() => navigate('/account/bank')}
+                            >
                                 Cancel
                             </Button>
                         </div>
-                    </div>
+                    </form>
                 </motion.div>
 
                 {/* ── Right sidebar ── */}

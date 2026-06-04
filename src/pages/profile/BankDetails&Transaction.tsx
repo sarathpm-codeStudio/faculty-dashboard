@@ -135,9 +135,9 @@ const BankDetailsAndTransaction = () => {
                                     </div>
                                 </div>
                             </div>
-                            <Button variant="primary" onClick={() => navigate('/account/bank/update')}>
+                            <Button variant="primary" onClick={() => navigate('/account/bank/add-bank-details')}>
                                 <Pencil size={20} />
-                                Update Bank Details
+                                Add Bank Details
                             </Button>
                         </div>
 

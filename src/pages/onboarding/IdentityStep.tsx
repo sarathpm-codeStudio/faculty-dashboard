@@ -261,6 +261,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
                             placeholder="Say Something About You"
                             rows={3}
                             error={err('bio')}
+                            className="min-h-[200px]"
                         />
 
                         <div className="flex justify-end pt-2">
