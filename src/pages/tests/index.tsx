@@ -84,7 +84,7 @@ const TestsPage = () => {
       header: 'Test Name',
       render: row => (
         <div>
-          <p className="font-bold text-[#191c1e] text-sm cursor-pointer" onClick={() => { navigate(`/tests/${row?.id}`) }} >{row?.title}</p>
+          <p className="font-bold text-[#191c1e] text-sm cursor-pointer" onClick={() => { navigate(`/tests/${row?.id}/analytics`) }} >{row?.title}</p>
           <p className="text-[11px] text-[#767683] mt-0.5">{timeAgo(row?.updated_at)}</p>
         </div>
       ),

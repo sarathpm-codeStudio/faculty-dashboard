@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Mail, Phone, Calendar, User, Clock, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Mail, Clock } from 'lucide-react'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsPencilFill } from 'react-icons/bs'
 import { HiMiniCurrencyDollar } from 'react-icons/hi2'
 import { Button, Heading, DataTable, Subheading, Skeleton, SkeletonStatCard } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
-import { StatCard, ProgressBar } from '@/components/features'
-import man from '@/assets/images/man.jpg'
+import { StatCard } from '@/components/features'
 import { useGetStudentAnalytics, useGetStudentCourses } from '@/hooks/student'
 
 type EnrolledCourse = {
@@ -32,7 +31,7 @@ const StudentDetailPage = () => {
     const navigate = useNavigate()
     const { id } = useParams()
     const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(5)
+  const [pageSize, setPageSize] = useState(10)
   const [rangeLabel, setRangeLabel] = useState('')
 
 
@@ -43,54 +42,49 @@ const StudentDetailPage = () => {
             key: 'details',
             header: 'Course Details',
             render: row => (
-                <div>
-                    <p className="font-bold text-[#191c1e] text-sm">{row.title}</p>
-                    {/* <p className="text-xs text-[#767683] mt-0.5">{row.subtitle}</p> */}
-                </div>
+                <p className="font-bold text-[#191c1e] text-sm">{row.title}</p>
             ),
         },
         {
             key: 'progress',
             header: 'Current Progress',
             render: row => (
-                <div className="min-w-[180px] flex items-center justify-center gap-2">
-                                        <p className="text-xs text-[#767683]">{row.progress}%</p>
-
-                    <div className="h-1.5 w-full rounded-full bg-gray-200 mb-1.5">
+                <div className="min-w-[180px]">
+                    <p className="text-xs font-bold text-[#767683] mb-1">{row.progress}%</p>
+                    <div className="h-1.5 w-full rounded-full bg-gray-200">
                         <div
-                            className="h-full rounded-full bg-[#1a237e]"
+                            className="h-full rounded-full bg-[#000B60]"
                             style={{ width: `${row.progress}%` }}
                         />
                     </div>
-
                 </div>
             ),
         },
         {
             key: 'avgScore',
             header: 'Avg Test Score',
-            render: row => <span className="text-sm text-[#767683] font-medium">{row.test_score}%</span>,
+            render: row => (
+                <span className="text-[#191c1e] text-sm font-medium">{row.test_score}%</span>
+            ),
         },
         {
             key: 'status',
             header: 'Status',
             render: row => (
-                <span className={`text-xs font-bold ${row.status === 'Completed' ? 'text-[#00875A]' : 'text-[#B49C00]'}`}>
-                    {row.status.toUpperCase()}
+                <span
+                    className={`inline-flex items-center gap-1 text-xs font-bold ${
+                        row.status === 'Completed' ? 'text-[#00875A]' : 'text-[#B49C00]'
+                    }`}
+                >
+                    <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                            row.status === 'Completed' ? 'bg-[#00875A]' : 'bg-[#B49C00]'
+                        }`}
+                    />
+                    {row.status}
                 </span>
             ),
         },
-        // {
-        //     key: 'actions',
-        //     header: 'Actions',
-        //     render: () => (
-        //         <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
-        //             <MoreVertical size={15} className="text-[#767683]" />
-        //         </button>
-        //     ),
-        //     headerClassName: 'text-right',
-        //     cellClassName: 'text-right',
-        // },
     ]
 
     // query
@@ -141,7 +135,7 @@ const StudentDetailPage = () => {
                             <Heading className="text-[#000B60] mb-3">{studentAnalytics?.data?.student?.first_name} {studentAnalytics?.data?.student?.last_name}</Heading>
                             <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
                                 <span className="flex items-center gap-1.5 text-xs text-black font-medium">
-                                    <Clock className='text-[#00A6BF]' size={12} /> Recent Active: Today 11:40 pm
+                                    <Clock className='text-[#00A6BF]' size={15} /> Recent Active: {studentAnalytics?.data?.recentActive?.display}
                                 </span>
                             </div>
                                 </>
@@ -199,26 +193,29 @@ const StudentDetailPage = () => {
                 )}
             </motion.div>
 
-            {/* Enrolled Courses — flex-1 + min-h-0: scroll only inside table */}
-            <motion.div className="flex min-h-0 flex-1 flex-col px-2" {...fadeUp(0.15)}>
-                <Subheading className="mb-3 shrink-0 text-[#000B60] font-bold">Enrolled Courses</Subheading>
-                <div className="min-h-0 flex-1">
-                <DataTable
-                    className="h-full"
-                    columns={COURSE_COLUMNS}
-                    data={studentCourses?.data?.data ?? []}
-                    total={studentCourses?.data?.total ?? 0}
-                    page={page}
-                    loading={studentCoursesLoading}
-                    pageSize={pageSize}
-                    onPageChange={setPage}
-                    onPageSizeChange={(size) => {
-                        setPageSize(size)
-                        setPage(1)
-                    }}
-                    onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
-                    fixedBodyRows={5}
-                />
+            {/* Enrolled Courses */}
+            <motion.div className="flex flex-1 min-h-0 flex-col gap-3 px-2" {...fadeUp(0.15)}>
+                <div className="flex items-center justify-between shrink-0">
+                    <Subheading className="text-[#000B60] font-bold">Enrolled Courses</Subheading>
+                    {rangeLabel && (
+                        <span className="text-xs text-[#767683] font-medium shrink-0">{rangeLabel}</span>
+                    )}
+                </div>
+                <div className="flex-1 min-h-0">
+                    <DataTable
+                        columns={COURSE_COLUMNS}
+                        data={studentCourses?.data?.data ?? []}
+                        total={studentCourses?.data?.total ?? 0}
+                        page={page}
+                        loading={studentCoursesLoading}
+                        pageSize={pageSize}
+                        onPageChange={setPage}
+                        onPageSizeChange={(size) => {
+                            setPageSize(size)
+                            setPage(1)
+                        }}
+                        onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
+                    />
                 </div>
             </motion.div>
 

@@ -7,6 +7,7 @@ import type { TableColumn } from '@/components/ui'
 import man from '@/assets/images/man.jpg'
 import { useGetStudents } from '@/hooks/student'
 import { useGetAllCourses } from '@/hooks/useCourse'
+import { formatDateTime } from '@/utils/helper/formatDate'
 
 type Student = {
   id: number
@@ -19,6 +20,10 @@ type Student = {
   status: 'Active' | 'Expired'
   courses: any[]
   avatar_url: string
+  created_at: string
+  recentActive: {
+    display: string
+  }
 }
 
 // const MOCK_STUDENTS: Student[] = [
@@ -78,13 +83,13 @@ const StudentsPage = () => {
     {
       key: 'Joined Date',
       header: 'Joined Date',
-      render: row => <span className="text-[#767683]">2 Jan 2026</span>,
+      render: row => <span className="text-[#767683]">{formatDateTime(row?.created_at)}</span>,
     },
     {
       key: 'recentActive',
       header: 'Recent Active',
       render: row => (
-        <span className="text-[#767683]">Today 11:40 pm</span>
+        <span className="text-[#767683]">{row?.recentActive?.display}</span>
       ),
     },
     // {
