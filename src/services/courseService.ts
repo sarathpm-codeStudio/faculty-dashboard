@@ -31,6 +31,21 @@ export const courseService = {
     }
   },
 
+  getAllCategories: async (): Promise<any> => {
+
+    try {
+
+      const data=await supabase.from('categories').select('*').eq('is_active', true)
+
+      return data
+      
+    } catch (error:any) {
+      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+      throw new Error(message)
+    }
+
+  },
+
   createBasicDetails: async (payload: CreateCoursePayload): Promise<Course> => {
     try {
       const { data } = await apiClient.post('/courses', payload)
@@ -122,6 +137,8 @@ export const courseService = {
       throw new Error(message)
     }
   },
+
+  
 
 
 

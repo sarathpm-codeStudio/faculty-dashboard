@@ -129,8 +129,11 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
                 setCourseId(e.target.value)
                 setModuleId("")
                 formik.setFieldValue('course', e.target.value)
+                formik.setFieldValue('module', '')
+                setModuleOptions([])
               }}
-              disabled={isEdit}
+              loading={coursesLoading}
+              disabled={isEdit || coursesLoading}
               error={formik.touched.course && formik.errors.course ? formik.errors.course : undefined}
             />
 
@@ -139,7 +142,8 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
               options={moduleOptions}
               placeholder="Select module"
               value={formik.values.module}
-              disabled={isEdit}
+              loading={!!courseId && foldersLoading}
+              disabled={isEdit || !courseId || foldersLoading}
               onChange={e => {
                 setModuleId(e.target.value)
                 formik.setFieldValue('module', e.target.value)

@@ -16,9 +16,6 @@ const fadeUp = (delay = 0) => ({
     transition: { duration: 0.36, delay, ease: 'easeOut' as const },
 })
 
-const toTitleCase = (value: string) =>
-    value.trim().toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase())
-
 const initialValues: SaveBankDetailsInput = {
     bank_name: '',
     account_holder_name: '',
@@ -62,11 +59,7 @@ const UpdateBankDetails = () => {
     const err = (field: keyof SaveBankDetailsInput) =>
         formik.touched[field] && formik.errors[field] ? formik.errors[field] : undefined
 
-    const titleCaseOnChange = (field: 'bank_name') => (e: ChangeEvent<HTMLInputElement>) => {
-        formik.setFieldValue(field, toTitleCase(e.target.value))
-    }
-
-    const uppercaseOnChange = (field: 'account_holder_name' | 'ifsc_code' | 'pan_number') => (
+    const uppercaseOnChange = (field: 'bank_name' | 'account_holder_name' | 'ifsc_code' | 'pan_number') => (
         e: ChangeEvent<HTMLInputElement>,
     ) => {
         formik.setFieldValue(field, e.target.value.toUpperCase())
@@ -97,9 +90,10 @@ const UpdateBankDetails = () => {
                             <Input
                                 label="Bank Name"
                                 name="bank_name"
-                                placeholder="e.g. International Federal Bank"
+                                placeholder="e.g. INTERNATIONAL FEDERAL BANK"
+                                autoCapitalize="characters"
                                 value={formik.values.bank_name}
-                                onChange={titleCaseOnChange('bank_name')}
+                                onChange={uppercaseOnChange('bank_name')}
                                 onBlur={formik.handleBlur}
                                 error={err('bank_name')}
                             />

@@ -6,30 +6,26 @@ import { Heading, Paragraph, DataTable, Subheading, Skeleton, SkeletonStatCard }
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import Button from '@/components/ui/Button'
+import { useGetBankDetails } from '@/hooks/bank'
+import { useGetTransactionHistory } from '@/hooks/bank'
+import { useAuthStore } from '@/store/authStore'
 
 type Transaction = {
     id: string
-    txnId: string
-    time: string
-    amount: string
-    date: string
+    transactionId: string
+    amount: number
+    amountDisplay: string
+    type: string
     status: 'SUCCESS' | 'PENDING' | 'FAILED'
+    time: string
+    date: string
 }
-
-const MOCK_TRANSACTIONS: Transaction[] = Array.from({ length: 8 }, (_, i) => ({
-    id: String(i + 1),
-    txnId: '#TRX-99210-FB',
-    time: '09:45 AM',
-    amount: '₹8,450.00',
-    date: 'Nov 01, 2023',
-    status: 'SUCCESS',
-}))
 
 const COLUMNS: TableColumn<Transaction>[] = [
     {
-        key: 'txnId',
+        key: 'transactionId',
         header: 'TRANSACTION ID',
-        render: row => <span className="text-sm font-bold text-[#000B60]">{row.txnId}</span>,
+        render: row => <span className="text-sm font-bold text-[#000B60]">{row.transactionId}</span>,
     },
     {
         key: 'time',
@@ -39,7 +35,7 @@ const COLUMNS: TableColumn<Transaction>[] = [
     {
         key: 'amount',
         header: 'AMOUNT',
-        render: row => <span className="text-sm font-bold text-[#191c1e]">{row.amount}</span>,
+        render: row => <span className="text-sm font-bold text-[#191c1e]">{row.amountDisplay ?? "₹0"}</span>,
     },
     {
         key: 'date',
@@ -73,6 +69,15 @@ const BankDetailsAndTransaction = () => {
     const [loading, setLoading] = useState(true)
     const [showAll, setShowAll] = useState(false)
 
+    const authUser = useAuthStore((s) => s.user)
+
+
+    // query
+    const { data: bankDetails, isLoading: isLoadingBankDetails } = useGetBankDetails()
+    const { data: transactionHistory, isLoading: isLoadingTransactionHistory } = useGetTransactionHistory(authUser?.id, 6)
+
+
+
     useEffect(() => {
         const t = setTimeout(() => setLoading(false), 800)
         return () => clearTimeout(t)
@@ -99,7 +104,8 @@ const BankDetailsAndTransaction = () => {
         )
     }
 
-    const visibleTransactions = showAll ? MOCK_TRANSACTIONS : MOCK_TRANSACTIONS.slice(0, 8)
+    const transactions = transactionHistory?.transactions ?? []
+    const visibleTransactions = showAll ? transactions : transactions.slice(0, 6)
 
     return (
         <div className="flex flex-col h-full overflow-y-auto scrollbar-hide gap-5 pb-6">
@@ -128,17 +134,30 @@ const BankDetailsAndTransaction = () => {
                                     <Landmark size={26} className="text-[#000B60]" />
                                 </div>
                                 <div>
-                                    <Subheading className="font-bold" >Active Disbursement Method</Subheading>
+                                    <Subheading className="font-bold" > Active Disbursement Method </Subheading>
                                     <div className="flex items-center gap-1.5 mt-1">
                                         <span className="w-2 h-2 rounded-full bg-[#00875A]" />
-                                        <Paragraph className=" text-gray-500">Personal Checking Account</Paragraph>
+                                        <Paragraph className=" text-gray-500">
+                                            Personal Checking Account 
+
+                                            {
+                                                bankDetails?.data?.is_verified ? <span className="px-1.5 py-0.5 rounded ml-2 text-[10px] font-bold bg-[#E6FBF7] text-[#00875A]">
+                                                VERIFIED
+                                            </span> : <span className="px-1.5 py-0.5 rounded text-[10px] ml-2 font-bold bg-[#E6FBF7] text-[#00875A]">
+                                                UNVERIFIED
+                                            </span>
+                                            }
+
+                                        </Paragraph>
                                     </div>
                                 </div>
                             </div>
-                            <Button variant="primary" onClick={() => navigate('/account/bank/add-bank-details')}>
+                            {
+                                bankDetails?.data === null && <Button variant="primary" className='!h-10 !text-sm !px-4' onClick={() => navigate('/account/bank/add-bank-details')}>
                                 <Pencil size={20} />
                                 Add Bank Details
                             </Button>
+                            }
                         </div>
 
                         {/* Bank info row */}
@@ -148,7 +167,15 @@ const BankDetailsAndTransaction = () => {
                                     Bank Name
                                 </Paragraph>
                                 <Paragraph className="!text-sm font-bold text-[#191c1e]">
-                                    Standard Chartered Bank
+                                    {bankDetails?.data?.bank_name }
+                                </Paragraph>
+                            </div>
+                            <div>
+                                <Paragraph className="!text-[10px] font-bold text-[#767683] uppercase tracking-widest mb-1">
+                                    Account Holder Name
+                                </Paragraph>
+                                <Paragraph className="!text-sm font-bold text-[#191c1e]">
+                                    {bankDetails?.data?.account_holder_name }
                                 </Paragraph>
                             </div>
                             <div>
@@ -156,7 +183,7 @@ const BankDetailsAndTransaction = () => {
                                     Account Number
                                 </Paragraph>
                                 <Paragraph className="!text-sm font-bold text-[#191c1e]">
-                                    •••• •••• 8842
+                                    {bankDetails?.data?.account_number}
                                 </Paragraph>
                             </div>
                             <div>
@@ -164,18 +191,21 @@ const BankDetailsAndTransaction = () => {
                                     IFSC Code
                                 </Paragraph>
                                 <Paragraph className="!text-sm font-bold text-[#191c1e]">
-                                    SCBL0034012
+                                {bankDetails?.data?.ifsc_code}
                                 </Paragraph>
                             </div>
                             <div>
                                 <Paragraph className="!text-[10px] font-bold text-[#767683] uppercase tracking-widest mb-1">
-                                    PAN Status
+                                    PAN Number
                                 </Paragraph>
                                 <div className="flex items-center gap-2">
-                                    <Paragraph className="!text-sm font-bold text-[#191c1e]">ABCDE1234F</Paragraph>
-                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E6FBF7] text-[#00875A]">
+                                    <Paragraph className="!text-sm font-bold text-[#191c1e]"> 
+                                        {bankDetails?.data?.pan_number}
+
+                                    </Paragraph>
+                                    {/* <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E6FBF7] text-[#00875A]">
                                         VERIFIED
-                                    </span>
+                                    </span> */}
                                 </div>
                             </div>
                         </div>
@@ -185,18 +215,25 @@ const BankDetailsAndTransaction = () => {
                     <motion.div {...fadeUp(0.12)} className="flex flex-col gap-3">
                         <div className="flex items-center justify-between">
                             <Subheading className="text-[#000B60] font-bold">Last Transactions</Subheading>
-                            <button onClick={() => navigate('/account/bank/history')} className="flex items-center gap-1 text-sm font-bold text-[#000B60] hover:opacity-75 transition-opacity">
-                                View Full History
-                                <ChevronRight size={15} />
-                            </button>
+                            {transactions.length > 6 && (
+                                <button onClick={() => navigate('/account/bank/history')} className="flex items-center gap-1 text-sm font-bold text-[#000B60] hover:opacity-75 transition-opacity">
+                                    View Full History
+                                    <ChevronRight size={15} />
+                                </button>
+                            )}
                         </div>
 
                         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                             <DataTable
                                 columns={COLUMNS}
                                 data={visibleTransactions}
-                                defaultPageSize={8}
+                                total={transactions.length}
+                                page={1}
+                                pageSize={6}
+                                onPageChange={() => {}}
+                                onPageSizeChange={() => {}}
                                 hidePagination
+                                loading={isLoadingTransactionHistory}
                             />
                             <div className="flex justify-center py-4 border-t border-gray-100">
                                 <button
@@ -240,9 +277,9 @@ const BankDetailsAndTransaction = () => {
                     <motion.div {...fadeUp(0.14)}>
                         <StatCard
                             icon={null}
-                            label="ANNUAL INCOME"
-                            value="96,500.00"
-                            prefix="₹"
+                            label="TOTAL TRANSFERRED AMOUNT"
+                            value={transactionHistory?.totalTransferred?.display ?? "0"}
+                            // prefix="₹"
                             valueColor="#000B60"
                         />
                     </motion.div>

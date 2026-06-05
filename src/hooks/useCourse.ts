@@ -168,6 +168,13 @@ export const useDeleteMaterial = (courseId: string) => {
 }
 
 
+export const useGetAllCategories = () => {
+  return useQuery({
+    queryKey: ['categories'],
+    queryFn: () => courseService.getAllCategories(), 
+  })
+}
+
 export const useGetAllContent = (courseId: string, parentId?: string) => {
   return useQuery({
     queryKey: ['content', courseId, parentId],

@@ -15,6 +15,7 @@ import {
   getImageDimensions,
   isAspectRatio16x9,
 } from '@/utils/imageAspectRatio'
+import { useGetAllCategories } from '@/hooks/useCourse'
 
 interface Props {
   form: CourseFormData
@@ -29,7 +30,6 @@ interface Props {
   isLoadingCourseDetails?: boolean
 }
 
-const categoryOptions = ['CMA', 'CA', 'CFA', 'MBA', 'CPA', 'ACCA']
 const levelOptions = ['Beginner', 'Intermediate', 'Advanced']
 const languageOptions = ['English', 'Malayalam', 'Hindi', 'Tamil', 'Telugu', 'Kannada', 'Arabic']
 
@@ -89,6 +89,8 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
       update(values)
     },
   })
+
+  const { data: categories, isLoading: categoriesLoading } = useGetAllCategories()
 
   useEffect(() => {
     if (courseDetails) {
@@ -245,7 +247,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               error={formik.touched.description && formik.errors.description ? formik.errors.description : undefined}
               maxLength={5000}
               showCount
-              className="flex-1 min-h-[90px] h-[calc(100%-32px)]"
+              className="flex-1 min-h-[200px] h-[calc(100%-32px)]"
             />
           </div>
 
@@ -254,10 +256,15 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               label="Category"
               name="category"
               placeholder="Select category"
-              options={categoryOptions.map((o) => ({ value: o, label: o }))}
+              options={categories?.data?.map((category: any) => ({
+                value: category.name,
+                label: category.name,
+              })) ?? []}
               value={formik.values.category}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
+              loading={categoriesLoading}
+              disabled={categoriesLoading}
               error={formik.touched.category && formik.errors.category ? formik.errors.category : undefined}
             />
             <Select
