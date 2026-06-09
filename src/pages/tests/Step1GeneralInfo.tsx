@@ -1,9 +1,9 @@
 
-import { ArrowRight, Loader2 } from 'lucide-react'
-import { Input, Textarea, Select, Paragraph } from '@/components/ui'
+import { ArrowRight, ChevronRight, Info, Loader2, MapPin } from 'lucide-react'
+import { Input, Textarea, Select, Paragraph, Modal } from '@/components/ui'
 import Button from '@/components/ui/Button'
 import { IoAddCircleOutline } from "react-icons/io5";
-import { useGetAllCourses, useGetAllFoldersInCourse } from "@/hooks/useCourse"
+import { useGetAllCourses, useGetAllFoldersInCourse, useGetAllContentInModule } from "@/hooks/useCourse"
 import { useEffect, useState } from 'react';
 import { useFormik } from 'formik'
 import { testSchema } from '@/utils/validator/test.validator';
@@ -13,6 +13,9 @@ export type TestFormData = {
   title: string
   course: string
   module: string
+  moduleTitle: string
+  material: string
+  materialTitle: string
   testType: string
   duration: string
   instructions: string
@@ -33,6 +36,46 @@ interface Props {
 const testTypeOptions = [{ value: 'final', label: 'Final Examination' }, { value: 'midterm', label: 'Mid-Term' }, { value: 'quiz', label: 'Quiz' }]
 const durationOptions = [{ value: '', label: 'Select Duration' }, { value: '30', label: '30 mins' }, { value: '60', label: '1 hour' }, { value: '90', label: '1h 30 mins' }, { value: '120', label: '2 hours' }]
 
+const getLabel = (options: { value: string; label: string }[], value: string) =>
+  options.find(option => option.value === value)?.label
+
+const getPlacementInfo = (
+  values: TestFormData,
+  courseOptions: { value: string; label: string }[],
+  moduleOptions: { value: string; label: string }[],
+  materialOptions: { value: string; label: string }[],
+) => {
+  const courseName = getLabel(courseOptions, values.course)
+  const moduleName = getLabel(moduleOptions, values.module)
+  const materialName = getLabel(materialOptions, values.material)
+
+  if (values.material && materialName) {
+    return {
+      message: `This test will appear under the material "${materialName}" within the module "${moduleName}" in the course "${courseName}".`,
+      path: [courseName, moduleName, materialName].filter(Boolean) as string[],
+    }
+  }
+
+  if (values.module && moduleName) {
+    return {
+      message: `This test will appear under the module "${moduleName}" in the course "${courseName}".`,
+      path: [courseName, moduleName].filter(Boolean) as string[],
+    }
+  }
+
+  if (values.course && courseName) {
+    return {
+      message: `This test will appear under the course "${courseName}".`,
+      path: [courseName].filter(Boolean) as string[],
+    }
+  }
+
+  return {
+    message: 'Select a course to see where this test will appear.',
+    path: [] as string[],
+  }
+}
+
 const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setIsDraft, testData }: Props) => {
 
 
@@ -41,13 +84,17 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
   const [moduleOptions, setModuleOptions] = useState<{ value: string; label: string }[]>([])
   const [courseId, setCourseId] = useState<string>("")
   const [moduleId, setModuleId] = useState<string>("")
+  const [materialOptions, setMaterialOptions] = useState<{ value: string; label: string }[]>([])
   const [isEdit, setIsEdit] = useState<boolean>(false)
   const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>("next")
+  const [showPlacementModal, setShowPlacementModal] = useState(false)
+  const [pendingAction, setPendingAction] = useState<'draft' | 'next' | null>(null)
 
 
   // query
   const { data: courses, isLoading: coursesLoading } = useGetAllCourses("all", "", true)
   const { data: folders, isLoading: foldersLoading } = useGetAllFoldersInCourse(courseId, !!courseId)
+  const { data: contentData, isLoading: materialsLoading } = useGetAllContentInModule(moduleId, !!moduleId)
 
   console.log("courseId", courseId)
 
@@ -66,18 +113,29 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
   }, [folders])
 
   useEffect(() => {
+    const materials = contentData?.data ?? contentData?.json?.data ?? []
+    setMaterialOptions(materials.map((material: any) => ({ value: material.id, label: material.title })))
+  }, [contentData])
+
+  useEffect(() => {
     if (testData) {
       setIsEdit(true)
       formik.setValues({
         title: testData?.data?.title,
         course: testData?.data?.course_id,
         module: testData?.data?.module_id,
+        moduleTitle: testData?.data?.module_title ?? '',
+        material: testData?.data?.material_id ?? '',
+        materialTitle: testData?.data?.material_title ?? '',
         testType: testData?.data?.type,
         duration: testData?.data?.duration_minutes,
         instructions: testData?.data?.instructions,
       })
       if (testData?.data?.course_id) {
         setCourseId(testData?.data?.course_id)
+      }
+      if (testData?.data?.module_id) {
+        setModuleId(testData?.data?.module_id)
       }
       console.log("testData", testData)
     }
@@ -94,6 +152,38 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
     }
   })
 
+  const placement = getPlacementInfo(formik.values, courseOptions, moduleOptions, materialOptions)
+
+  const handleActionClick = async (action: 'next' | 'draft') => {
+    const errors = await formik.validateForm()
+    formik.setTouched({
+      title: true,
+      course: true,
+      module: true,
+      material: true,
+      testType: true,
+      duration: true,
+      instructions: true,
+    })
+    if (Object.keys(errors).length > 0) return
+
+    setActiveBtn(action)
+    setPendingAction(action)
+    setShowPlacementModal(true)
+  }
+
+  const handleConfirmPlacement = () => {
+    setShowPlacementModal(false)
+    if (pendingAction === 'draft') setIsDraft(true)
+    formik.submitForm()
+    setPendingAction(null)
+  }
+
+  const closePlacementModal = () => {
+    setShowPlacementModal(false)
+    setPendingAction(null)
+  }
+
 
   return (
 
@@ -108,6 +198,13 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
           <div className="flex items-center gap-3 border-l-4 border-[#000B60] pl-3">
             <Paragraph className="font-bold text-[#000B60] !text-base">General Information</Paragraph>
           </div>
+
+          {!isEdit && (
+            <p className="flex items-start gap-2 text-sm text-[#767683] leading-relaxed font-semibold">
+              <Info size={18} className="text-[#00A6BF] shrink-0 mt-0.5" />
+              <span>You can create this test under a course, module, or material.</span>
+            </p>
+          )}
 
           <Input
             label="Test Title"
@@ -130,7 +227,11 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
                 setModuleId("")
                 formik.setFieldValue('course', e.target.value)
                 formik.setFieldValue('module', '')
+                formik.setFieldValue('moduleTitle', '')
+                formik.setFieldValue('material', '')
+                formik.setFieldValue('materialTitle', '')
                 setModuleOptions([])
+                setMaterialOptions([])
               }}
               loading={coursesLoading}
               disabled={isEdit || coursesLoading}
@@ -145,17 +246,31 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
               loading={!!courseId && foldersLoading}
               disabled={isEdit || !courseId || foldersLoading}
               onChange={e => {
+                const selectedModule = moduleOptions.find(option => option.value === e.target.value)
                 setModuleId(e.target.value)
                 formik.setFieldValue('module', e.target.value)
+                formik.setFieldValue('moduleTitle', selectedModule?.label || '')
+                formik.setFieldValue('material', '')
+                formik.setFieldValue('materialTitle', '')
+                setMaterialOptions([])
               }}
             />
-            {/* <Input
-              label="Chapter"
-              placeholder="e.g., Differential Equations"
-              value={form.chapter}
-              onChange={e => update({ chapter: e.target.value })}
-            /> */}
           </div>
+
+          <Select
+            label="Material"
+            options={materialOptions}
+            placeholder={materialsLoading ? 'Loading materials...' : 'Select material'}
+            value={formik.values.material}
+            loading={!!moduleId && materialsLoading}
+            disabled={isEdit || !moduleId || materialsLoading}
+            onChange={e => {
+              const selectedMaterial = materialOptions.find(option => option.value === e.target.value)
+              formik.setFieldValue('material', e.target.value)
+              formik.setFieldValue('materialTitle', selectedMaterial?.label || '')
+            }}
+            error={formik.touched.material && formik.errors.material ? formik.errors.material : undefined}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <Select
@@ -205,18 +320,52 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
       {/* ── Right sidebar ── */}
       <div className="col-span-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
-          <Button variant="primary" disabled={isSubmiting} onClick={() => { setActiveBtn('next'); formik.handleSubmit() }} fullWidth >
+          <Button variant="primary" disabled={isSubmiting} onClick={() => handleActionClick('next')} fullWidth >
             {isSubmiting && activeBtn === 'next'
               ? <Loader2 size={16} className="animate-spin" />
               : <><span>Add Questions</span><ArrowRight size={18} /></>}
           </Button>
-          <Button variant="white" disabled={isSubmiting} fullWidth onClick={() => { setActiveBtn('draft'); formik.handleSubmit(); setIsDraft(true) }}>
+          <Button variant="white" disabled={isSubmiting} fullWidth onClick={() => handleActionClick('draft')}>
             {isSubmiting && activeBtn === 'draft'
               ? <Loader2 size={16} className="animate-spin" />
               : <><span>Save Draft</span></>}
           </Button>
         </div>
       </div>
+
+      <Modal
+        open={showPlacementModal}
+        onClose={closePlacementModal}
+        title="Where will this test appear?"
+        footer={
+          <>
+            <Button variant="white" className="!h-10" onClick={closePlacementModal} disabled={isSubmiting}>
+              Cancel
+            </Button>
+            <Button variant="primary" className="!h-10" onClick={handleConfirmPlacement} disabled={isSubmiting}>
+              {isSubmiting
+                ? <Loader2 size={16} className="animate-spin" />
+                : pendingAction === 'draft' ? 'Save Draft' : 'Continue'}
+            </Button>
+          </>
+        }
+      >
+        <Paragraph className="!text-sm text-gray-600 leading-relaxed">
+          {placement.message}
+        </Paragraph>
+
+        {placement.path.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap rounded-xl bg-[#F2F4F6] px-4 py-3">
+            <MapPin size={16} className="text-[#000B60] shrink-0" />
+            {placement.path.map((segment, index) => (
+              <span key={segment} className="flex items-center gap-2 text-sm font-semibold text-[#000B60]">
+                {index > 0 && <ChevronRight size={14} className="text-gray-400" />}
+                {segment}
+              </span>
+            ))}
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

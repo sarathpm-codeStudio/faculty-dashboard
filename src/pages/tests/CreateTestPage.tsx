@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 
 
 const emptyForm = (): TestFormData => ({
-  title: '', course: '', module: '',
+  title: '', course: '', module: '', moduleTitle: '', material: '', materialTitle: '',
   testType: '', duration: '',
   instructions: '',
 })
@@ -28,7 +28,6 @@ const CreateTestPage = () => {
   const [form, setForm] = useState<TestFormData>(emptyForm)
   const [isDraft, setIsDraft] = useState(false)
   const [testId, setTestId] = useState<string>("")
-  const [moduleId, setModuleId] = useState<string>("")
 
 
 
@@ -46,14 +45,17 @@ const CreateTestPage = () => {
 
     if (id) {
       setTestId(id)
-      setModuleId(testData?.data?.module_id)
 
       // edit test basic details
       setForm(values)
       console.log("values>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", values)
 
       const payload = {
-        ...values
+        ...values,
+        module_id: values.module,
+        module_title: values.moduleTitle,
+        material_id: values.material,
+        material_title: values.materialTitle,
       }
 
       // call api 
@@ -69,7 +71,6 @@ const CreateTestPage = () => {
 
       // create test basic details
       setForm(values)
-      setModuleId(values.module)
       console.log("values", values)
       // genarate unique id for test 
       const unique_id = generateUniqueId()
@@ -77,6 +78,10 @@ const CreateTestPage = () => {
       const payload = {
         ...values,
         unique_id,
+        module_id: values.module,
+        module_title: values.moduleTitle,
+        material_id: values.material,
+        material_title: values.materialTitle,
       }
 
       // call api 
@@ -127,11 +132,13 @@ const CreateTestPage = () => {
       )}
       {step === 2 && (
         <Step2AddQuestions
-          // onPublish={() => navigate('/tests')}
-          // onSaveDraft={() => navigate('/tests')}
           onBack={() => setStep(1)}
           testId={testId}
-          moduleId={moduleId}
+          courseId={form.course}
+          moduleId={form.module}
+          moduleName={form.moduleTitle}
+          materialId={form.material}
+          materialName={form.materialTitle}
         />
       )}
     </div>

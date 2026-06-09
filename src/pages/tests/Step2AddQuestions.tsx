@@ -11,28 +11,22 @@ import { IoRocketOutline } from 'react-icons/io5'
 import { useAddQuestion, useGetQuestionsByTestId, useUpdateQuestion, useDeleteQuestion, usePublishTest } from '@/hooks/test'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
-import { useGetAllContentInModule } from '@/hooks/useCourse'
+import { useGetAllContentInModule, useGetAllFoldersInCourse } from '@/hooks/useCourse'
 
 interface Props {
-  // onPublish: () => void
-  // onSaveDraft: () => void
   onBack: () => void
   testId: string
+  courseId: string
   moduleId: string
+  moduleName: string
+  materialId: string
+  materialName: string
 }
-
-const questionSchema = Yup.object({
-  text: Yup.string().trim().required('Question text is required'),
-  materialId: Yup.string().required('Material is required'),
-  optionA: Yup.string().trim().required('Option A is required'),
-  optionB: Yup.string().trim().required('Option B is required'),
-  optionC: Yup.string().trim().required('Option C is required'),
-  optionD: Yup.string().trim().required('Option D is required'),
-  correctAnswer: Yup.string().required('Please select the correct answer'),
-})
 
 const INITIAL_VALUES = {
   text: '',
+  moduleId: '',
+  moduleTitle: '',
   materialId: '',
   materialTitle: '',
   optionA: '',
@@ -42,55 +36,122 @@ const INITIAL_VALUES = {
   correctAnswer: '',
 }
 
-const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
+const Step2AddQuestions = ({
+  onBack,
+  testId,
+  courseId,
+  moduleId: testModuleId,
+  moduleName: testModuleName,
+  materialId: testMaterialId,
+  materialName: testMaterialName,
+}: Props) => {
+  const hasPreselectedMaterial = !!testMaterialId
+  const hasPreselectedModule = !!testModuleId
+  const needsModuleSelect = !hasPreselectedModule && !!courseId
+  const needsMaterialSelect = !hasPreselectedMaterial
+
   const [randomize, setRandomize] = useState(false)
   const [isEditQuestion, setIsEditQuestion] = useState(false)
   const [editQuestionId, setEditQuestionId] = useState<any>(null)
+  const [questionModuleId, setQuestionModuleId] = useState('')
 
   const navigate = useNavigate()
 
+  const activeModuleId = testModuleId || questionModuleId
 
-  // queries
   const { data: questionsData } = useGetQuestionsByTestId(testId, true)
-  const { data: contentData, isLoading: isLoadingContent } = useGetAllContentInModule(moduleId, true)
+  const { data: folders, isLoading: foldersLoading } = useGetAllFoldersInCourse(
+    courseId,
+    !!courseId && (needsModuleSelect || hasPreselectedModule),
+  )
+  const { data: contentData, isLoading: isLoadingContent } = useGetAllContentInModule(
+    activeModuleId,
+    needsMaterialSelect && !!activeModuleId,
+  )
+  const { data: preselectedContentData } = useGetAllContentInModule(
+    testModuleId,
+    hasPreselectedMaterial && !!testModuleId,
+  )
 
-  console.log('── Content Data ──', contentData)
-
-
-  // mutations
   const { mutateAsync: addQuestion, isPending: isAddingQuestion } = useAddQuestion(testId)
   const { mutateAsync: updateQuestion, isPending: isUpdatingQuestion } = useUpdateQuestion(testId, editQuestionId)
   const { mutateAsync: deleteQuestion } = useDeleteQuestion(testId)
   const { mutateAsync: publishTest, isPending: isPublishingTest } = usePublishTest()
 
-
-
-  console.log('── Questions Data ──', questionsData)
+  const moduleOptions = useMemo(() => {
+    const modules = folders?.data ?? []
+    return modules.map((folder: any) => ({
+      value: folder.id,
+      label: folder.title,
+    }))
+  }, [folders])
 
   const materialOptions = useMemo(() => {
     const materials = contentData?.data ?? contentData?.json?.data ?? []
-
     return materials.map((material: any) => ({
       value: material.id,
       label: material.title,
     }))
   }, [contentData])
 
+  const preselectedMaterialTitle = useMemo(() => {
+    if (!hasPreselectedMaterial) return ''
+    if (testMaterialName) return testMaterialName
+    const materials = preselectedContentData?.data ?? preselectedContentData?.json?.data ?? []
+    return materials.find((material: any) => material.id === testMaterialId)?.title ?? ''
+  }, [hasPreselectedMaterial, testMaterialId, testMaterialName, preselectedContentData])
+
+  const preselectedModuleTitle = useMemo(() => {
+    if (!hasPreselectedModule) return ''
+    if (testModuleName) return testModuleName
+    return moduleOptions.find((module: { value: string; label: string }) => module.value === testModuleId)?.label ?? ''
+  }, [hasPreselectedModule, testModuleId, testModuleName, moduleOptions])
+
+  const questionSchema = useMemo(() => Yup.object({
+    text: Yup.string().trim().required('Question text is required'),
+    moduleId: needsModuleSelect
+      ? Yup.string().required('Module is required')
+      : Yup.string().optional(),
+    materialId: needsMaterialSelect
+      ? Yup.string().required('Material is required')
+      : Yup.string().optional(),
+    optionA: Yup.string().trim().required('Option A is required'),
+    optionB: Yup.string().trim().required('Option B is required'),
+    optionC: Yup.string().trim().required('Option C is required'),
+    optionD: Yup.string().trim().required('Option D is required'),
+    correctAnswer: Yup.string().required('Please select the correct answer'),
+  }), [needsModuleSelect, needsMaterialSelect])
 
   const formik = useFormik({
     initialValues: INITIAL_VALUES,
     validationSchema: questionSchema,
-    validateOnChange: true,  // ✅ show errors as user types
+    validateOnChange: true,
     validateOnBlur: true,
-    onSubmit: async (values, { resetForm }) => {
-      const selectedMaterial = materialOptions.find((option: { value: string; label: string }) => option.value === values.materialId)
+    onSubmit: async (values) => {
+      const selectedMaterial = materialOptions.find(
+        (option: { value: string; label: string }) => option.value === values.materialId,
+      )
+      const effectiveModuleId = testModuleId || questionModuleId || values.moduleId
+      const selectedModule = moduleOptions.find(
+        (option: { value: string; label: string }) => option.value === effectiveModuleId,
+      )
+      const effectiveModuleTitle = hasPreselectedModule
+        ? preselectedModuleTitle
+        : selectedModule?.label || values.moduleTitle
+      const effectiveMaterialId = hasPreselectedMaterial ? testMaterialId : values.materialId
+      const effectiveMaterialTitle = hasPreselectedMaterial
+        ? preselectedMaterialTitle
+        : selectedMaterial?.label || values.materialTitle
+
       const questionPayload = {
         test_id: testId,
         question: values.text,
         type: 'mcq',
         marks: 5,
-        material_id: values.materialId,
-        material_title: selectedMaterial?.label || values.materialTitle,
+        module_id: effectiveModuleId,
+        module_title: effectiveModuleTitle,
+        material_id: effectiveMaterialId,
+        material_title: effectiveMaterialTitle,
       }
 
       const optionsPayload = [
@@ -119,7 +180,7 @@ const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
           toast.success('Question updated successfully')
           setIsEditQuestion(false)
           setEditQuestionId(null)
-          resetForm()
+          resetQuestionForm()
         }
 
       } else {
@@ -130,18 +191,31 @@ const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
         }
         if (data) {
           toast.success('Question added successfully')
-          resetForm()
+          resetQuestionForm()
         }
       }
     },
   })
 
-  const { values, errors, touched, handleBlur, setFieldValue, handleSubmit, setTouched } = formik
+  const { values, errors, touched, handleBlur, setFieldValue, handleSubmit, setTouched, resetForm } = formik
+
+  const resetQuestionForm = () => {
+    resetForm({
+      values: {
+        ...INITIAL_VALUES,
+        moduleId: needsModuleSelect ? questionModuleId : '',
+        moduleTitle: needsModuleSelect
+          ? moduleOptions.find((option: { value: string; label: string }) => option.value === questionModuleId)?.label || ''
+          : '',
+      },
+    })
+  }
 
   // ✅ Mark all fields touched so errors show on submit click
   const handleAddQuestion = () => {
     setTouched({
       text: true,
+      moduleId: true,
       materialId: true,
       optionA: true,
       optionB: true,
@@ -193,8 +267,11 @@ const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
 
   const handleEditQuestion = (editQuestionData: any) => {
     setIsEditQuestion(true)
-    console.log("editQuestionData", editQuestionData)
     setEditQuestionId(editQuestionData.id)
+
+    if (editQuestionData.module_id) {
+      setQuestionModuleId(editQuestionData.module_id)
+    }
 
     if (editQuestionData.options && editQuestionData.options.length > 0) {
       const optionsByLabel = editQuestionData.options.reduce((acc: any, option: any) => {
@@ -204,8 +281,10 @@ const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
 
       formik.setValues({
         text: editQuestionData.question,
-        materialId: editQuestionData.material_id || '',
-        materialTitle: editQuestionData.material_title || '',
+        moduleId: editQuestionData.module_id || questionModuleId || testModuleId || '',
+        moduleTitle: editQuestionData.module_title || preselectedModuleTitle || '',
+        materialId: hasPreselectedMaterial ? testMaterialId : (editQuestionData.material_id || ''),
+        materialTitle: hasPreselectedMaterial ? preselectedMaterialTitle : (editQuestionData.material_title || ''),
         optionA: optionsByLabel['A'] || '',
         optionB: optionsByLabel['B'] || '',
         optionC: optionsByLabel['C'] || '',
@@ -215,8 +294,10 @@ const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
     } else {
       formik.setValues({
         text: editQuestionData.question,
-        materialId: editQuestionData.material_id || '',
-        materialTitle: editQuestionData.material_title || '',
+        moduleId: editQuestionData.module_id || questionModuleId || testModuleId || '',
+        moduleTitle: editQuestionData.module_title || preselectedModuleTitle || '',
+        materialId: hasPreselectedMaterial ? testMaterialId : (editQuestionData.material_id || ''),
+        materialTitle: hasPreselectedMaterial ? preselectedMaterialTitle : (editQuestionData.material_title || ''),
         optionA: '',
         optionB: '',
         optionC: '',
@@ -313,22 +394,82 @@ const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
             {err('text')}
           </div>
 
-          {/* Material selector */}
-          <div>
-            <Select
-              label="Question related to Material"
-              placeholder={isLoadingContent ? 'Loading materials...' : 'Select material'}
-              options={materialOptions}
-              value={values.materialId}
-              onChange={e => {
-                const selectedMaterial = materialOptions.find((option: { value: string; label: string }) => option.value === e.target.value)
-                setFieldValue('materialId', e.target.value)
-                setFieldValue('materialTitle', selectedMaterial?.label || '')
-              }}
-              onBlur={handleBlur('materialId')}
-            />
-            {err('materialId')}
-          </div>
+          {/* Module selector — only when test was created with course only */}
+          {needsModuleSelect && (
+            <div>
+              <Select
+                label="Module"
+                placeholder={foldersLoading ? 'Loading modules...' : 'Select module'}
+                options={moduleOptions}
+                value={questionModuleId}
+                loading={foldersLoading}
+                disabled={foldersLoading}
+                onChange={e => {
+                  const selectedModule = moduleOptions.find(
+                    (option: { value: string; label: string }) => option.value === e.target.value,
+                  )
+                  setQuestionModuleId(e.target.value)
+                  setFieldValue('moduleId', e.target.value)
+                  setFieldValue('moduleTitle', selectedModule?.label || '')
+                  setFieldValue('materialId', '')
+                  setFieldValue('materialTitle', '')
+                }}
+                onBlur={handleBlur('moduleId')}
+              />
+              {err('moduleId')}
+            </div>
+          )}
+
+          {/* Material selector — hidden when material was selected during test creation */}
+          {needsMaterialSelect && (
+            <div>
+              <Select
+                label="Question related to Material"
+                placeholder={
+                  !activeModuleId
+                    ? 'Select a module first'
+                    : isLoadingContent
+                      ? 'Loading materials...'
+                      : 'Select material'
+                }
+                options={materialOptions}
+                value={values.materialId}
+                loading={!!activeModuleId && isLoadingContent}
+                disabled={!activeModuleId || isLoadingContent}
+                onChange={e => {
+                  const selectedMaterial = materialOptions.find(
+                    (option: { value: string; label: string }) => option.value === e.target.value,
+                  )
+                  setFieldValue('materialId', e.target.value)
+                  setFieldValue('materialTitle', selectedMaterial?.label || '')
+                }}
+                onBlur={handleBlur('materialId')}
+              />
+              {err('materialId')}
+            </div>
+          )}
+
+          {hasPreselectedMaterial && preselectedMaterialTitle && (
+            <div className="rounded-xl bg-[#F2F4F6] px-4 py-3">
+              <Paragraph className="!text-xs font-bold text-[#767683] uppercase tracking-wide">
+                Referenced Material
+              </Paragraph>
+              <Paragraph className="!text-sm font-semibold text-[#000B60] mt-1">
+                {preselectedMaterialTitle}
+              </Paragraph>
+            </div>
+          )}
+
+          {hasPreselectedModule && preselectedModuleTitle && !needsModuleSelect && (
+            <div className="rounded-xl bg-[#F2F4F6] px-4 py-3">
+              <Paragraph className="!text-xs font-bold text-[#767683] uppercase tracking-wide">
+                Module
+              </Paragraph>
+              <Paragraph className="!text-sm font-semibold text-[#000B60] mt-1">
+                {preselectedModuleTitle}
+              </Paragraph>
+            </div>
+          )}
 
           {/* MCQ options + correct answer */}
           <div className="flex flex-col gap-3">
@@ -414,13 +555,21 @@ const Step2AddQuestions = ({ onBack, testId, moduleId }: Props) => {
                     </span>
                     <div>
                       <Paragraph className="!text-sm font-bold text-[#000B60]">{q.question}</Paragraph>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {q.module_title && (
+                          <span className="text-[10px] font-bold text-[#767683] uppercase tracking-wide">
+                            {q.module_title}
+                          </span>
+                        )}
+                        {q.module_title && q.material_title && (
+                          <span className="text-[10px] text-[#767683]">•</span>
+                        )}
                         {q.material_title && (
                           <span className="text-[10px] font-bold text-[#767683] uppercase tracking-wide">
                             {q.material_title}
                           </span>
                         )}
-                        {q.material_title && (
+                        {(q.module_title || q.material_title) && (
                           <span className="text-[10px] text-[#767683]">•</span>
                         )}
                         <span className="text-[10px] font-bold text-[#767683] uppercase tracking-wide">
