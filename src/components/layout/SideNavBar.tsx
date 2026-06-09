@@ -9,7 +9,9 @@ import {
 import { RiCoupon2Line } from 'react-icons/ri'
 import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
-import logo from '@/assets/icons/Icon.svg'
+import logo from '@/assets/icons/brand_icon.svg'
+import title_logo from '@/assets/icons/title_logo.svg'
+
 import { Heading, Paragraph } from '../ui'
 
 const navLinks = [
@@ -81,15 +83,15 @@ const SideNavBar = () => {
             <div
                 className={`flex items-center border-b border-gray-100 pb-6 transition-[padding,gap] duration-300 ease-out ${collapsed ? 'justify-center px-2' : 'gap-3 px-6'}`}
             >
-                <div className="w-[50px] h-[40px] bg-[#000B60] rounded-xl flex items-center justify-center shrink-0">
+                <div className="w-[50px] h-[40px] rounded-xl flex items-center justify-center shrink-0">
                     <img src={logo} alt="logo" />
                 </div>
-                <Heading
+                {/* <Heading
                     className={`text-[#000B60] whitespace-nowrap ${labelClass()}`}
                     style={{ transition: LABEL_TRANSITION }}
                 >
                     Learninough
-                </Heading>
+                </Heading> */}
             </div>
 
             {/* Nav links */}
