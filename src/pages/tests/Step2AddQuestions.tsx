@@ -377,8 +377,8 @@ const Step2AddQuestions = ({
       <div className="col-span-8 flex flex-col gap-5">
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-3 border-l-4 border-[#000B60] pl-3">
-            <Paragraph className="font-bold text-[#000B60] !text-base">Add Questions</Paragraph>
+          <div className="flex items-center gap-3 border-l-4 border-[#2c1452] pl-3">
+            <Paragraph className="font-bold text-[#2c1452] !text-base">Add Questions</Paragraph>
           </div>
 
           {/* Question text */}
@@ -454,7 +454,7 @@ const Step2AddQuestions = ({
               <Paragraph className="!text-xs font-bold text-[#767683] uppercase tracking-wide">
                 Referenced Material
               </Paragraph>
-              <Paragraph className="!text-sm font-semibold text-[#000B60] mt-1">
+              <Paragraph className="!text-sm font-semibold text-[#2c1452] mt-1">
                 {preselectedMaterialTitle}
               </Paragraph>
             </div>
@@ -465,7 +465,7 @@ const Step2AddQuestions = ({
               <Paragraph className="!text-xs font-bold text-[#767683] uppercase tracking-wide">
                 Module
               </Paragraph>
-              <Paragraph className="!text-sm font-semibold text-[#000B60] mt-1">
+              <Paragraph className="!text-sm font-semibold text-[#2c1452] mt-1">
                 {preselectedModuleTitle}
               </Paragraph>
             </div>
@@ -501,7 +501,7 @@ const Step2AddQuestions = ({
 
             {/* Correct answer selector */}
             <div className="bg-[#F2F4F6] rounded-xl px-4 py-3 flex flex-col gap-2">
-              <Paragraph className="!text-xs font-bold text-[#000B60]">
+              <Paragraph className="!text-xs font-bold text-[#2c1452]">
                 ✓ Correct Answer
               </Paragraph>
               <div className="flex gap-2">
@@ -512,8 +512,8 @@ const Step2AddQuestions = ({
                     onClick={() => setFieldValue('correctAnswer', letter)}
                     className={`flex-1 py-2 rounded-lg text-sm font-bold border transition-colors
                         ${values.correctAnswer === letter
-                        ? 'bg-[#000B60] text-white border-[#000B60]'
-                        : 'bg-white text-[#000B60] border-[#000B60]/20 hover:bg-[#000B60]/10'
+                        ? 'bg-[#2c1452] text-white border-[#2c1452]'
+                        : 'bg-white text-[#2c1452] border-[#2c1452]/20 hover:bg-[#2c1452]/10'
                       }`}
                   >
                     {letter}
@@ -554,7 +554,7 @@ const Step2AddQuestions = ({
                       {String(i + 1).padStart(2, '0')}.
                     </span>
                     <div>
-                      <Paragraph className="!text-sm font-bold text-[#000B60]">{q.question}</Paragraph>
+                      <Paragraph className="!text-sm font-bold text-[#2c1452]">{q.question}</Paragraph>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
                         {q.module_title && (
                           <span className="text-[10px] font-bold text-[#767683] uppercase tracking-wide">
@@ -578,7 +578,7 @@ const Step2AddQuestions = ({
                         {q.type === 'mcq' && q.correctAnswer && (
                           <>
                             <span className="text-[10px] text-[#767683]">•</span>
-                            <span className="text-[10px] font-bold text-[#000B60] uppercase">
+                            <span className="text-[10px] font-bold text-[#2c1452] uppercase">
                               Ans: {q.correctAnswer}
                             </span>
                           </>
@@ -621,7 +621,7 @@ const Step2AddQuestions = ({
           </Button>
           <button
             onClick={onBack}
-            className="flex items-center justify-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] transition-colors"
+            className="flex items-center justify-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#2c1452] transition-colors"
           >
             <ArrowLeft size={15} />
             Back to General Info
@@ -631,7 +631,7 @@ const Step2AddQuestions = ({
         {/* Pro Tip */}
         <div className="bg-[#F2F4F6] rounded-2xl p-4 flex flex-col gap-3 mt-1">
           <div className="flex items-center gap-2">
-            <span className="text-[#000B60]">💡</span>
+            <span className="text-[#2c1452]">💡</span>
             <Paragraph className="!text-sm font-bold text-[#00A6BF]">Pro Tip</Paragraph>
           </div>
           <Checkbox

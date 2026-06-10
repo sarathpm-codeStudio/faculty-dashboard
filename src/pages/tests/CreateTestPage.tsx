@@ -104,16 +104,16 @@ const CreateTestPage = () => {
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-xs text-[#767683] font-medium">
-        <button onClick={() => navigate('/tests')} className="hover:text-[#000B60] transition-colors">
+        <button onClick={() => navigate('/tests')} className="hover:text-[#2c1452] transition-colors">
           Tests
         </button>
         <ChevronRight size={13} />
-        <span className="text-[#000B60] font-bold">{BREADCRUMBS[step - 1]}</span>
+        <span className="text-[#2c1452] font-bold">{BREADCRUMBS[step - 1]}</span>
       </div>
 
       {/* Title + DRAFT badge */}
       <div className="flex items-center gap-3">
-        <Heading className="text-[#000B60]">Create Test</Heading>
+        <Heading className="text-[#2c1452]">Create Test</Heading>
         <span className="px-2.5 py-0.5 rounded-md bg-[#F2F4F6] text-xs font-bold text-[#767683] tracking-wide">
           DRAFT
         </span>

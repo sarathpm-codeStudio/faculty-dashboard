@@ -144,7 +144,7 @@ const TestDetailPage = () => {
       <motion.div {...fadeUp(0.04)}>
         <button
           onClick={() => navigate('/tests')}
-          className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-3 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#2c1452] mb-3 transition-colors"
         >
           <ArrowLeft size={16} />
           Back to Tests
@@ -152,7 +152,7 @@ const TestDetailPage = () => {
         {testLoading ? (
           <Skeleton className="h-8 w-64" />
         ) : (
-          <Heading className="text-[#000B60]">{test?.data?.title ?? 'Test Details'}</Heading>
+          <Heading className="text-[#2c1452]">{test?.data?.title ?? 'Test Details'}</Heading>
         )}
       </motion.div>
 
@@ -170,14 +170,14 @@ const TestDetailPage = () => {
           icon={null}
           label="Completion Rate"
           value={`${testAnalytics?.data?.completedCount}/${testAnalytics?.data?.totalAttempts}`}
-          valueColor="#000B60"
+          valueColor="#2c1452"
         >
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-[#767683]">{testAnalytics?.data?.completionRate}%</span>
           </div>
           <div className="h-1.5 w-full rounded-full bg-gray-200">
             <div
-              className="h-full rounded-full bg-[#000B60]"
+              className="h-full rounded-full bg-[#2c1452]"
               style={{ width: `${testAnalytics?.data?.completionRate}%` }}
             />
           </div>
@@ -186,7 +186,7 @@ const TestDetailPage = () => {
           icon={null}
           label="Avg. Duration"
           value={testAnalytics?.data?.avgDuration?.display}
-          valueColor="#000B60"
+          valueColor="#2c1452"
         >
           <Paragraph className="!text-xs text-[#767683]">Allocated: {testAnalytics?.data?.allocatedDuration?.display}</Paragraph>
         </StatCard>
@@ -194,12 +194,12 @@ const TestDetailPage = () => {
           icon={null}
           label="Top Student"
           value={`${testAnalytics?.data?.topStudent?.score}/${testAnalytics?.data?.topStudent?.totalQuestions}`}
-          valueColor="#000B60"
+          valueColor="#2c1452"
         >
           {topScorer && (
             <div className="flex items-center gap-1.5">
-              <User size={13} className="text-[#000B60]" />
-              <Paragraph className="!text-xs text-[#000B60]">{testAnalytics?.data?.topStudent?.name}</Paragraph>
+              <User size={13} className="text-[#2c1452]" />
+              <Paragraph className="!text-xs text-[#2c1452]">{testAnalytics?.data?.topStudent?.name}</Paragraph>
             </div>
           )}
         </StatCard>
@@ -210,7 +210,7 @@ const TestDetailPage = () => {
       {/* Candidate Performance */}
       <motion.div className="flex-1 min-h-0 flex flex-col gap-3" {...fadeUp(0.12)}>
         <div className="flex items-center justify-between">
-          <Heading className="text-[#000B60] !text-xl">Candidate Performance</Heading>
+          <Heading className="text-[#2c1452] !text-xl">Candidate Performance</Heading>
           <div className="flex items-center gap-2">
             <button className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-[#767683] hover:bg-gray-50 transition-colors">
               <SlidersHorizontal size={13} />

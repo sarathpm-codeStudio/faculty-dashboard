@@ -10,13 +10,13 @@ const PendingScreen = () => {
 
     return (
         <div className="space-y-4">
-            <Heading className="text-[#000b60]">Hi, {user?.name}</Heading>
+            <Heading className="text-[#2c1452]">Hi, {user?.name}</Heading>
             {noProfile ? (
                 <Paragraph className="text-[#454652]">
                     Welcome! To get started,{' '}
                     <span className="font-bold">please complete your profile</span>{' '}
                     so our admin team can review and activate your faculty account.{' '}
-                    <Link to="/onboarding" className="font-bold text-[#000b60] underline cursor-pointer">
+                    <Link to="/onboarding" className="font-bold text-[#2c1452] underline cursor-pointer">
                         Complete Your Profile
                     </Link>
                 </Paragraph>
@@ -27,13 +27,13 @@ const PendingScreen = () => {
                     <span className="font-bold">Your account is under review</span>{' '}
                     Our admin team is currently reviewing your faculty profile.
                     You will gain access to the dashboard once your account is approved.{' '}
-                    <span className="font-bold text-[#000b60] cursor-pointer">Check The Mail</span>
+                    <span className="font-bold text-[#2c1452] cursor-pointer">Check The Mail</span>
                 </Paragraph>
             ) : profileStatus === 'REJECTED' ? (
                 <Paragraph className="text-[#454652]">
                     Your account verification was not approved. Please update your profile and resubmit for review. 
                     {' '}
-                    <Link to="/account" className="font-bold text-[#000b60] underline cursor-pointer">Update Profile</Link>
+                    <Link to="/account" className="font-bold text-[#2c1452] underline cursor-pointer">Update Profile</Link>
                 </Paragraph>
             ) : <Paragraph className="text-[#454652]">  wwqrqw</Paragraph>
         )}

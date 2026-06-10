@@ -136,12 +136,12 @@ const ImageCropperModal = ({
                             step={0.01}
                             value={zoom}
                             onChange={(e) => setZoom(Number(e.target.value))}
-                            className="flex-1 accent-[#000B60]"
+                            className="flex-1 accent-[#2c1452]"
                         />
                         <button
                             type="button"
                             onClick={handleReset}
-                            className="flex items-center gap-1 text-xs font-bold text-[#000B60] hover:underline cursor-pointer"
+                            className="flex items-center gap-1 text-xs font-bold text-[#2c1452] hover:underline cursor-pointer"
                         >
                             <RotateCcw size={12} />
                             Reset

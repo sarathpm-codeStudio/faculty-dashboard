@@ -4,7 +4,7 @@ type SpinnerProps = {
   label?: string
 }
 
-const Spinner = ({ size = 40, color = '#000B60', label = 'Loading...' }: SpinnerProps) => (
+const Spinner = ({ size = 40, color = '#2c1452', label = 'Loading...' }: SpinnerProps) => (
   <div className="flex flex-col items-center justify-center gap-3" role="status" aria-label={label}>
     <svg
       width={size}

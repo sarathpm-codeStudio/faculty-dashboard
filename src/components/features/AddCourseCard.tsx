@@ -10,7 +10,7 @@ const AddCourseCard = ({ onClick }: AddCourseCardProps) => (
     onClick={onClick}
     className="rounded-xl border-2 border-dashed border-gray-200 bg-white flex flex-col items-center justify-center gap-2 min-h-[220px] w-full"
     whileHover={{
-      borderColor: '#000B60',
+      borderColor: '#2c1452',
       backgroundColor: '#f5f6ff',
       y: -5,
       boxShadow: '0 16px 32px rgba(0, 11, 96, 0.08)',
@@ -22,7 +22,7 @@ const AddCourseCard = ({ onClick }: AddCourseCardProps) => (
       whileHover={{ scale: 1.15, backgroundColor: '#dde0ff' }}
       transition={{ duration: 0.18 }}
     >
-      <Plus size={20} color="#000B60" strokeWidth={2.5} />
+      <Plus size={20} color="#2c1452" strokeWidth={2.5} />
     </motion.div>
     <p className="font-bold text-[#191c1e] text-sm">Add New Course</p>
     <p className="text-xs text-[#767683]">Start a new curriculum</p>

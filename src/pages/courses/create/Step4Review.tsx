@@ -150,14 +150,14 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
           <div className="flex flex-col gap-1.5 flex-1 pt-1">
             <div className="flex items-center justify-between">
               <span
-                className="inline-block px-2 py-1 rounded text-xs bg-[#A8EDFF] font-bold text-[#000B60]"
-              // style={{ background: 'linear-gradient(to right, #000B60, #142283)' }}
+                className="inline-block px-2 py-1 rounded text-xs bg-[#A8EDFF] font-bold text-[#2c1452]"
+              // style={{ background: 'linear-gradient(to right, #2c1452, #2c1452)' }}
               >
                 {coursePreview?.data?.category.toUpperCase()}
               </span>
               <span className="text-xs text-gray-400">{coursePreview?.data?.video_duration?.formatted}</span>
             </div>
-            <Heading className="font-bold text-[#000B60]"> {coursePreview?.data?.title} </Heading>
+            <Heading className="font-bold text-[#2c1452]"> {coursePreview?.data?.title} </Heading>
             <Paragraph className="text-gray-500 leading-relaxed line-clamp-4"> {coursePreview?.data?.description} </Paragraph>
           </div>
         </div>
@@ -173,17 +173,17 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
           ].map(({ icon, label, count, blue }) => (
             <div key={label} className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2 text-gray-500">
-                <Paragraph className="text-[#000B60]"> {icon} </Paragraph>
+                <Paragraph className="text-[#2c1452]"> {icon} </Paragraph>
                 <Paragraph> {label} </Paragraph>
               </div>
-              <Paragraph className={`font-bold ${blue ? 'text-[#4F6EF7]' : 'text-[#000B60]'}`}>
+              <Paragraph className={`font-bold ${blue ? 'text-[#4F6EF7]' : 'text-[#2c1452]'}`}>
                 {String(count).padStart(2, '0')}
               </Paragraph>
             </div>
           ))}
           <div className="border-t border-gray-300 pt-2 flex justify-between text-sm">
             <span className="font-semibold text-gray-700">Total Contents</span>
-            <span className="font-bold text-[#000B60]">{coursePreview?.data?.content_inventory?.total_contents} Assets</span>
+            <span className="font-bold text-[#2c1452]">{coursePreview?.data?.content_inventory?.total_contents} Assets</span>
           </div>
         </div>
       </div>
@@ -195,22 +195,22 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
         <div className="col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100">
           <Paragraph className="font-bold uppercase tracking-widest text-black"> Pricing &amp; Access </Paragraph>
           <div className="flex items-baseline gap-1.5">
-            <Heading className="text-[#000B60] font-bold"> ₹{coursePreview?.data?.final_price} </Heading>
+            <Heading className="text-[#2c1452] font-bold"> ₹{coursePreview?.data?.final_price} </Heading>
             <Paragraph className="text-xs text-gray-400">/ per enrollment</Paragraph>
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 bg-[#F2F4F6] rounded-xl px-4 py-3">
-              <Clock size={16} className="text-[#000B60] shrink-0" />
+              <Clock size={16} className="text-[#2c1452] shrink-0" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Total Video Duration</p>
-                <p className="text-sm font-bold text-[#000B60]">{coursePreview?.data?.video_duration?.formatted}</p>
+                <p className="text-sm font-bold text-[#2c1452]">{coursePreview?.data?.video_duration?.formatted}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-[#F2F4F6] rounded-xl px-4 py-3">
-              <ShieldCheck size={16} className="text-[#000B60] shrink-0" />
+              <ShieldCheck size={16} className="text-[#2c1452] shrink-0" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Duration</p>
-                <p className="text-sm font-bold text-[#000B60]">{coursePreview?.data?.validity}</p>
+                <p className="text-sm font-bold text-[#2c1452]">{coursePreview?.data?.validity}</p>
               </div>
             </div>
           </div>
@@ -222,7 +222,7 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
           <div className="grid grid-cols-2 gap-4">
             {features.map((f) => (
               <div key={f.label} className="flex items-start gap-2">
-                <CheckCircle size={20} className="text-[#000B60] font-bold shrink-0 mt-0.5" />
+                <CheckCircle size={20} className="text-[#2c1452] font-bold shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold text-gray-700">{f.label}</p>
                   {f.sub && <p className="text-xs text-gray-400 mt-0.5">{f.sub}</p>}

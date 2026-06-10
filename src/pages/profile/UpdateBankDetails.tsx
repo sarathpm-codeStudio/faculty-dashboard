@@ -70,7 +70,7 @@ const UpdateBankDetails = () => {
 
             {/* Header */}
             <motion.div {...fadeUp(0.04)}>
-                <Heading className="text-[#000B60]">Add Bank Details</Heading>
+                <Heading className="text-[#2c1452]">Add Bank Details</Heading>
                 <Paragraph className="text-[#767683] mt-1">
                     Manage your disbursement methods and secure financial information.
                 </Paragraph>
@@ -182,11 +182,11 @@ const UpdateBankDetails = () => {
                     {/* Active Method */}
                     <motion.div
                         {...fadeUp(0.1)}
-                        className="bg-[#000B60] rounded-2xl p-5 flex flex-col gap-3"
+                        className="bg-[#2c1452] rounded-2xl p-5 flex flex-col gap-3"
                     >
                         <Paragraph className="!text-gray-400 font-bold">Active Method</Paragraph>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-[#142283] flex items-center justify-center shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-[#2c1452] flex items-center justify-center shrink-0">
                                 <Landmark size={20} className="text-blue-300" />
                             </div>
                             <div>
@@ -202,18 +202,18 @@ const UpdateBankDetails = () => {
                         className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3"
                     >
                         <div className="flex items-center gap-2">
-                            <Zap size={16} className="text-[#000B60]" />
-                            <Paragraph className="font-bold text-[#000B60] !text-sm">Quick Tips</Paragraph>
+                            <Zap size={16} className="text-[#2c1452]" />
+                            <Paragraph className="font-bold text-[#2c1452] !text-sm">Quick Tips</Paragraph>
                         </div>
                         <ul className="flex flex-col gap-2">
                             <li className="flex items-start gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#000B60] mt-1.5 shrink-0" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#2c1452] mt-1.5 shrink-0" />
                                 <Paragraph className="!text-xs text-black leading-relaxed">
                                     Ensure the IFSC code matches your local branch precisely.
                                 </Paragraph>
                             </li>
                             <li className="flex items-start gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#000B60] mt-1.5 shrink-0" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#2c1452] mt-1.5 shrink-0" />
                                 <Paragraph className="!text-xs text-black leading-relaxed">
                                     Double check the PAN format (e.g. ABCDE1234F).
                                 </Paragraph>
@@ -224,7 +224,7 @@ const UpdateBankDetails = () => {
                     {/* Need Help */}
                     <motion.div
                         {...fadeUp(0.14)}
-                        className="bg-[#000B60] rounded-2xl p-5 flex flex-col justify-end gap-2 min-h-[200px] overflow-hidden relative"
+                        className="bg-[#2c1452] rounded-2xl p-5 flex flex-col justify-end gap-2 min-h-[200px] overflow-hidden relative"
                     >
                         <div className="absolute inset-0 flex items-center justify-center opacity-20">
                             <img src={img} alt="" className='w-full h-full object-cover' />

@@ -47,7 +47,7 @@ const OtpInput = ({ value, onChange, length = 6 }: OtpInputProps) => {
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={handlePaste}
           className={`w-14 h-15 text-center text-xl font-semibold rounded-lg outline-none transition-all bg-[#F2F4F6] border border-gray-100 text-gray-900 focus:border-gray-100 focus:ring-0
-            ${value[i] ? 'text-[#000B60] font-bold' : ''}`}
+            ${value[i] ? 'text-[#2c1452] font-bold' : ''}`}
         />
       ))}
     </div>

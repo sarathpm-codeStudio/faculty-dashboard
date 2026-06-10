@@ -53,7 +53,7 @@ const OnboardingLayout = ({
                         className="h-[3px] rounded-full transition-all duration-500"
                         style={{
                             width: `${progress}%`,
-                            background: 'linear-gradient(to right, #000B60, #142283)'
+                            background: 'linear-gradient(to right, #2c1452, #2c1452)'
                         }}
                     />
                 </div>

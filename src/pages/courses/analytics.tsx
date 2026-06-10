@@ -35,7 +35,7 @@ const CourseAnalyticsPage = () => {
             {/* Back */}
             <motion.button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-5 transition-colors"
+                className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#2c1452] mb-5 transition-colors"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.28 }}
@@ -49,7 +49,7 @@ const CourseAnalyticsPage = () => {
                 <div>
                     <Heading className="text-black">
                         Course Performance:{' '}
-                        <span className="text-[#000b60]">{course_title}</span>
+                        <span className="text-[#2c1452]">{course_title}</span>
                     </Heading>
                     {/* <Paragraph className="text-[#767683] mt-1">
                         Track enrollment trends, revenue, and student performance for this course.
@@ -83,7 +83,7 @@ const CourseAnalyticsPage = () => {
                 />
                 <StatCard
 
-                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#000b60]" size={25} /></div>}
+                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#2c1452]" size={25} /></div>}
 
                     label="Total Students"
                     value={analytics?.data?.activeStudents || 0}

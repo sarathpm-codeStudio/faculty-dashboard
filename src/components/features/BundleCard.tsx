@@ -60,7 +60,7 @@ const BundleCard = ({
       {image_url ? (
         <img src={image_url} alt={title} className="w-full h-44 object-cover" />
       ) : (
-        <div className="w-full h-44 bg-gradient-to-br from-[#BCC2FF] to-[#142283]" />
+        <div className="w-full h-44 bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
       )}
 
       <div className="p-4 flex flex-col flex-1">
@@ -69,17 +69,17 @@ const BundleCard = ({
           <Paragraph className='text-[#00A6BF] font-semibold'>{total_courses_count || 0} Courses Included</Paragraph>
         </div>
 
-        <Subheading className="text-[#000b60] font-bold mb-3">{title}</Subheading>
+        <Subheading className="text-[#2c1452] font-bold mb-3">{title}</Subheading>
 
         <div className="flex  items-center justify-center gap-3 mb-4 bg-[#F2F4F6] rounded-lg px-3 py-2">
           <div className="flex-1">
             <p className="text-[10px] text-[#767683] font-semibold uppercase tracking-wide">Students</p>
-            <Paragraph className="text-sm font-bold text-[#000b60]">{students || "100K"}</Paragraph>
+            <Paragraph className="text-sm font-bold text-[#2c1452]">{students || "100K"}</Paragraph>
           </div>
           {/* <div className="w-px h-8 bg-gray-300" /> */}
           <div className="flex-1">
             <p className="text-[10px] text-[#767683] font-semibold uppercase tracking-wide">Revenue</p>
-            <Paragraph className="text-sm font-bold text-[#000b60]">₹{revenue || "10M"}</Paragraph>
+            <Paragraph className="text-sm font-bold text-[#2c1452]">₹{revenue || "10M"}</Paragraph>
           </div>
         </div>
 
@@ -88,13 +88,13 @@ const BundleCard = ({
 
             <Paragraph className="text-[11px] text-[#767683] line-through font-bold">₹{price}</Paragraph>
 
-            <Subheading className="text-[#000b60] font-bold"> ₹{final_price}</Subheading>
+            <Subheading className="text-[#2c1452] font-bold"> ₹{final_price}</Subheading>
           </div>
 
           <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setMenuOpen(v => !v)}
-              className="p-1 rounded hover:bg-gray-100 text-[#000b60]"
+              className="p-1 rounded hover:bg-gray-100 text-[#2c1452]"
             >
               <MoreVertical size={20} />
             </button>

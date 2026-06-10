@@ -25,7 +25,7 @@ const COLUMNS: TableColumn<Transaction>[] = [
     {
         key: 'transactionId',
         header: 'TRANSACTION ID',
-        render: row => <span className="text-sm font-bold text-[#000B60]">{row.transactionId}</span>,
+        render: row => <span className="text-sm font-bold text-[#2c1452]">{row.transactionId}</span>,
     },
     {
         key: 'time',
@@ -112,7 +112,7 @@ const BankDetailsAndTransaction = () => {
 
             {/* Header */}
             <motion.div {...fadeUp(0.04)}>
-                <Heading className="text-[#000B60]">Bank &amp; Payment Details</Heading>
+                <Heading className="text-[#2c1452]">Bank &amp; Payment Details</Heading>
                 <Paragraph className="text-[#767683] mt-1">
                     Manage your disbursement methods and view recent transaction history.
                 </Paragraph>
@@ -131,7 +131,7 @@ const BankDetailsAndTransaction = () => {
                         <div className="flex items-start justify-between gap-4">
                             <div className="flex items-center gap-4">
                                 <div className="w-14 h-14 rounded-xl bg-[#F2F4F6] flex items-center justify-center shrink-0">
-                                    <Landmark size={26} className="text-[#000B60]" />
+                                    <Landmark size={26} className="text-[#2c1452]" />
                                 </div>
                                 <div>
                                     <Subheading className="font-bold" > Active Disbursement Method </Subheading>
@@ -214,9 +214,9 @@ const BankDetailsAndTransaction = () => {
                     {/* Last Transactions */}
                     <motion.div {...fadeUp(0.12)} className="flex flex-col gap-3">
                         <div className="flex items-center justify-between">
-                            <Subheading className="text-[#000B60] font-bold">Last Transactions</Subheading>
+                            <Subheading className="text-[#2c1452] font-bold">Last Transactions</Subheading>
                             {transactions.length > 6 && (
-                                <button onClick={() => navigate('/account/bank/history')} className="flex items-center gap-1 text-sm font-bold text-[#000B60] hover:opacity-75 transition-opacity">
+                                <button onClick={() => navigate('/account/bank/history')} className="flex items-center gap-1 text-sm font-bold text-[#2c1452] hover:opacity-75 transition-opacity">
                                     View Full History
                                     <ChevronRight size={15} />
                                 </button>
@@ -238,7 +238,7 @@ const BankDetailsAndTransaction = () => {
                             <div className="flex justify-center py-4 border-t border-gray-100">
                                 <button
                                     onClick={() => setShowAll(prev => !prev)}
-                                    className="text-xs font-bold text-[#767683] uppercase tracking-widest hover:text-[#000B60] transition-colors"
+                                    className="text-xs font-bold text-[#767683] uppercase tracking-widest hover:text-[#2c1452] transition-colors"
                                 >
                                     {showAll ? 'Show Less' : 'Show More Transactions'}
                                 </button>
@@ -253,7 +253,7 @@ const BankDetailsAndTransaction = () => {
                     {/* Need Assistance card */}
                     <motion.div
                         {...fadeUp(0.1)}
-                        className="bg-[#000B60] rounded-2xl p-6 flex flex-col gap-4"
+                        className="bg-[#2c1452] rounded-2xl p-6 flex flex-col gap-4"
                     >
                         <div>
                             <Subheading className="text-white font-bold">Need Assistance?</Subheading>
@@ -262,11 +262,11 @@ const BankDetailsAndTransaction = () => {
                             </Paragraph>
                         </div>
                         <div className="flex flex-col gap-3">
-                            <Button variant="secondary" fullWidth className="!bg-[#142283] !text-white ">
+                            <Button variant="secondary" fullWidth className="!bg-[#2c1452] !text-white ">
                                 <Mail size={15} className="text-blue-300 shrink-0" />
                                 finance-help@university.edu
                             </Button>
-                            <Button variant="secondary" fullWidth className="!bg-[#142283] !text-white ">
+                            <Button variant="secondary" fullWidth className="!bg-[#2c1452] !text-white ">
                                 <Phone size={15} className="text-blue-300 shrink-0" />
                                 +1 (555) 092-4411
                             </Button>
@@ -280,7 +280,7 @@ const BankDetailsAndTransaction = () => {
                             label="TOTAL TRANSFERRED AMOUNT"
                             value={transactionHistory?.totalTransferred?.display ?? "0"}
                             // prefix="₹"
-                            valueColor="#000B60"
+                            valueColor="#2c1452"
                         />
                     </motion.div>
                 </div>

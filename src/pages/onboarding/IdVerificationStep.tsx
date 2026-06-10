@@ -100,7 +100,7 @@ const IdVerificationStep = ({
         >
             <form onSubmit={formik.handleSubmit} className="w-full max-w-4xl">
                 <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-5">
-                    <Subheading className='text-[#000B60] font-bold'>Identity Document</Subheading>
+                    <Subheading className='text-[#2c1452] font-bold'>Identity Document</Subheading>
                     <Paragraph className='mb-4 text-gray-500'>
                         {isEdit
                             ? 'Select your document type and upload a new photo. Our team will review it again.'

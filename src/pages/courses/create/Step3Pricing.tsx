@@ -180,8 +180,8 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-10 py-10 flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-base"><RiCoupon2Fill size={25} className='text-[#000B60] font-bold' /></span>
-              <Subheading className='text-[#000B60] font-bold' >Promotional Tools</Subheading>
+              <span className="text-base"><RiCoupon2Fill size={25} className='text-[#2c1452] font-bold' /></span>
+              <Subheading className='text-[#2c1452] font-bold' >Promotional Tools</Subheading>
             </div>
             <Paragraph className='text-gray-400 mt-0.5 ml-8'>
               Allow students to apply additional discount codes at checkout
@@ -191,7 +191,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
             <button
               type="button"
               onClick={() => setFieldValue('enableCoupons', !enableCoupons)}
-              className={`w-10 h-5 rounded-full transition-colors relative ${enableCoupons ? 'bg-[#000B60]' : 'bg-gray-200'}`}
+              className={`w-10 h-5 rounded-full transition-colors relative ${enableCoupons ? 'bg-[#2c1452]' : 'bg-gray-200'}`}
             >
               <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${enableCoupons ? 'left-5' : 'left-0.5'}`} />
             </button>
@@ -207,7 +207,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
         {/* Students Price card */}
         <div
           className="rounded-2xl p-7 text-white"
-          style={{ background: 'linear-gradient(135deg, #000B60, #142283)' }}
+          style={{ background: 'linear-gradient(135deg, #2c1452, #2c1452)' }}
         >
           <p className="text-xs font-semibold uppercase tracking-widest opacity-70 mb-2">Students Price</p>
           <p className="text-4xl font-bold tracking-tight">₹{studentPrice.toFixed(2)}</p>
@@ -235,13 +235,13 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
           </div>
           <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
             <Paragraph className='text-xs font-semibold text-gray-600'>Students Price</Paragraph>
-            <span className="font-bold text-[#000B60]">₹{studentPrice.toFixed(2)}</span>
+            <span className="font-bold text-[#2c1452]">₹{studentPrice.toFixed(2)}</span>
           </div>
         </div>
 
         {/* Discount Calculator */}
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col gap-4">
-          <Subheading className='text-[#000B60] font-bold'>Discount Calculator</Subheading>
+          <Subheading className='text-[#2c1452] font-bold'>Discount Calculator</Subheading>
           <div className="grid grid-cols-3 gap-3">
             <div className="flex flex-col gap-1 bg-[#F2F4F6] rounded-xl p-2">
               <Paragraph className='text-xs font-semibold text-gray-600'>Sum of Courses</Paragraph>

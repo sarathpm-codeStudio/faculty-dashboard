@@ -89,7 +89,7 @@ const BundlesPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
-        <Heading className="text-[#000b60]">
+        <Heading className="text-[#2c1452]">
           Course Bundles ({String(bundles?.data?.length || 0).padStart(2, '0')})
         </Heading>
 
@@ -115,7 +115,7 @@ const BundlesPage = () => {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-5 py-1.5 rounded-full text-sm font-semibold capitalize transition-all ${activeTab === tab
-              ? 'bg-white text-[#000B60] shadow-sm'
+              ? 'bg-white text-[#2c1452] shadow-sm'
               : 'text-[#767683] hover:text-[#191c1e]'
               }`}
           >

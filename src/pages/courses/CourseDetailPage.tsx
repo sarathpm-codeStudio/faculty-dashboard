@@ -118,7 +118,7 @@ const CourseDetailPage = () => {
             {/* Back */}
             <motion.button
                 onClick={() => navigate('/courses')}
-                className="flex items-center gap-1.5 text-sm font-bold text-[#767683] hover:text-[#000B60] mb-4 transition-colors"
+                className="flex items-center gap-1.5 text-sm font-bold text-[#767683] hover:text-[#2c1452] mb-4 transition-colors"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.28 }}
@@ -133,7 +133,7 @@ const CourseDetailPage = () => {
                 {...fadeUp(0.05)}
             >
                 <div>
-                    <Heading className="text-[#000B60]">{course?.data?.title}</Heading>
+                    <Heading className="text-[#2c1452]">{course?.data?.title}</Heading>
                     <Paragraph className="text-[#767683] mt-1 max-w-lg ">
                         Comprehensive module covering advanced management accounting
                         and cost control techniques.
@@ -217,10 +217,10 @@ const CourseDetailPage = () => {
                         {/* About this Course — below video, same card */}
                         <div className="p-6">
                             <div className="flex items-start justify-between gap-4 mb-3">
-                                <Subheading className="font-bold text-[#000b60]">About this Course</Subheading>
+                                <Subheading className="font-bold text-[#2c1452]">About this Course</Subheading>
                                 <div className="text-right shrink-0">
                                     <Paragraph className="!text-[12px] uppercase tracking-widest text-gray-500 ">Category</Paragraph>
-                                    <Paragraph className="text-sm font-bold text-[#000B60] mt-0.5">{course?.data?.category} : {course?.data?.level}</Paragraph>
+                                    <Paragraph className="text-sm font-bold text-[#2c1452] mt-0.5">{course?.data?.category} : {course?.data?.level}</Paragraph>
                                 </div>
                             </div>
                             <Paragraph className="text-[#767683] leading-relaxed text-sm">
@@ -234,13 +234,13 @@ const CourseDetailPage = () => {
                     {/* Students Reviews */}
                     <motion.div {...fadeUp(0.24)} className='w-[1000px]'>
                         <div className="flex items-center justify-between mb-4 w-[1045px]">
-                            <Subheading className="font-bold text-[#000b60]">Students Reviews</Subheading>
+                            <Subheading className="font-bold text-[#2c1452]">Students Reviews</Subheading>
                             
                             {
                                 reviews?.data?.total_reviews > 0 && (
                                     <button
                                 onClick={() => navigate(`/courses/${id}/reviews`)}
-                                className="text-sm font-semibold text-[#000B60] hover:underline underline-offset-2"
+                                className="text-sm font-semibold text-[#2c1452] hover:underline underline-offset-2"
                             >
                                 View All {reviews?.data?.total_reviews} Reviews
                             </button>
@@ -276,7 +276,7 @@ const CourseDetailPage = () => {
                     >
                         {/* Price row */}
                         <div className="flex items-baseline gap-2 mb-2">
-                            <Heading className="font-bold text-[#000b60]">₹{formatNumber(course?.data?.final_price)}</Heading>
+                            <Heading className="font-bold text-[#2c1452]">₹{formatNumber(course?.data?.final_price)}</Heading>
                             {/* <span className="text-3xl font-extrabold text-[#191c1e]">₹3,500</span> */}
                             <Paragraph className="text-[#767683] line-through font-bold">₹{formatNumber(course?.data?.price)}</Paragraph>
                             {/* <span className="text-sm text-[#767683] line-through">₹4,500</span> */}
@@ -304,7 +304,7 @@ const CourseDetailPage = () => {
                     <motion.div
                         onClick={() => navigate(`/courses/${id}/analytics`,{state: {course_title: course?.data?.title}})}
                         className="rounded-2xl p-5 cursor-pointer overflow-hidden"
-                        style={{ background: 'linear-gradient(135deg, #000B60 0%, #1a2a9c 100%)' }}
+                        style={{ background: 'linear-gradient(135deg, #2c1452 0%, #1a2a9c 100%)' }}
                         {...fadeUp(0.22)}
                         whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
                     >

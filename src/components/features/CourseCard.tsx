@@ -71,10 +71,10 @@ const CourseCard = ({
         {cover_image ? (
           <img src={cover_image} alt={title} className="w-full h-36 object-fill" />
         ) : (
-          <div className="w-full h-36 bg-gradient-to-br from-[#BCC2FF] to-[#142283]" />
+          <div className="w-full h-36 bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
         )}
         {selectable && selected && (
-          <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-[#000B60] flex items-center justify-center shadow">
+          <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-[#2c1452] flex items-center justify-center shadow">
             <Check size={14} color="white" strokeWidth={3} />
           </div>
         )}
@@ -88,7 +88,7 @@ const CourseCard = ({
           </div>
         )}
 
-        <Subheading className='text-[#000b60] font-bold'>{title.length > 20 ? title.slice(0, 20) + '...' : title}</Subheading>
+        <Subheading className='text-[#2c1452] font-bold'>{title.length > 20 ? title.slice(0, 20) + '...' : title}</Subheading>
 
         {/* {description ? (
           <Paragraph className="text-gray-400 !text-xs mb-2">
@@ -124,7 +124,7 @@ const CourseCard = ({
 
         <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center gap-5">
-            <Paragraph className='text-[#000b60] font-bold !text-[20px]'>
+            <Paragraph className='text-[#2c1452] font-bold !text-[20px]'>
               ₹
               {final_price}</Paragraph>
             {<span className="text-[15px] text-[#767683] line-through font-bold "> ₹{price}</span>}
@@ -134,7 +134,7 @@ const CourseCard = ({
             <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
               <button
                 onClick={() => setMenuOpen(v => !v)}
-                className="p-1 rounded hover:bg-gray-100 text-[#000b60] font-bold"
+                className="p-1 rounded hover:bg-gray-100 text-[#2c1452] font-bold"
               >
                 <MoreVertical size={20} />
               </button>

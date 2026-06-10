@@ -113,7 +113,7 @@ const CouponsPage = () => {
     {
       key: 'code',
       header: 'Coupon Code',
-      render: row => <span className="text-sm font-bold text-[#000B60]">{row.code}</span>,
+      render: row => <span className="text-sm font-bold text-[#2c1452]">{row.code}</span>,
     },
     {
       key: 'type',
@@ -204,7 +204,7 @@ const CouponsPage = () => {
       {/* Header */}
       <motion.div className="flex items-start justify-between mb-5 px-2 pt-2" {...fadeUp(0.04)}>
         <div>
-          <Heading className="text-[#000B60]">Coupon Management</Heading>
+          <Heading className="text-[#2c1452]">Coupon Management</Heading>
           <Paragraph className="text-[#767683] mt-1">
             Create and manage academic promotion campaigns and discount codes.
           </Paragraph>
@@ -217,7 +217,7 @@ const CouponsPage = () => {
       {/* Stat cards */}
       <motion.div className="grid grid-cols-3 gap-4 mb-5 px-2" {...fadeUp(0.08)}>
         <StatCard
-          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><Tag className="text-[#000B60]" size={20} /></div>}
+          icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><Tag className="text-[#2c1452]" size={20} /></div>}
           label="Active Coupons"
           value={couponAnalytics?.data?.active_coupons ?? 0}
         />
@@ -244,7 +244,7 @@ const CouponsPage = () => {
               <button
                 key={tab}
                 onClick={() => setActiveFilter(activeFilter === tab ? null : tab)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeFilter === tab ? 'bg-white text-[#000B60]' : 'text-[#767683] hover:text-[#000B60]'
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeFilter === tab ? 'bg-white text-[#2c1452]' : 'text-[#767683] hover:text-[#2c1452]'
                   }`}
               >
                 {tab}
@@ -253,11 +253,11 @@ const CouponsPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#000B60] transition-colors">
+          <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#2c1452] transition-colors">
             <SlidersHorizontal size={14} />
             Advanced
           </button>
-          <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#000B60] transition-colors">
+          <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#2c1452] transition-colors">
             <Download size={14} />
             Export CSV
           </button>

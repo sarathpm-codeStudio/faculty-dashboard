@@ -242,7 +242,7 @@ const CreateCouponPage = () => {
 
       {/* Header */}
       <div className="mb-6">
-        <Heading className="text-[#000B60]">{isEditMode ? 'Edit Coupon' : 'Create New Coupon'}</Heading>
+        <Heading className="text-[#2c1452]">{isEditMode ? 'Edit Coupon' : 'Create New Coupon'}</Heading>
         <Paragraph className="text-[#767683] mt-1">
           {isEditMode
             ? 'Update the expiry date and usage limits for this coupon.'
@@ -281,8 +281,8 @@ const CreateCouponPage = () => {
                   disabled={isEditMode}
                   onClick={() => !isEditMode && formik.setFieldValue('discountType', type)}
                   className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${formik.values.discountType === type
-                    ? 'bg-white text-[#000B60] shadow-sm'
-                    : 'text-[#767683] hover:text-[#000B60]'
+                    ? 'bg-white text-[#2c1452] shadow-sm'
+                    : 'text-[#767683] hover:text-[#2c1452]'
                     }`}
                 >
                   {type}
@@ -363,7 +363,7 @@ const CreateCouponPage = () => {
               {selectedCourses.map(course => (
                 <span
                   key={course.value}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-[#EAECFF] rounded-full text-xs font-semibold text-[#000B60]"
+                  className="flex items-center gap-1.5 px-3 py-1 bg-[#EAECFF] rounded-full text-xs font-semibold text-[#2c1452]"
                 >
                   {course.label}
                   <button
@@ -372,7 +372,7 @@ const CreateCouponPage = () => {
                       removeCourse(course.value)
                       formik.setFieldTouched('courses', true, false)
                     }}
-                    className="text-[#000B60]/60 hover:text-red-500 transition-colors"
+                    className="text-[#2c1452]/60 hover:text-red-500 transition-colors"
                   >
                     <X size={11} />
                   </button>
@@ -384,7 +384,7 @@ const CreateCouponPage = () => {
                   setShowCourseDropdown(prev => !prev)
                   formik.setFieldTouched('courses', true, false)
                 }}
-                className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-[#000B60] text-[#000B60] hover:bg-[#000B60] hover:text-white transition-colors"
+                className="w-6 h-6 flex items-center justify-center rounded-full border-2 border-[#2c1452] text-[#2c1452] hover:bg-[#2c1452] hover:text-white transition-colors"
               >
                 <Plus size={13} />
               </button>
@@ -405,7 +405,7 @@ const CreateCouponPage = () => {
                           onClick={() => addCourse(course)}
                           className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#F2F4F6] transition-colors ${
                             isAllOption
-                              ? 'font-semibold text-[#000B60] border-b border-gray-100'
+                              ? 'font-semibold text-[#2c1452] border-b border-gray-100'
                               : 'text-[#191c1e]'
                           }`}
                         >
@@ -431,18 +431,18 @@ const CreateCouponPage = () => {
           {/* Coupon Preview card with top accent */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             {/* Top accent line */}
-            <div className="h-1 bg-[#000B60]" />
+            <div className="h-1 bg-[#2c1452]" />
 
             <div className="p-4 flex flex-col gap-3">
               <div className="flex items-center gap-2">
-                <Eye size={15} className="text-[#000B60]" />
-                <p className="text-sm font-bold text-[#000B60]">Coupon Preview</p>
+                <Eye size={15} className="text-[#2c1452]" />
+                <p className="text-sm font-bold text-[#2c1452]">Coupon Preview</p>
               </div>
 
               {/* Preview gradient card */}
               <div
                 className="rounded-xl p-4 flex flex-col gap-3"
-                style={{ background: 'linear-gradient(135deg, #000B60 0%, #142283 100%)' }}
+                style={{ background: 'linear-gradient(135deg, #2c1452 0%, #2c1452 100%)' }}
               >
                 <div>
                   <p className="text-[9px] font-bold uppercase tracking-widest text-blue-300 mb-1">Exclusive Discount</p>

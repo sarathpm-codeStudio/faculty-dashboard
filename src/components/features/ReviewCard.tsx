@@ -15,7 +15,7 @@ const ReviewCard = ({ avatar, name, date, rating, review }: ReviewCardProps) => 
         <img src={avatar} alt={name} className="w-12 h-12 rounded-xl object-cover shrink-0" />
       ) : (
         <div className="w-9 h-9 rounded-full bg-[#BCC2FF] flex items-center justify-center shrink-0">
-          <span className="text-[#000B60] font-bold text-sm">{name.charAt(0)}</span>
+          <span className="text-[#2c1452] font-bold text-sm">{name.charAt(0)}</span>
         </div>
       )}
       <div className="min-w-0">

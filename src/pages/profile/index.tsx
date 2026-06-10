@@ -56,7 +56,7 @@ const DetailField = ({ label, value }: DetailFieldProps) => (
         <Paragraph className="!text-[10px] font-bold text-[#767683] uppercase tracking-widest mb-1">
             {label}
         </Paragraph>
-        <Paragraph className="!text-sm font-bold text-[#000B60]">{value}</Paragraph>
+        <Paragraph className="!text-sm font-bold text-[#2c1452]">{value}</Paragraph>
     </div>
 )
 
@@ -162,7 +162,7 @@ const ProfilePage = () => {
             {/* Page header */}
             <motion.div {...fadeUp(0.04)} className="flex items-start justify-between gap-4">
                 <div>
-                    <Heading className="text-[#000B60]">Personal Information</Heading>
+                    <Heading className="text-[#2c1452]">Personal Information</Heading>
                     <Paragraph className="text-[#767683] mt-1 max-w-2xl">
                         Manage your academic profile identity and contact details for the university directory.
                     </Paragraph>
@@ -196,13 +196,13 @@ const ProfilePage = () => {
                                         />
                                     ) : (
                                         <div className="w-28 h-28 rounded-xl bg-gray-100 flex items-center justify-center">
-                                            <User size={28} className="text-[#000B60]" />
+                                            <User size={28} className="text-[#2c1452]" />
                                         </div>
                                     )
                                 }
                                 {/* <button
                                     type="button"
-                                    className="w-8 h-8 rounded-lg bg-[#F2F4F6] flex items-center justify-center text-[#000B60] hover:bg-[#E8EBF5] transition-colors"
+                                    className="w-8 h-8 rounded-lg bg-[#F2F4F6] flex items-center justify-center text-[#2c1452] hover:bg-[#E8EBF5] transition-colors"
                                     aria-label="Social profile"
                                 >
                                     <FaInstagram size={16} />
@@ -299,10 +299,10 @@ const ProfilePage = () => {
                                         onClick={() => setSelectedQualification(item)}
                                             className="flex items-center justify-between w-full rounded-xl border border-gray-200 px-4 py-3.5 text-left bg-white"
                                         >
-                                        <Paragraph className="!text-[15px] font-bold text-[#000B60]">
+                                        <Paragraph className="!text-[15px] font-bold text-[#2c1452]">
                                             {item.type || item.field_of_study || '—'}
                                         </Paragraph>
-                                        <ChevronRight size={16} className="text-[#000B60] size-5 shrink-0 font-bold" />
+                                        <ChevronRight size={16} className="text-[#2c1452] size-5 shrink-0 font-bold" />
                                     </button>
                                 ))
                             ) : (
@@ -352,10 +352,10 @@ const ProfilePage = () => {
                     <>
                         <div className="flex items-center gap-3 pb-1">
                             <div className="w-10 h-10 bg-[#DFE0FF] rounded-lg flex items-center justify-center shrink-0">
-                                <GraduationCap size={18} className="text-[#000B60]" />
+                                <GraduationCap size={18} className="text-[#2c1452]" />
                             </div>
                             <div>
-                                <Paragraph className="!text-base font-bold text-[#000B60]">
+                                <Paragraph className="!text-base font-bold text-[#2c1452]">
                                     {selectedQualification.field_of_study || '—'}
                                 </Paragraph>
                                 <Paragraph className="!text-sm text-[#767683]">
@@ -397,7 +397,7 @@ const ProfilePage = () => {
                                         href={selectedQualification.document_url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-[#000B60]"
+                                        className="text-[#2c1452]"
                                         aria-label="View certificate"
                                     >
                                         <Eye size={20} />
@@ -405,7 +405,7 @@ const ProfilePage = () => {
                                     <a
                                         href={selectedQualification.document_url}
                                         download
-                                        className="text-[#000B60]"
+                                        className="text-[#2c1452]"
                                         aria-label="Download certificate"
                                     >
                                         <Download size={20} />

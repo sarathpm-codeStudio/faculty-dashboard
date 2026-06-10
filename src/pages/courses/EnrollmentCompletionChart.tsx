@@ -76,7 +76,7 @@ const EnrollmentCompletionChart = ({ courseId }: { courseId: string }) => {
             rightContent={
                 <div className="flex items-center gap-4">
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-[#767683]">
-                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#000B60]" />
+                        <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#2c1452]" />
                         Enrollments
                     </span>
                     <span className="flex items-center gap-1.5 text-xs font-semibold text-[#767683]">
@@ -111,7 +111,7 @@ const EnrollmentCompletionChart = ({ courseId }: { courseId: string }) => {
                             content={({ active, payload, label }) => {
                                 if (!active || !payload?.length) return null
                                 return (
-                                    <div className="rounded-lg bg-[#000b60] px-3 py-2 shadow-lg space-y-1">
+                                    <div className="rounded-lg bg-[#2c1452] px-3 py-2 shadow-lg space-y-1">
                                         <p className="text-[10px] font-semibold text-indigo-200">{label}</p>
                                         {payload.map((p: any) => (
                                             <p key={p.dataKey} className="text-xs font-bold text-white">
@@ -123,7 +123,7 @@ const EnrollmentCompletionChart = ({ courseId }: { courseId: string }) => {
                             }}
                         />
                         <Legend content={() => null} />
-                        <Bar dataKey="enrollments" name="Enrollments" fill="#000B60" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="enrollments" name="Enrollments" fill="#2c1452" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="completions" name="Completions" fill="#00C6DE" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>

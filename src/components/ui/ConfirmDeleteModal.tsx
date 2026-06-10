@@ -31,8 +31,8 @@ const variantStyles: Record<
   },
   primary: {
     bg: 'bg-[#A8EDFF]',
-    gradient: 'linear-gradient(to right, #000B60, #142283)',
-    defaultIcon: <RocketLaunch size={24} className="text-[#000B60]" weight="bold" />,
+    gradient: 'linear-gradient(to right, #2c1452, #2c1452)',
+    defaultIcon: <RocketLaunch size={24} className="text-[#2c1452]" weight="bold" />,
   },
 }
 

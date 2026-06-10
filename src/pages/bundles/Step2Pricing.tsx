@@ -166,16 +166,16 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
           {/* Enable Coupons toggle */}
           <div className="flex items-center justify-between bg-[#F2F4F6] rounded-xl px-5 py-4">
             <div className="flex items-center gap-3">
-              <RiCoupon2Fill size={22} className="text-[#000B60]" />
+              <RiCoupon2Fill size={22} className="text-[#2c1452]" />
               <div>
-                <Subheading className="text-[#000B60] font-bold !text-sm">Enable Coupons</Subheading>
+                <Subheading className="text-[#2c1452] font-bold !text-sm">Enable Coupons</Subheading>
                 <Paragraph className="text-gray-400 !text-xs">Allow students to apply additional discount codes at checkout</Paragraph>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setEnableCoupons(v => !v)}
-              className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${enableCoupons ? 'bg-[#000B60]' : 'bg-gray-300'}`}
+              className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${enableCoupons ? 'bg-[#2c1452]' : 'bg-gray-300'}`}
             >
               <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${enableCoupons ? 'left-6' : 'left-1'}`} />
             </button>
@@ -185,7 +185,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
         {/* Discount Calculator */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <Subheading className="text-[#000b60] font-bold">Discount Calculator</Subheading>
+            <Subheading className="text-[#2c1452] font-bold">Discount Calculator</Subheading>
             <span className="text-[10px] font-bold text-[#00A98F] bg-[#E6FBF7] px-2.5 py-1 rounded-full uppercase tracking-wide">
               Smart Pricing Active
             </span>
@@ -212,7 +212,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
         {/* Cover Image */}
         {/* <div
           onClick={() => fileInputRef.current?.click()}
-          className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#000B60] hover:bg-[#f5f6ff] transition-colors min-h-[300px]"
+          className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#2c1452] hover:bg-[#f5f6ff] transition-colors min-h-[300px]"
         >
           {coverPreview ? (
             <img src={coverPreview} alt="Cover" className="w-full h-full object-cover rounded-xl" />
@@ -266,7 +266,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
 
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
             <Paragraph className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Bundle Offer</Paragraph>
-            <p className="text-3xl font-bold text-[#000B60]">
+            <p className="text-3xl font-bold text-[#2c1452]">
               ₹{bundleOffer.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>

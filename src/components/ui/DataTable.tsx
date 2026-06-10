@@ -201,7 +201,7 @@ function DataTable<T>({
                   key={p}
                   onClick={() => onPageChange(p as number)}
                   className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition-colors ${page === p
-                    ? 'bg-[#000B60] text-white'
+                    ? 'bg-[#2c1452] text-white'
                     : 'border border-gray-200 text-[#767683] hover:bg-gray-50'
                     }`}
                 >

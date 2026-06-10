@@ -72,7 +72,7 @@ const AnnouncementDetailPage = () => {
       {/* Breadcrumb */}
       <motion.button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-sm text-[#767683] font-medium hover:text-[#000B60] mb-5 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#767683] font-medium hover:text-[#2c1452] mb-5 transition-colors"
         initial={{ opacity: 0, x: -8 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.28 }}
@@ -84,7 +84,7 @@ const AnnouncementDetailPage = () => {
       {/* Page header */}
       <motion.div className="flex items-start justify-between mb-6" {...fadeUp(0.05)}>
         <div>
-          <Heading className="text-[#000B60]">{announcement?.data?.title}</Heading>
+          <Heading className="text-[#2c1452]">{announcement?.data?.title}</Heading>
           <div className="flex items-center gap-1.5 mt-1.5">
             <Info size={16} className="text-[#00A6BF]" />
             <Paragraph className="text-[#767683]">
@@ -124,7 +124,7 @@ const AnnouncementDetailPage = () => {
 
           {/* Message body */}
           <div>
-            <Subheading className="text-[#000B60] font-bold mb-3">
+            <Subheading className="text-[#2c1452] font-bold mb-3">
               Announcement Message
             </Subheading>
             {/* <div className="flex flex-col gap-3 leading-relaxed">
@@ -139,7 +139,7 @@ const AnnouncementDetailPage = () => {
               </Paragraph>
             </div> */}
             <div
-              className="prose prose-sm max-w-none text-gray-800 prose-a:text-[#000B60] prose-strong:text-gray-900"
+              className="prose prose-sm max-w-none text-gray-800 prose-a:text-[#2c1452] prose-strong:text-gray-900"
               dangerouslySetInnerHTML={{ __html: announcement?.data?.content }}
             />
           </div>
@@ -148,25 +148,25 @@ const AnnouncementDetailPage = () => {
           <div className="bg-[#F2F4F6] rounded-xl p-4 grid grid-cols-2 gap-x-8 gap-y-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#767683] mb-1">Course Name</p>
-              <Paragraph className="font-bold text-[#000B60]">{announcement?.data?.courses?.title || ""}</Paragraph>
+              <Paragraph className="font-bold text-[#2c1452]">{announcement?.data?.courses?.title || ""}</Paragraph>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#767683] mb-1">Date</p>
-              <Paragraph className="font-bold text-[#000B60]">{formatDateTime(announcement?.data?.published) || ""}</Paragraph>
+              <Paragraph className="font-bold text-[#2c1452]">{formatDateTime(announcement?.data?.published) || ""}</Paragraph>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#767683] mb-1">Time Period</p>
-              <Paragraph className="font-bold text-[#000B60]">{formatDateTime(announcement?.data?.time_period.split("/")[0])} to {formatDateTime(announcement?.data?.time_period.split("/")[1])}</Paragraph>
+              <Paragraph className="font-bold text-[#2c1452]">{formatDateTime(announcement?.data?.time_period.split("/")[0])} to {formatDateTime(announcement?.data?.time_period.split("/")[1])}</Paragraph>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#767683] mb-1">Audience</p>
-              <Paragraph className="font-bold text-[#000B60]">{announcement?.data?.courses ? "Selected Course" : "All Students"}</Paragraph>
+              <Paragraph className="font-bold text-[#2c1452]">{announcement?.data?.courses ? "Selected Course" : "All Students"}</Paragraph>
             </div>
           </div>
 
           {/* Edit / Delete */}
           <div className="flex items-center gap-5 pt-1">
-            <button onClick={() => navigate(`/announcements/${announcement?.data?.id}/edit`)} className="flex items-center gap-1.5 text-sm font-bold text-[#000B60] hover:underline transition-colors">
+            <button onClick={() => navigate(`/announcements/${announcement?.data?.id}/edit`)} className="flex items-center gap-1.5 text-sm font-bold text-[#2c1452] hover:underline transition-colors">
               <Pencil size={14} />
               Edit
             </button>
@@ -181,7 +181,7 @@ const AnnouncementDetailPage = () => {
         <motion.div className="col-span-4 flex flex-col gap-4" {...fadeUp(0.15)}>
           <div
             className="rounded-2xl p-5 flex flex-col gap-1"
-            style={{ background: 'linear-gradient(to right, #000B60, #142283)' }}
+            style={{ background: 'linear-gradient(to right, #2c1452, #2c1452)' }}
           >
             <p className="text-xs font-bold uppercase tracking-widest text-blue-200">Views</p>
             <p className="text-5xl font-extrabold text-white">{announcement?.data?.view_count}</p>

@@ -181,7 +181,7 @@ const AnnouncementsPage = () => {
       {/* Header */}
       <motion.div className="flex items-start justify-between mb-5 px-2 pt-2" {...fadeUp(0.04)}>
         <div>
-          <Heading className="text-[#000B60]">Announcements</Heading>
+          <Heading className="text-[#2c1452]">Announcements</Heading>
           <Paragraph className="text-[#767683] mt-1">
             Communicate important updates and academic news across your enrolled student groups.
           </Paragraph>
@@ -199,8 +199,8 @@ const AnnouncementsPage = () => {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors ${activeTab === tab
-                ? 'bg-white text-[#000B60]'
-                : 'text-gray-500 hover:text-[#000B60]'
+                ? 'bg-white text-[#2c1452]'
+                : 'text-gray-500 hover:text-[#2c1452]'
                 }`}
             >
               {tab}
@@ -208,11 +208,11 @@ const AnnouncementsPage = () => {
           ))}
         </div>
         <div className="flex items-center gap-4">
-          {/* <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#000B60] transition-colors">
+          {/* <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#2c1452] transition-colors">
             <Filter size={14} />
             Filter
           </button> */}
-          <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#000B60] transition-colors">
+          <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#2c1452] transition-colors">
             <ArrowUpDown size={14} />
             Sort by: Date
           </button>

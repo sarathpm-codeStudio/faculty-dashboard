@@ -13,7 +13,7 @@ export type ReviewListCardProps = {
 }
 
 const COURSE_TAG_COLORS: Record<string, { bg: string; text: string }> = {
-  default: { bg: '#EEF0FF', text: '#000B60' },
+  default: { bg: '#EEF0FF', text: '#2c1452' },
   taxation: { bg: '#E6F7FF', text: '#0078C8' },
   accounting: { bg: '#E6FFF6', text: '#00875A' },
   law: { bg: '#FFF7E6', text: '#B76E00' },
@@ -44,7 +44,7 @@ const ReviewListCard = ({ avatar, name, course, date, rating, review, onReply }:
             <img src={avatar} alt={name} className="w-12 h-12 rounded-full object-cover shrink-0" />
           ) : (
             <div className="w-12 h-12 rounded-full bg-[#BCC2FF] flex items-center justify-center shrink-0">
-              <span className="text-[#000B60] font-bold text-base">{name.charAt(0)}</span>
+              <span className="text-[#2c1452] font-bold text-base">{name.charAt(0)}</span>
             </div>
           )}
           {/* Name + course tag */}
@@ -72,7 +72,7 @@ const ReviewListCard = ({ avatar, name, course, date, rating, review, onReply }:
       {/* Reply */}
       <button
         onClick={onReply}
-        className="flex items-center gap-1.5 text-sm font-semibold text-[#000B60] hover:underline underline-offset-2 w-fit"
+        className="flex items-center gap-1.5 text-sm font-semibold text-[#2c1452] hover:underline underline-offset-2 w-fit"
       >
         <CornerDownLeft size={14} />
         Reply to Student

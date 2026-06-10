@@ -183,7 +183,7 @@ const EnrollmentChart = () => {
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null
                 return (
-                  <div className="rounded-lg bg-[#000b60] px-3 py-2 shadow-lg">
+                  <div className="rounded-lg bg-[#2c1452] px-3 py-2 shadow-lg">
                     <p className="text-[10px] font-semibold text-indigo-200 mb-0.5">{label}</p>
                     <p className="text-sm font-bold text-white">{payload[0].value} students</p>
                   </div>

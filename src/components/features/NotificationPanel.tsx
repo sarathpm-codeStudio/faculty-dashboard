@@ -26,7 +26,7 @@ const MOCK_NOTIFS: Notification[] = [
 ]
 
 const iconConfig: Record<NotifType, { bg: string; color: string; Icon: typeof Bell }> = {
-    course: { bg: 'bg-blue-50', color: 'text-[#000B60]', Icon: BookOpen },
+    course: { bg: 'bg-blue-50', color: 'text-[#2c1452]', Icon: BookOpen },
     student: { bg: 'bg-purple-50', color: 'text-purple-600', Icon: Users },
     announcement: { bg: 'bg-orange-50', color: 'text-orange-500', Icon: Megaphone },
     system: { bg: 'bg-green-50', color: 'text-green-600', Icon: Bell },
@@ -68,7 +68,7 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                         {/* Header */}
                         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                             <div className="flex items-center gap-2.5">
-                                <Paragraph className="font-bold text-[#000B60] !text-base">Notifications</Paragraph>
+                                <Paragraph className="font-bold text-[#2c1452] !text-base">Notifications</Paragraph>
                                 {unreadCount > 0 && (
                                     <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
                                         {unreadCount}
@@ -77,8 +77,8 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                             </div>
                             <div className="flex items-center gap-1">
                                 <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-                                    <CheckCheck size={14} className="text-[#000B60]" />
-                                    <Paragraph className="!text-xs font-bold text-[#000B60]">Mark all read</Paragraph>
+                                    <CheckCheck size={14} className="text-[#2c1452]" />
+                                    <Paragraph className="!text-xs font-bold text-[#2c1452]">Mark all read</Paragraph>
                                 </button>
                                 <button
                                     onClick={onClose}
@@ -129,7 +129,7 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                                                             </Paragraph>
                                                         </div>
                                                         {!notif.read && (
-                                                            <span className="w-2 h-2 rounded-full bg-[#000B60] shrink-0 mt-1.5" />
+                                                            <span className="w-2 h-2 rounded-full bg-[#2c1452] shrink-0 mt-1.5" />
                                                         )}
                                                     </motion.button>
                                                 )
@@ -143,7 +143,7 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                         {/* Footer */}
                         <div className="px-5 py-4 border-t border-gray-100">
                             <button className="w-full py-2.5 rounded-xl bg-[#F2F4F6] hover:bg-gray-200 transition-colors">
-                                <Paragraph className="!text-sm font-bold text-[#000B60]">View All Notifications</Paragraph>
+                                <Paragraph className="!text-sm font-bold text-[#2c1452]">View All Notifications</Paragraph>
                             </button>
                         </div>
                     </motion.div>

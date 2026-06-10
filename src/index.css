@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-sans: 'Manrope', system-ui, sans-serif;
 
   /* Brand colors from Figma */
-  --color-brand-from: #000B60;
-  --color-brand-to: #142283;
+  --color-brand-from: #2c1452;
+  --color-brand-to: #2c1452;
 
   /* Brand gradient as a background image token */
-  --background-image-btn-primary: linear-gradient(to right, #000B60, #142283);
+  --background-image-btn-primary: linear-gradient(to right, #2c1452, #2c1452);
 
   --color-input-bg: #F2F4F6;
   --color-text-body: #656464;
 }
 
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: 'Manrope', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -61,10 +61,12 @@ body {
     left: -40%;
     width: 40%;
   }
+
   50% {
     left: 30%;
     width: 50%;
   }
+
   100% {
     left: 100%;
     width: 40%;
@@ -82,7 +84,7 @@ body {
   top: 0;
   height: 100%;
   border-radius: 9999px;
-  background: linear-gradient(90deg, transparent, var(--loader-color, #000B60), transparent);
+  background: linear-gradient(90deg, transparent, var(--loader-color, #2c1452), transparent);
   animation: indeterminateLoader 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
@@ -90,6 +92,7 @@ body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
@@ -98,6 +101,7 @@ body {
   0% {
     background-position: -200% 0;
   }
+
   100% {
     background-position: 200% 0;
   }
@@ -110,7 +114,7 @@ body {
 }
 
 .skeleton-shimmer-dark {
-  background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0.12) 75%);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.12) 25%, rgba(255, 255, 255, 0.22) 50%, rgba(255, 255, 255, 0.12) 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.5s ease-in-out infinite;
 }

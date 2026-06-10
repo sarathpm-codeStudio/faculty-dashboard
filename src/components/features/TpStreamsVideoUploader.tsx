@@ -48,7 +48,7 @@ const TpStreamsVideoUploader = ({
         onDragLeave={() => setDrag(false)}
         onDrop={handleDrop}
         className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden h-[200px]
-          ${drag ? 'border-[#000B60] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#000B60]/40'}`}
+          ${drag ? 'border-[#2c1452] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#2c1452]/40'}`}
       >
         {preview ? (
           <>
@@ -63,12 +63,12 @@ const TpStreamsVideoUploader = ({
           </>
         ) : (
           <div className="flex flex-col items-center gap-1.5 px-4 text-center select-none">
-            <div className="w-9 h-9 rounded-xl bg-white shadow flex items-center justify-center text-[#000B60]">
+            <div className="w-9 h-9 rounded-xl bg-white shadow flex items-center justify-center text-[#2c1452]">
               <Video size={20} />
             </div>
             <p className="text-xs font-semibold text-gray-600">{title}</p>
             <p className="text-[10px] text-gray-400 leading-snug">{hint}</p>
-            <span className="flex items-center gap-1 text-[10px] font-semibold text-[#000B60]">
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-[#2c1452]">
               <Upload size={10} /> Click to upload or drag and drop
             </span>
           </div>
@@ -76,8 +76,8 @@ const TpStreamsVideoUploader = ({
 
         {isLoading && (
           <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center gap-2">
-            <Loader2 size={22} className="text-[#000B60] animate-spin" />
-            <p className="text-xs font-semibold text-[#000B60]">Uploading…</p>
+            <Loader2 size={22} className="text-[#2c1452] animate-spin" />
+            <p className="text-xs font-semibold text-[#2c1452]">Uploading…</p>
           </div>
         )}
 
@@ -100,7 +100,7 @@ const TpStreamsVideoUploader = ({
           </div>
           <div className="w-full bg-gray-200 rounded-full h-1.5">
             <div
-              className="h-1.5 bg-[#000B60] rounded-full transition-all duration-300"
+              className="h-1.5 bg-[#2c1452] rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>

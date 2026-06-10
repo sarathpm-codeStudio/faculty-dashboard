@@ -82,7 +82,7 @@ const FONT_FAMILIES = [
 
 // ─── Text colors ──────────────────────────────────────────────────────────────
 const TEXT_COLORS = [
-    { hex: '#000B60', label: 'Navy' },
+    { hex: '#2c1452', label: 'Navy' },
     { hex: '#185FA5', label: 'Blue' },
     { hex: '#0F6E56', label: 'Green' },
     { hex: '#D85A30', label: 'Orange' },
@@ -119,7 +119,7 @@ const ToolbarButton = ({ onClick, active, title, disabled, children }: ToolbarBu
         className={`
       w-7 h-7 flex items-center justify-center rounded text-sm transition-colors
       ${active
-                ? 'bg-[#000B60] text-white'
+                ? 'bg-[#2c1452] text-white'
                 : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
             }
       disabled:opacity-30 disabled:cursor-not-allowed
@@ -202,7 +202,7 @@ const RichTextEditor = ({
             <div
                 className={`
           rounded-lg border bg-white overflow-hidden transition-colors
-          focus-within:ring-2 focus-within:ring-[#000B60]/20 focus-within:border-[#000B60]
+          focus-within:ring-2 focus-within:ring-[#2c1452]/20 focus-within:border-[#2c1452]
           ${error ? 'border-red-400' : 'border-gray-200'}
         `}
             >
@@ -231,7 +231,7 @@ const RichTextEditor = ({
                                 editor.chain().focus().setFontFamily(val).run()
                             }
                         }}
-                        className="h-7 px-1.5 text-xs border border-gray-200 rounded bg-white text-gray-700 outline-none hover:border-gray-300 focus:border-[#000B60] cursor-pointer"
+                        className="h-7 px-1.5 text-xs border border-gray-200 rounded bg-white text-gray-700 outline-none hover:border-gray-300 focus:border-[#2c1452] cursor-pointer"
                         style={{ fontFamily: currentFontFamily || 'inherit' }}
                     >
                         {FONT_FAMILIES.map((f) => (
@@ -263,7 +263,7 @@ const RichTextEditor = ({
                                     ; (editor.chain().focus() as any).setFontSize(`${val}px`).run()
                                 }
                             }}
-                            className="w-12 h-7 px-1.5 text-xs text-center border border-gray-200 rounded bg-white text-gray-700 outline-none hover:border-gray-300 focus:border-[#000B60]"
+                            className="w-12 h-7 px-1.5 text-xs text-center border border-gray-200 rounded bg-white text-gray-700 outline-none hover:border-gray-300 focus:border-[#2c1452]"
                         />
                         <span className="text-xs text-gray-400">px</span>
                     </div>
@@ -327,8 +327,8 @@ const RichTextEditor = ({
                                 className="w-4 h-4 rounded-full border-2 transition-transform hover:scale-110"
                                 style={{
                                     background: c.hex,
-                                    borderColor: editor.isActive('textStyle', { color: c.hex }) ? '#000B60' : 'transparent',
-                                    outline: editor.isActive('textStyle', { color: c.hex }) ? '1.5px solid #000B60' : 'none',
+                                    borderColor: editor.isActive('textStyle', { color: c.hex }) ? '#2c1452' : 'transparent',
+                                    outline: editor.isActive('textStyle', { color: c.hex }) ? '1.5px solid #2c1452' : 'none',
                                     outlineOffset: '1px',
                                 }}
                             />

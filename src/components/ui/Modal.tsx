@@ -17,7 +17,7 @@ const Modal = ({ open, onClose, title, children, footer, maxWidth = 'max-w-lg' }
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} mx-4 overflow-hidden`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="text-base font-bold text-[#000B60]">{title}</h3>
+          <h3 className="text-base font-bold text-[#2c1452]">{title}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X size={20} />
           </button>

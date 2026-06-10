@@ -122,13 +122,13 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
                                     onDragLeave={() => setDragOver(false)}
                                     onClick={handleChange}
                                     className={`border-2 border-dashed rounded-xl py-5 px-4 flex items-center gap-4 cursor-pointer transition-colors
-                                        ${dragOver ? 'border-[#000B60] bg-blue-50' : 'border-gray-200 hover:border-[#000B60]'}`}
+                                        ${dragOver ? 'border-[#2c1452] bg-blue-50' : 'border-gray-200 hover:border-[#2c1452]'}`}
                                 >
                                     <div className="w-16 h-16 rounded-full bg-[#DFE0FF] flex items-center justify-center shrink-0">
-                                        <ImagePlus size={26} className="text-[#000B60]" />
+                                        <ImagePlus size={26} className="text-[#2c1452]" />
                                     </div>
                                     <div className="flex flex-col flex-1">
-                                        <p className="text-sm font-bold text-[#000B60]">Click to upload or drag and drop</p>
+                                        <p className="text-sm font-bold text-[#2c1452]">Click to upload or drag and drop</p>
                                         <p className="text-xs text-gray-500 mt-0.5">JPG or PNG (max. 2MB) — you can crop after upload</p>
                                     </div>
                                 </div>
@@ -142,16 +142,16 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
                                         />
                                         {avatarUploading ? (
                                             <div className="absolute inset-0 rounded-full bg-white/70 flex items-center justify-center">
-                                                <Loader2 size={18} className="text-[#000B60] animate-spin" />
+                                                <Loader2 size={18} className="text-[#2c1452] animate-spin" />
                                             </div>
                                         ) : (
-                                            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-[#000B60] rounded-full flex items-center justify-center text-white">
+                                            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-[#2c1452] rounded-full flex items-center justify-center text-white">
                                                 <Camera size={10} />
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex flex-col flex-1 min-w-0">
-                                        <p className="text-sm font-bold text-[#000B60] truncate">
+                                        <p className="text-sm font-bold text-[#2c1452] truncate">
                                             {avatarUploading ? 'Uploading profile photo…' : 'Profile photo added'}
                                         </p>
                                         <p className="text-xs text-gray-500 mt-0.5">
@@ -165,7 +165,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
                                             type="button"
                                             onClick={handleChange}
                                             disabled={avatarUploading}
-                                            className="text-sm font-bold text-[#000B60] hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="text-sm font-bold text-[#2c1452] hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Change
                                         </button>

@@ -133,7 +133,7 @@ const ReviewPage = () => {
             {/* Back */}
             <motion.button
                 onClick={() => navigate(-1)}
-                className="flex items-center gap-1.5 font-bold  text-sm text-[#767683] hover:text-[#000B60] mb-5 transition-colors"
+                className="flex items-center gap-1.5 font-bold  text-sm text-[#767683] hover:text-[#2c1452] mb-5 transition-colors"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.28 }}
@@ -144,7 +144,7 @@ const ReviewPage = () => {
 
             {/* Header */}
             <motion.div className="mb-7" {...fadeUp(0.05)}>
-                <Heading className="text-[#000B60]">All Students Review</Heading>
+                <Heading className="text-[#2c1452]">All Students Review</Heading>
                 <Paragraph className="text-[#767683] mt-1 max-w-xl">
                     Monitor academic feedback across your active courses. Use analytics to identify
                     trends and refine the student learning experience.
@@ -199,8 +199,8 @@ const ReviewPage = () => {
                     <p className="text-[10px] uppercase tracking-widest text-[#767683] font-semibold mb-3">
                         Average Rating
                     </p>
-                    {/* <Heading className='text-[#000b60]'> {avgRating} </Heading> */}
-                    <p className="text-5xl font-extrabold text-[#000b60] leading-none mb-2">{avgRating}</p>
+                    {/* <Heading className='text-[#2c1452]'> {avgRating} </Heading> */}
+                    <p className="text-5xl font-extrabold text-[#2c1452] leading-none mb-2">{avgRating}</p>
                     <div className="mb-1">
                         <StarRating rating={Math.round(Number(avgRating))} size={16} />
                     </div>

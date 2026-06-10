@@ -130,8 +130,8 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
       <div className="col-span-4 flex flex-col gap-4 min-h-0">
         <div className="bg-gray-100 rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4 overflow-y-auto scrollbar-hide">
           <div className="flex flex-col gap-2 items-start">
-            <Subheading className="text-[#000b60] font-bold">Selection Summary</Subheading>
-            <span className="text-[10px] font-bold text-white bg-[#000B60] px-2.5 py-0.5 rounded-full">
+            <Subheading className="text-[#2c1452] font-bold">Selection Summary</Subheading>
+            <span className="text-[10px] font-bold text-white bg-[#2c1452] px-2.5 py-0.5 rounded-full">
               {selected.length} Selected
             </span>
           </div>
@@ -148,7 +148,7 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-[#191c1e] truncate leading-tight">{c.title}</p>
                     <p className="text-[11px] text-gray-400 font-medium mt-0.5">{c.category}</p>
-                    <p className="text-xs text-[#000B60] font-bold mt-1">₹{c.final_price.toLocaleString()}.00</p>
+                    <p className="text-xs text-[#2c1452] font-bold mt-1">₹{c.final_price.toLocaleString()}.00</p>
                   </div>
                 </div>
               ))}

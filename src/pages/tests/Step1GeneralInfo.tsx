@@ -195,8 +195,8 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
 
         {/* General Information */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-3 border-l-4 border-[#000B60] pl-3">
-            <Paragraph className="font-bold text-[#000B60] !text-base">General Information</Paragraph>
+          <div className="flex items-center gap-3 border-l-4 border-[#2c1452] pl-3">
+            <Paragraph className="font-bold text-[#2c1452] !text-base">General Information</Paragraph>
           </div>
 
           {!isEdit && (
@@ -295,8 +295,8 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
 
         {/* Instructions */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-          <div className="flex items-center gap-3 border-l-4 border-[#000B60] pl-3">
-            <Paragraph className="font-bold text-[#000B60] !text-base">Instructions</Paragraph>
+          <div className="flex items-center gap-3 border-l-4 border-[#2c1452] pl-3">
+            <Paragraph className="font-bold text-[#2c1452] !text-base">Instructions</Paragraph>
           </div>
           <Textarea
             placeholder="Outline the guidelines for students..."
@@ -356,9 +356,9 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
 
         {placement.path.length > 0 && (
           <div className="flex items-center gap-2 flex-wrap rounded-xl bg-[#F2F4F6] px-4 py-3">
-            <MapPin size={16} className="text-[#000B60] shrink-0" />
+            <MapPin size={16} className="text-[#2c1452] shrink-0" />
             {placement.path.map((segment, index) => (
-              <span key={segment} className="flex items-center gap-2 text-sm font-semibold text-[#000B60]">
+              <span key={segment} className="flex items-center gap-2 text-sm font-semibold text-[#2c1452]">
                 {index > 0 && <ChevronRight size={14} className="text-gray-400" />}
                 {segment}
               </span>

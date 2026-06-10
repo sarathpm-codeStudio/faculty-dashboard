@@ -295,7 +295,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               {formik.values.languages.map((lang) => (
                 <span
                   key={lang}
-                  className="flex items-center gap-1 px-2.5 py-1 bg-[#BCC2FF] text-[#000B60] text-xs font-semibold rounded-full"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-[#BCC2FF] text-[#2c1452] text-xs font-semibold rounded-full"
                 >
                   {lang}
                   <button
@@ -324,8 +324,8 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
                       type="button"
                       onClick={() => toggleLang(lang)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${active
-                        ? 'bg-[#000B60] text-white border-[#000B60]'
-                        : 'bg-[#F2F4F6] text-gray-600 border-gray-100 hover:border-[#000B60]'
+                        ? 'bg-[#2c1452] text-white border-[#2c1452]'
+                        : 'bg-[#F2F4F6] text-gray-600 border-gray-100 hover:border-[#2c1452]'
                         }`}
                     >
                       {lang}
@@ -400,7 +400,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
                 <div style={{
                   width: `${uploadProgress}%`,
                   height: 6,
-                  background: '#000B60',
+                  background: '#2c1452',
                   borderRadius: 8,
                   transition: 'width 0.3s ease',
                 }} />

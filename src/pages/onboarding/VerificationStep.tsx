@@ -70,7 +70,7 @@ const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClas
                                     <Paragraph className="text-gray-400 uppercase tracking-wider">Courses Done</Paragraph>
                                     <div className="flex gap-1 flex-wrap mt-0.5">
                                         {courses.map((c) => (
-                                            <Paragraph key={c} className="px-2 py-0.5 bg-[#F2F4F6] text-[#000B60] text-xs rounded font-medium">
+                                            <Paragraph key={c} className="px-2 py-0.5 bg-[#F2F4F6] text-[#2c1452] text-xs rounded font-medium">
                                                 {c}
                                             </Paragraph>
                                         ))}
@@ -84,7 +84,7 @@ const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClas
                     {/* Right — Submit card */}
                     <div
                         className="w-80 rounded-xl p-5 flex flex-col gap-4 flex-shrink-0"
-                        style={{ background: 'linear-gradient(135deg, #000B60, #142283)' }}
+                        style={{ background: 'linear-gradient(135deg, #2c1452, #2c1452)' }}
                     >
                         <h3 className="text-white font-semibold text-base leading-snug">
                             Ready to Submit?

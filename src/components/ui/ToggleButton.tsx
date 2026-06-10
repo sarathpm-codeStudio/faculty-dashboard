@@ -68,7 +68,7 @@ const ToggleButton = ({
         disabled={isDisabled}
         onClick={handleClick}
         style={{ backgroundColor: trackColor }}
-        className={`relative inline-flex shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#000B60] ${track} ${
+        className={`relative inline-flex shrink-0 items-center rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#2c1452] ${track} ${
           isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
         }`}
         {...rest}

@@ -13,7 +13,7 @@ const Checkbox = ({ label, id, className = '', ...props }: CheckboxProps) => {
         <input
           id={checkboxId}
           type="checkbox"
-          className="peer appearance-none w-4 h-4 rounded bg-[#F2F4F6] border border-gray-300 cursor-pointer transition-all checked:bg-[#000B60] checked:border-[#000B60] focus:outline-none"
+          className="peer appearance-none w-4 h-4 rounded bg-[#F2F4F6] border border-gray-300 cursor-pointer transition-all checked:bg-[#2c1452] checked:border-[#2c1452] focus:outline-none"
           {...props}
         />
         {/* checkmark */}

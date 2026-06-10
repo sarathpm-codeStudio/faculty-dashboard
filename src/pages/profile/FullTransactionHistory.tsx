@@ -67,7 +67,7 @@ const FullTransactionHistory = () => {
         {
             key: 'transactionId',
             header: 'TRANSACTION ID',
-            render: row => <span className="text-sm font-bold text-[#000B60]">{row.transactionId}</span>,
+            render: row => <span className="text-sm font-bold text-[#2c1452]">{row.transactionId}</span>,
         },
         {
             key: 'time',
@@ -134,7 +134,7 @@ const FullTransactionHistory = () => {
             {/* Header */}
             <motion.div {...fadeUp(0.04)} className="flex items-start justify-between shrink-0">
                 <div>
-                    <Heading className="text-[#000B60]">Full Transaction History</Heading>
+                    <Heading className="text-[#2c1452]">Full Transaction History</Heading>
                     <Paragraph className="text-[#767683] mt-1">
                         Review all institutional disbursements and academic grants.
                     </Paragraph>
@@ -154,21 +154,21 @@ const FullTransactionHistory = () => {
             {/* Stats — two StatCards side by side */}
             <motion.div {...fadeUp(0.08)} className="grid grid-cols-2 gap-4 shrink-0">
                 <StatCard
-                    icon={<TrendingUp size={22} className="text-[#000B60]" />}
+                    icon={<TrendingUp size={22} className="text-[#2c1452]" />}
                     label="Total Earnings (YTD)"
                     value={transactionAnalyticsWithTransactions?.totalEarningsYTD?.display ?? "0"}
                     // prefix="₹"
-                    valueColor="#000B60"
+                    valueColor="#2c1452"
                 >
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-[#E6FBF7] text-[#00875A]">
                        {transactionAnalyticsWithTransactions?.totalEarningsYTD?.growth?.display ?? "0"}
                     </span>
                 </StatCard>
                 <StatCard
-                    icon={<Calendar size={22} className="text-[#000B60]" />}
+                    icon={<Calendar size={22} className="text-[#2c1452]" />}
                     label="Last Payout"
                     value={transactionAnalyticsWithTransactions?.lastPayout?.display?? "N/A"}
-                    valueColor="#000B60"
+                    valueColor="#2c1452"
                 />
             </motion.div>
 

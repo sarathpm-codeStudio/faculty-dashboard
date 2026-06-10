@@ -217,7 +217,7 @@ const CourseCreatePage = () => {
       {/* Back link */}
       <button
         onClick={back}
-        className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-5 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#2c1452] mb-5 transition-colors"
 
       >
         <ArrowLeft size={16} />
@@ -226,8 +226,8 @@ const CourseCreatePage = () => {
 
       {/* Step header */}
       <div className="flex items-center justify-between mb-3">
-        <Heading className="text-[#000B60]" > {STEPS[step - 1]}  </Heading>
-        {/* <h1 className="text-xl font-bold text-[#000B60]">{STEPS[step - 1]}</h1> */}
+        <Heading className="text-[#2c1452]" > {STEPS[step - 1]}  </Heading>
+        {/* <h1 className="text-xl font-bold text-[#2c1452]">{STEPS[step - 1]}</h1> */}
 
         <div className="flex items-center gap-3">
           {step === 4 && (
@@ -236,7 +236,7 @@ const CourseCreatePage = () => {
             </span>
           )}
           <span className="text-sm font-medium text-gray-400">
-            <span className="text-[#000B60] font-bold">Step {String(step).padStart(2, '0')}</span>
+            <span className="text-[#2c1452] font-bold">Step {String(step).padStart(2, '0')}</span>
             <span className="text-gray-500"> / 04</span>
           </span>
         </div>
@@ -249,7 +249,7 @@ const CourseCreatePage = () => {
             height: '6px',
             borderRadius: '999px',
             width: `${(step / 4) * 100}%`,
-            background: 'linear-gradient(to right, #000B60, #142283)',
+            background: 'linear-gradient(to right, #2c1452, #2c1452)',
             transition: 'width 0.5s ease',
           }}
         />

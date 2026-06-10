@@ -117,7 +117,7 @@ const SignupPage = () => {
 
             <Paragraph size="sm" className="text-center mt-4 mb-[10px]">
                 Already have an account?{' '}
-                <Link to="/auth" className="text-[#000B60] font-bold">
+                <Link to="/auth" className="text-[#2c1452] font-bold">
                     Sign in
                 </Link>
             </Paragraph>

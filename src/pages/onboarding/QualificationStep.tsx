@@ -168,7 +168,7 @@ const QualificationStep = ({
 
                 {isEdit && existingQualifications.length > 0 && (
                     <div className="flex flex-col gap-3">
-                        <Subheading className="text-[#000B60] font-bold">Saved Qualifications</Subheading>
+                        <Subheading className="text-[#2c1452] font-bold">Saved Qualifications</Subheading>
                         <Paragraph className="text-gray-500 -mt-2">
                             These are on your profile. You can remove them but not edit them.
                         </Paragraph>
@@ -185,7 +185,7 @@ const QualificationStep = ({
 
                 {/* Add Qualification card */}
                 <div className="bg-white rounded-xl border-2 border-dotted border-gray-200 p-5">
-                    <Subheading className='text-[#000B60] font-bold'>Add New Qualification</Subheading>
+                    <Subheading className='text-[#2c1452] font-bold'>Add New Qualification</Subheading>
                     <Paragraph className='mb-4 text-gray-500'>Fill in the details for your next academic degree.</Paragraph>
 
                     <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
@@ -243,7 +243,7 @@ const QualificationStep = ({
                                 onClear={handleClear}
                             />
                             {formik.values.fileName && (
-                                <p className="text-xs font-medium text-[#000B60]">{formik.values.fileName}</p>
+                                <p className="text-xs font-medium text-[#2c1452]">{formik.values.fileName}</p>
                             )}
                             {err('document_url') && (
                                 <p className="text-xs text-red-500 font-medium mt-1">{err('document_url')}</p>
@@ -260,7 +260,7 @@ const QualificationStep = ({
                 </div>
 
                 {isEdit && newQualifications.length > 0 && (
-                    <Subheading className="text-[#000B60] font-bold pt-2">New Qualifications</Subheading>
+                    <Subheading className="text-[#2c1452] font-bold pt-2">New Qualifications</Subheading>
                 )}
 
                 {(isEdit ? newQualifications : qualifications).map((q) => (
@@ -305,7 +305,7 @@ const QualificationCard = ({ q, isExisting, onRemove }: QualificationCardProps) 
         <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-[#DFE0FF] rounded-lg flex items-center justify-center">
-                    <GraduationCap size={15} className="text-[#000B60]" />
+                    <GraduationCap size={15} className="text-[#2c1452]" />
                 </div>
                 <div>
                     <Subheading>{q.fieldOfStudy}</Subheading>
@@ -366,7 +366,7 @@ const QualificationCard = ({ q, isExisting, onRemove }: QualificationCardProps) 
                             href={q.document_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-[#000B60] font-bold"
+                            className="text-[#2c1452] font-bold"
                             aria-label="View certificate"
                         >
                             <Eye size={20} />
@@ -374,7 +374,7 @@ const QualificationCard = ({ q, isExisting, onRemove }: QualificationCardProps) 
                         <a
                             href={q.document_url}
                             download={q.fileName}
-                            className="text-[#000B60] font-bold"
+                            className="text-[#2c1452] font-bold"
                             aria-label="Download certificate"
                         >
                             <Download size={20} />

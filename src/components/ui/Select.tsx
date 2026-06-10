@@ -91,7 +91,7 @@ const Select = ({
             if (!open) onBlur?.({ target: { name } })
           }}
           className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border text-base font-medium outline-none transition-all bg-[#F2F4F6] text-left
-            ${error ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100' : open ? 'border-[#000B60] ring-2 ring-[#BCC2FF]/40' : 'border-gray-100'}
+            ${error ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100' : open ? 'border-[#2c1452] ring-2 ring-[#BCC2FF]/40' : 'border-gray-100'}
             ${disabled || loading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
             ${className}`}
         >
@@ -123,7 +123,7 @@ const Select = ({
                     onClick={() => handleSelect(opt.value)}
                     className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
                       isSelected
-                        ? 'bg-[#000B60] text-white'
+                        ? 'bg-[#2c1452] text-white'
                         : 'text-gray-700 hover:bg-[#F2F4F6]'
                     }`}
                   >

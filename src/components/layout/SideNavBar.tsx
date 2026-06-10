@@ -119,7 +119,7 @@ const SideNavBar = () => {
                             className={({ isActive }) =>
                                 navItemClass(
                                     isActive
-                                        ? 'bg-[#000B60] text-white font-medium'
+                                        ? 'bg-[#2c1452] text-white font-medium'
                                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                                 )
                             }
@@ -163,8 +163,8 @@ const SideNavBar = () => {
                                 onClick={() => { navigate('/account'); setAccountOpen(false) }}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#F2F4F6] transition-colors"
                             >
-                                <User size={16} className="text-[#000B60]" />
-                                <Paragraph className="font-bold text-[#000B60]">Personal Information</Paragraph>
+                                <User size={16} className="text-[#2c1452]" />
+                                <Paragraph className="font-bold text-[#2c1452]">Personal Information</Paragraph>
                             </button>
                             <div className="h-px bg-gray-100 mx-3" />
                             <button
@@ -172,8 +172,8 @@ const SideNavBar = () => {
                                 onClick={() => { navigate('/account/bank'); setAccountOpen(false) }}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-[#F2F4F6] transition-colors"
                             >
-                                <Landmark size={16} className="text-[#000B60]" />
-                                <Paragraph className="font-bold text-[#000B60]">Bank Details</Paragraph>
+                                <Landmark size={16} className="text-[#2c1452]" />
+                                <Paragraph className="font-bold text-[#2c1452]">Bank Details</Paragraph>
                             </button>
                             <div className="h-px bg-gray-100 mx-3" />
                             <button
@@ -191,9 +191,9 @@ const SideNavBar = () => {
                         type="button"
                         title={collapsed ? (user?.name ?? 'Account') : undefined}
                         onClick={() => setAccountOpen(prev => !prev)}
-                        className={`w-full ${navItemClass(accountOpen ? 'bg-[#000B60] text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900')}`}
+                        className={`w-full ${navItemClass(accountOpen ? 'bg-[#2c1452] text-white' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900')}`}
                     >
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${accountOpen ? 'bg-white text-[#000B60]' : 'bg-[#000B60] text-white'}`}>
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${accountOpen ? 'bg-white text-[#2c1452]' : 'bg-[#2c1452] text-white'}`}>
                             {initials}
                         </div>
                         <Paragraph

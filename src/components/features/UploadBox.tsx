@@ -49,7 +49,7 @@ export const UploadBox = ({
             onDrop={handleDrop}
             className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden w-full
         ${aspectRatio ? 'min-h-[120px]' : 'h-[200px]'}
-        ${drag ? 'border-[#000B60] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#000B60]/40'}`}
+        ${drag ? 'border-[#2c1452] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#2c1452]/40'}`}
             style={aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
         >
             {preview ? (
@@ -61,8 +61,8 @@ export const UploadBox = ({
                             className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#F8F9FB] px-4 text-center"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <Loader2 size={22} className="text-[#000B60] animate-spin" />
-                            <p className="text-xs font-semibold text-[#000B60]">{videoBlockedMessage}</p>
+                            <Loader2 size={22} className="text-[#2c1452] animate-spin" />
+                            <p className="text-xs font-semibold text-[#2c1452]">{videoBlockedMessage}</p>
                         </div>
                     ) : preview.includes('tpstreams.com') || preview.includes('/embed/') ? (
                         <iframe
@@ -94,20 +94,20 @@ export const UploadBox = ({
                 </>
             ) : (
                 <div className="flex flex-col items-center gap-1.5 px-4 text-center select-none">
-                    <div className="w-9 h-9 rounded-xl bg-white shadow flex items-center justify-center text-[#000B60]">
+                    <div className="w-9 h-9 rounded-xl bg-white shadow flex items-center justify-center text-[#2c1452]">
                         {icon}
                     </div>
                     <p className="text-xs font-semibold text-gray-600">{title}</p>
                     <p className="text-[10px] text-gray-400 leading-snug">{hint}</p>
-                    <span className="flex items-center gap-1 text-[10px] font-semibold text-[#000B60]">
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-[#2c1452]">
                         <Upload size={10} /> Click to upload or drag and drop
                     </span>
                 </div>
             )}
             {loading && (
                 <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center gap-2">
-                    <Loader2 size={22} className="text-[#000B60] animate-spin" />
-                    <p className="text-xs font-semibold text-[#000B60]">Uploading…</p>
+                    <Loader2 size={22} className="text-[#2c1452] animate-spin" />
+                    <p className="text-xs font-semibold text-[#2c1452]">Uploading…</p>
                 </div>
             )}
             <input

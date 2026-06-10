@@ -39,7 +39,7 @@ const OtpPage = () => {
             {/* Sent-to banner */}
             <div className='flex justify-center mb-[40px]'>
                 <div className="w-[250px] text-center px-4 py-2 bg-[#F2F4F6] border border-gray-100 rounded-lg text-sm text-gray-600 font-medium">
-                    OTP sent to <span className=' text-[#000B60] font-bold'>+91 987●●●●937</span>
+                    OTP sent to <span className=' text-[#2c1452] font-bold'>+91 987●●●●937</span>
                 </div>
             </div>
 
@@ -60,7 +60,7 @@ const OtpPage = () => {
 
                     </div>
 
-                    <span className="text-[#000B60] font-bold cursor-pointer">
+                    <span className="text-[#2c1452] font-bold cursor-pointer">
                         Resend
                     </span>
 

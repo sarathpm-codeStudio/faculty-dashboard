@@ -84,7 +84,7 @@ const rowVariants: Variants = {
 type MaterialDbType = 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES' | 'LINK' | 'TEST'
 
 const MATERIAL_TYPE_META: Record<MaterialDbType, { label: string; icon: React.ReactNode; iconBg: string; iconColor: string }> = {
-  VIDEO: { label: 'Video', icon: <VideoIcon size={16} />, iconBg: 'bg-[#E8EBFF]', iconColor: 'text-[#000B60]' },
+  VIDEO: { label: 'Video', icon: <VideoIcon size={16} />, iconBg: 'bg-[#E8EBFF]', iconColor: 'text-[#2c1452]' },
   PDF: { label: 'Document', icon: <FilePdfIcon size={16} />, iconBg: 'bg-[#FEE7E7]', iconColor: 'text-[#D63B3B]' },
   IMAGE: { label: 'Image', icon: <LucideImage size={16} />, iconBg: 'bg-[#E5F6EA]', iconColor: 'text-[#1F9D55]' },
   NOTES: { label: 'Notes', icon: <StickyNote size={16} />, iconBg: 'bg-[#FFF6DC]', iconColor: 'text-[#B7791F]' },
@@ -128,7 +128,7 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
       onDrop={handleDrop}
       className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden w-full
         ${aspectRatio ? 'min-h-[120px]' : 'h-[200px]'}
-        ${drag ? 'border-[#000B60] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#000B60]/40'}`}
+        ${drag ? 'border-[#2c1452] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#2c1452]/40'}`}
       style={aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
     >
       {preview ? (
@@ -145,7 +145,7 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
                 href={preview}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[10px] font-semibold text-[#000B60] underline"
+                className="text-[10px] font-semibold text-[#2c1452] underline"
                 onClick={(e) => e.stopPropagation()}
               >
                 View file
@@ -156,8 +156,8 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
               className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#F8F9FB] px-4 text-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <Loader2 size={22} className="text-[#000B60] animate-spin" />
-              <p className="text-xs font-semibold text-[#000B60]">{videoBlockedMessage}</p>
+              <Loader2 size={22} className="text-[#2c1452] animate-spin" />
+              <p className="text-xs font-semibold text-[#2c1452]">{videoBlockedMessage}</p>
             </div>
           ) : preview.includes('tpstreams.com') || preview.includes('/embed/') ? (
             <iframe
@@ -187,20 +187,20 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
         </>
       ) : (
         <div className="flex flex-col items-center gap-1.5 px-4 text-center select-none">
-          <div className="w-9 h-9 rounded-xl bg-white shadow flex items-center justify-center text-[#000B60]">
+          <div className="w-9 h-9 rounded-xl bg-white shadow flex items-center justify-center text-[#2c1452]">
             {icon}
           </div>
           <p className="text-xs font-semibold text-gray-600">{title}</p>
           <p className="text-[10px] text-gray-400 leading-snug">{hint}</p>
-          <span className="flex items-center gap-1 text-[10px] font-semibold text-[#000B60]">
+          <span className="flex items-center gap-1 text-[10px] font-semibold text-[#2c1452]">
             <Upload size={10} /> Click to upload or drag and drop
           </span>
         </div>
       )}
       {loading && (
         <div className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center gap-2">
-          <Loader2 size={22} className="text-[#000B60] animate-spin" />
-          <p className="text-xs font-semibold text-[#000B60]">Uploading…</p>
+          <Loader2 size={22} className="text-[#2c1452] animate-spin" />
+          <p className="text-xs font-semibold text-[#2c1452]">Uploading…</p>
         </div>
       )}
       <input
@@ -717,7 +717,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           {navPath.length === 0 && (
             <span
               onClick={openFolderModal}
-              className="flex items-center gap-2 px-4 py-2 text-[#000B60] text-sm font-semibold cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 text-[#2c1452] text-sm font-semibold cursor-pointer"
             >
               <IoAddCircleOutline size={20} />
               Add New Folder
@@ -731,7 +731,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
             <button
               type="button"
               onClick={goBack}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[#000B60] text-xs font-bold shadow-sm hover:bg-[#000B60] hover:text-white transition-colors shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[#2c1452] text-xs font-bold shadow-sm hover:bg-[#2c1452] hover:text-white transition-colors shrink-0"
             >
               <PhArrowLeft size={14} weight="bold" />
               Back
@@ -744,7 +744,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               <button
                 type="button"
                 onClick={() => setNavPath([])}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-gray-500 font-semibold hover:text-[#000B60] hover:bg-white transition-colors"
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-gray-500 font-semibold hover:text-[#2c1452] hover:bg-white transition-colors"
               >
                 <Home size={12} />
                 Root
@@ -758,8 +758,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                       type="button"
                       onClick={() => jumpTo(idx)}
                       className={`px-2 py-1 rounded-md font-semibold truncate max-w-[180px] transition-colors ${isLast
-                        ? 'text-[#000B60] bg-white shadow-sm cursor-default'
-                        : 'text-gray-500 hover:text-[#000B60] hover:bg-white'}`}
+                        ? 'text-[#2c1452] bg-white shadow-sm cursor-default'
+                        : 'text-gray-500 hover:text-[#2c1452] hover:bg-white'}`}
                     >
                       {crumb.title}
                     </button>
@@ -772,7 +772,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
         {/* Current folder header (when inside a folder) */}
         {navPath.length > 0 && (
-          <div className="flex items-center gap-2 px-4 py-3 bg-[#000B60] rounded-xl">
+          <div className="flex items-center gap-2 px-4 py-3 bg-[#2c1452] rounded-xl">
             <div className="h-9 w-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
               <FaFolder size={17} className="text-white" />
             </div>
@@ -836,7 +836,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                     >
                       <div className="flex items-center gap-2">
                         <div className="h-9 w-9 rounded-xl bg-gray-200 flex items-center justify-center shrink-0">
-                          <FaFolder size={17} className="text-[#000B60]" />
+                          <FaFolder size={17} className="text-[#2c1452]" />
                         </div>
                         <div>
                           <Paragraph className="text-black font-bold leading-tight">{node.title}</Paragraph>
@@ -846,7 +846,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                         <div className="relative" ref={menuOpenId === node.id ? menuRef : undefined}>
                           <button
                             type="button"
-                            className="p-1 rounded-md text-[#000B60] hover:bg-[#000B60]/10"
+                            className="p-1 rounded-md text-[#2c1452] hover:bg-[#2c1452]/10"
                             onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === node.id ? null : node.id) }}
                           >
                             <MoreVertical size={20} />
@@ -861,7 +861,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                                 onClick={() => handleEditItem(node)}
                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-[#F2F4F6]"
                               >
-                                <Pencil size={14} className="text-[#000B60]" /> Edit
+                                <Pencil size={14} className="text-[#2c1452]" /> Edit
                               </button>
                               <button
                                 type="button"
@@ -888,7 +888,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                     variants={rowVariants}
                     layout
                     onClick={node?.type === "TEST" ? () => { } : () => setPreviewItem(node)}
-                    className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#000B60]/30 cursor-pointer transition-colors"
+                    className="flex items-center justify-between px-4 py-3 bg-white border border-gray-100 rounded-xl hover:border-[#2c1452]/30 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} ${meta.iconColor}`}>
@@ -931,7 +931,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                       <div className="relative" ref={menuOpenId === node.id ? menuRef : undefined}>
                         <button
                           type="button"
-                          className="p-1 rounded-md text-[#000B60] hover:bg-[#000B60]/10"
+                          className="p-1 rounded-md text-[#2c1452] hover:bg-[#2c1452]/10"
                           onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === node.id ? null : node.id) }}
                         >
                           <MoreVertical size={20} />
@@ -946,7 +946,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                               onClick={node?.type === "TEST" ? () => navigate("/tests") : () => handleEditItem(node)}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-[#F2F4F6]"
                             >
-                              <Pencil size={14} className="text-[#000B60]" /> Edit
+                              <Pencil size={14} className="text-[#2c1452]" /> Edit
                             </button>
                             <button
                               type="button"
@@ -972,10 +972,10 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         {/* Add Content */}
         <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-3">
           <div>
-            <Paragraph className="text-[#000B60] font-bold">Add Content</Paragraph>
+            <Paragraph className="text-[#2c1452] font-bold">Add Content</Paragraph>
             {/* <p className="text-xs text-gray-400 mt-0.5">
               {navPath.length > 0
-                ? <>Into: <span className="font-semibold text-[#000B60]">{navPath[navPath.length - 1].title}</span></>
+                ? <>Into: <span className="font-semibold text-[#2c1452]">{navPath[navPath.length - 1].title}</span></>
                 : 'No folder open — adds to root'}
             </p> */}
           </div>
@@ -985,9 +985,9 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                 key={kind}
                 type="button"
                 onClick={kind === "test" ? () => navigate("/tests/create") : () => openContentModal(kind)}
-                className="flex flex-col items-center gap-2 px-3 py-4 bg-white rounded-xl border border-gray-100 text-xs font-semibold text-[#000B60] hover:border-[#000B60] transition-colors"
+                className="flex flex-col items-center gap-2 px-3 py-4 bg-white rounded-xl border border-gray-100 text-xs font-semibold text-[#2c1452] hover:border-[#2c1452] transition-colors"
               >
-                <span className="text-[#000B60]">{CONTENT_ICONS[kind]}</span>
+                <span className="text-[#2c1452]">{CONTENT_ICONS[kind]}</span>
                 {label}
               </button>
             ))}
@@ -996,10 +996,10 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
         {/* Advance Settings */}
         <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-4">
-          <h3 className="text-xs font-bold text-[#000B60] uppercase tracking-widest">Advance Settings</h3>
+          <h3 className="text-xs font-bold text-[#2c1452] uppercase tracking-widest">Advance Settings</h3>
           {[
-            { key: 'offlineDownload' as const, label: 'Offline Download', icon: <Download size={16} className="text-[#000B60]" /> },
-            { key: 'pdfPermissions' as const, label: 'PDF Permissions', icon: <FilePdfIcon size={16} className="text-[#000B60]" /> },
+            { key: 'offlineDownload' as const, label: 'Offline Download', icon: <Download size={16} className="text-[#2c1452]" /> },
+            { key: 'pdfPermissions' as const, label: 'PDF Permissions', icon: <FilePdfIcon size={16} className="text-[#2c1452]" /> },
           ].map(({ key, label, icon }) => (
             <div key={key} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -1009,7 +1009,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               <button
                 type="button"
                 // onClick={() => toggle(key)}
-                className={`w-10 h-5 rounded-full transition-colors relative ${form[key] ? 'bg-[#000B60]' : 'bg-gray-200'}`}
+                className={`w-10 h-5 rounded-full transition-colors relative ${form[key] ? 'bg-[#2c1452]' : 'bg-gray-200'}`}
               >
                 <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${form[key] ? 'left-5' : 'left-0.5'}`} />
               </button>
@@ -1048,7 +1048,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       >
         {!editingFolderId && navPath.length > 0 && (
           <p className="text-xs text-gray-500">
-            Inside: <span className="font-semibold text-[#000B60]">{navPath[navPath.length - 1].title}</span>
+            Inside: <span className="font-semibold text-[#2c1452]">{navPath[navPath.length - 1].title}</span>
           </p>
         )}
         <Input
@@ -1099,7 +1099,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       >
         {navPath.length > 0 && (
           <p className="text-xs text-gray-500">
-            Into: <span className="font-semibold text-[#000B60]">{navPath[navPath.length - 1].title}</span>
+            Into: <span className="font-semibold text-[#2c1452]">{navPath[navPath.length - 1].title}</span>
           </p>
         )}
 
@@ -1162,7 +1162,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                   </div>
                   <div className="w-full bg-gray-200 rounded-lg h-1.5">
                     <div
-                      className="h-1.5 rounded-lg bg-[#000B60] transition-all"
+                      className="h-1.5 rounded-lg bg-[#2c1452] transition-all"
                       style={{ width: `${contentUploadProgress}%` }}
                     />
                   </div>
@@ -1262,7 +1262,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                       href={fileUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#000B60] hover:underline"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2c1452] hover:underline"
                     >
                       <Download size={14} /> Open in new tab
                     </a>
@@ -1299,8 +1299,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                   if (blocked) {
                     return (
                       <div className="flex flex-col items-center gap-2 py-12 px-6 text-center">
-                        <Loader2 size={22} className="text-[#000B60] animate-spin" />
-                        <p className="text-sm font-semibold text-[#000B60]">{blocked}</p>
+                        <Loader2 size={22} className="text-[#2c1452] animate-spin" />
+                        <p className="text-sm font-semibold text-[#2c1452]">{blocked}</p>
                       </div>
                     )
                   }
@@ -1322,7 +1322,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                       href={fileUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-sm font-semibold text-[#000B60] hover:underline break-all"
+                      className="text-sm font-semibold text-[#2c1452] hover:underline break-all"
                     >
                       {fileUrl}
                     </a>

@@ -143,7 +143,7 @@ const StudentsPage = () => {
 
       {/* Header */}
       <motion.div className="mb-6 px-2 pt-2" {...fadeUp(0.04)}>
-        <Heading className="text-[#000B60]">Enrolled Students</Heading>
+        <Heading className="text-[#2c1452]">Enrolled Students</Heading>
         <Paragraph className="text-black font-bold mt-0.5">
           {students?.data?.pagination?.total} Total Students
         </Paragraph>

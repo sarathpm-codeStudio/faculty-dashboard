@@ -56,7 +56,7 @@ const DashboardPage = () => {
       {/* ── Greeting + Filter ── */}
       <div className="flex items-end justify-between">
         <div>
-          <Heading className='text-[#000b60]'>Hi, {user?.name}</Heading>
+          <Heading className='text-[#2c1452]'>Hi, {user?.name}</Heading>
           <Paragraph className='text-[#454652] font-semibold' > Welcome back! Here's what's happening with your courses. </Paragraph>
           {/* <p className="mt-2 text-base font-medium text-[#454652]"> */}
 
@@ -87,7 +87,7 @@ const DashboardPage = () => {
         ) : (
           <>
             <StatCard
-              icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#000b60]" size={25} /></div>}
+              icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#2c1452]" size={25} /></div>}
               label="Total Students"
               value={formatNumber(dashboardCounters?.data?.total_students ?? 0)}
             />
@@ -131,7 +131,7 @@ const DashboardPage = () => {
         <div className="col-span-2">
           <SectionCard
             title="Top Courses Performance"
-            title_color='text-[#000b60]'
+            title_color='text-[#2c1452]'
             rightContent={
               <Paragraph className='text-[#767683]  font-bold'>
                 Enrollment &amp; Revenue

@@ -30,14 +30,14 @@ const CreateBundlePage = () => {
       {step === 2 && (
         <button
           onClick={() => setStep(1)}
-          className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-4 transition-colors w-fit shrink-0"
+          className="flex items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#2c1452] mb-4 transition-colors w-fit shrink-0"
         >
           <ArrowLeft size={16} />
           Back to Course Selection
         </button>
       )}
 
-      <Heading className="text-[#000B60] mb-1 shrink-0">
+      <Heading className="text-[#2c1452] mb-1 shrink-0">
         {step === 1 ? 'Create Bundle' : 'Pricing'}
       </Heading>
       <Paragraph className="text-[#767683] mb-6 shrink-0">

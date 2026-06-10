@@ -8,7 +8,7 @@ type ProgressBarProps = {
   data?: any
 }
 
-const ProgressBar = ({ label, status, barColor = '#000B60', data }: ProgressBarProps) => (
+const ProgressBar = ({ label, status, barColor = '#2c1452', data }: ProgressBarProps) => (
   <div className="flex items-center gap-5">
     <div className="min-w-0 flex-1 space-y-1.5">
       {label && (

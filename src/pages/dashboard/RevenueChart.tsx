@@ -38,7 +38,7 @@ const RevenueChart = ({
   return (
     <div
       className="flex h-full flex-col rounded-lg p-8"
-      style={{ background: 'linear-gradient(135deg, #000B60, #142283)' }}
+      style={{ background: 'linear-gradient(135deg, #2c1452, #2c1452)' }}
     >
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -50,7 +50,7 @@ const RevenueChart = ({
             className="h-7 w-[90px] appearance-none rounded-[6px] border border-white/20 bg-transparent pl-3 pr-7 text-sm font-semibold text-white focus:outline-none cursor-pointer"
           >
             {PERIODS.map(({ key, label }) => (
-              <option key={key} value={key} className="bg-[#142283] text-white">
+              <option key={key} value={key} className="bg-[#2c1452] text-white">
                 {label}
               </option>
             ))}
@@ -124,7 +124,7 @@ const RevenueChart = ({
                         x={cx}
                         y={(y ?? 0) - 14}
                         textAnchor="middle"
-                        fill="#142283"
+                        fill="#2c1452"
                         fontSize={10}
                         fontWeight={700}
                       >

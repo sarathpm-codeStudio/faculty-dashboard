@@ -53,7 +53,7 @@ const StudentDetailPage = () => {
                     <p className="text-xs font-bold text-[#767683] mb-1">{row.progress}%</p>
                     <div className="h-1.5 w-full rounded-full bg-gray-200">
                         <div
-                            className="h-full rounded-full bg-[#000B60]"
+                            className="h-full rounded-full bg-[#2c1452]"
                             style={{ width: `${row.progress}%` }}
                         />
                     </div>
@@ -101,7 +101,7 @@ const StudentDetailPage = () => {
             {/* Back */}
             <motion.button
                 onClick={() => navigate(-1)}
-                className="flex shrink-0 items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#000B60] mb-5 px-2 transition-colors"
+                className="flex shrink-0 items-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#2c1452] mb-5 px-2 transition-colors"
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.28 }}
@@ -132,7 +132,7 @@ const StudentDetailPage = () => {
                                 </div>
                             ) : (
                                 <>
-                            <Heading className="text-[#000B60] mb-3">{studentAnalytics?.data?.student?.first_name} {studentAnalytics?.data?.student?.last_name}</Heading>
+                            <Heading className="text-[#2c1452] mb-3">{studentAnalytics?.data?.student?.first_name} {studentAnalytics?.data?.student?.last_name}</Heading>
                             <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
                                 <span className="flex items-center gap-1.5 text-xs text-black font-medium">
                                     <Clock className='text-[#00A6BF]' size={15} /> Recent Active: {studentAnalytics?.data?.recentActive?.display}
@@ -196,7 +196,7 @@ const StudentDetailPage = () => {
             {/* Enrolled Courses */}
             <motion.div className="flex flex-1 min-h-0 flex-col gap-3 px-2" {...fadeUp(0.15)}>
                 <div className="flex items-center justify-between shrink-0">
-                    <Subheading className="text-[#000B60] font-bold">Enrolled Courses</Subheading>
+                    <Subheading className="text-[#2c1452] font-bold">Enrolled Courses</Subheading>
                     {rangeLabel && (
                         <span className="text-xs text-[#767683] font-medium shrink-0">{rangeLabel}</span>
                     )}

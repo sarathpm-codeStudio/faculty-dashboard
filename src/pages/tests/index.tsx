@@ -188,8 +188,8 @@ const TestsPage = () => {
       {/* Header */}
       <motion.div className="flex items-center justify-between" {...fadeUp(0.04)}>
         <div>
-          <Heading className="text-[#000B60]">Tests</Heading>
-          <div className="flex items-center gap-1.5 mt-0.5 p-2 rounded-lg bg-[#A8EDFF]">
+          <Heading className="text-[#2c1452]">Tests</Heading>
+          <div className="flex items-center gap-1.5 mt-0.5 p-2 rounded-lg bg-[#E1C3FF]">
             <Paragraph className="text-black font-bold !text-[12px]">
               Total Tests Created: {testsTotal}
             </Paragraph>
@@ -226,21 +226,21 @@ const TestsPage = () => {
           </>
         ) : (
           <>
-        <StatCard
-          icon={<CheckCircle2 size={28} className="text-[#000B60]" />}
-          value={String(testsPageAnalytics?.data?.activeTests ?? 0)}
-          label="Active Tests"
-        />
-        <StatCard
-          icon={<FileText size={28} className="text-orange-400" />}
-          value={String(testsPageAnalytics?.data?.draftTests ?? 0)}
-          label="Drafts"
-        />
-        <StatCard
-          icon={<BarChart2 size={28} className="text-green-500" />}
-          value={String(testsPageAnalytics?.data?.totalCompletedAttempts ?? 0)}
-          label="Total Completed Attempts"
-        />
+            <StatCard
+              icon={<CheckCircle2 size={28} className="text-[#2c1452]" />}
+              value={String(testsPageAnalytics?.data?.activeTests ?? 0)}
+              label="Active Tests"
+            />
+            <StatCard
+              icon={<FileText size={28} className="text-orange-400" />}
+              value={String(testsPageAnalytics?.data?.draftTests ?? 0)}
+              label="Drafts"
+            />
+            <StatCard
+              icon={<BarChart2 size={28} className="text-green-500" />}
+              value={String(testsPageAnalytics?.data?.totalCompletedAttempts ?? 0)}
+              label="Total Completed Attempts"
+            />
           </>
         )}
       </motion.div>
@@ -248,7 +248,7 @@ const TestsPage = () => {
       {/* Assessment Registry */}
       <motion.div className="flex-1 min-h-0 flex flex-col gap-3" {...fadeUp(0.12)}>
         <div className="flex items-center justify-between">
-          <Heading className="text-[#000B60] !text-xl">Assessment Registry</Heading>
+          <Heading className="text-[#2c1452] !text-xl">Assessment Registry</Heading>
           <div className="flex items-center gap-2">
             <button className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-[#767683] hover:bg-gray-50 transition-colors">
               <SlidersHorizontal size={13} />

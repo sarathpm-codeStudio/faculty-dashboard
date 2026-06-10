@@ -137,7 +137,7 @@ const CreateAnnouncementPage = () => {
       {/* Back */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-sm text-[#767683] font-medium hover:text-[#000B60] mb-5 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#767683] font-medium hover:text-[#2c1452] mb-5 transition-colors"
       >
         <ArrowLeft size={14} />
         Announcements
@@ -146,7 +146,7 @@ const CreateAnnouncementPage = () => {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <Heading className="text-[#000B60]">Create Campaign</Heading>
+          <Heading className="text-[#2c1452]">Create Campaign</Heading>
           <Paragraph className="text-[#767683] mt-1">
             Design and distribute high-impact academic updates.
           </Paragraph>
@@ -259,7 +259,7 @@ const CreateAnnouncementPage = () => {
           {/* Ready to Send */}
           <div
             className="rounded-2xl p-5 flex flex-col gap-4"
-            style={{ background: 'linear-gradient(to right, #000B60, #142283)' }}
+            style={{ background: 'linear-gradient(to right, #2c1452, #2c1452)' }}
           >
             <div className="flex items-center gap-2 text-white font-bold text-sm">
               <RocketLaunch size={18} weight="bold" />
@@ -289,8 +289,8 @@ const CreateAnnouncementPage = () => {
           {/* Banner Image */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
             <div className="flex items-center gap-2">
-              <ImageIcon size={15} className="text-[#000B60]" />
-              <p className="text-sm font-bold text-[#000B60] uppercase tracking-wider">Banner Image</p>
+              <ImageIcon size={15} className="text-[#2c1452]" />
+              <p className="text-sm font-bold text-[#2c1452] uppercase tracking-wider">Banner Image</p>
             </div>
 
             <UploadBox

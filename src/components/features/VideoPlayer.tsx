@@ -81,7 +81,7 @@ const VideoPlayer = ({ src, embed, type = 'video/mp4', poster, className = '' }:
             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/35 transition-colors" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-16 h-16 rounded-full bg-white/90 group-hover:bg-white group-hover:scale-110 flex items-center justify-center shadow-lg transition-all duration-200">
-                <Play size={26} className="text-[#000B60] fill-[#000B60] ml-1" />
+                <Play size={26} className="text-[#2c1452] fill-[#2c1452] ml-1" />
               </div>
             </div>
           </button>
