@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useFormik } from 'formik'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
 import AuthLayout from '@/components/layout/AuthLayout'
-import { Button, Input, Paragraph, Checkbox } from '@/components/ui'
+import { Button, Paragraph } from '@/components/ui'
+import { PhoneInput } from '@/components/features'
 import { authService } from '@/services/authService'
 import { validationSchema } from '@/utils/validator/auth.validator'
 
@@ -12,9 +13,7 @@ import { validationSchema } from '@/utils/validator/auth.validator'
 
 const LoginPage = () => {
     const navigate = useNavigate()
-    const login = useAuthStore((state) => state.login)
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-    const [rememberMe, setRememberMe] = useState(false)
 
     useEffect(() => {
         const checkSession = async () => {
@@ -29,35 +28,17 @@ const LoginPage = () => {
 
 
     const formik = useFormik({
-        initialValues: { email: '', password: '' },
+        initialValues: { countryCode: '+91', phone: '' },
         validationSchema,
         onSubmit: async (values, { setSubmitting }) => {
+            // Combine into E.164 (e.g. +919876543210) — format sent to Supabase is unchanged
+            const fullPhone = `${values.countryCode}${values.phone}`
             try {
-                const data = await authService.signIn(values.email, values.password)
-                const user = data.user
-                console.log("user", user, data.session)
-
-                // get user profile
-                const profile = await authService.getUserProfile(user?.id ?? '')
-                console.log("profile", profile)
-
-
-
-                login(
-                    {
-                        id: user?.id ?? '',
-                        name: `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || "",
-                        email: user?.email ? values.email : " ",
-                        avatar_url: profile?.avatar_url || "",
-                    },
-                    data.session?.access_token ?? ''
-                )
-                console.log(data)
-                toast.success('Signed in successfully')
-                navigate('/dashboard')
+                await authService.sendLoginOtp(fullPhone)
+                toast.success('OTP sent to your phone')
+                navigate('/auth/otp', { state: { phone: fullPhone, mode: 'login' } })
             } catch (err: unknown) {
-                console.log("err", err)
-                const message = err instanceof Error ? err.message : 'Sign in failed. Please try again.'
+                const message = err instanceof Error ? err.message : 'Failed to send OTP. Please try again.'
                 toast.error(message)
             } finally {
                 setSubmitting(false)
@@ -69,37 +50,20 @@ const LoginPage = () => {
         <AuthLayout title="Faculty Sign in" subtitle="Access your dashboard and classrooms">
             <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
 
-                <Input
-                    label="Email"
-                    type="email"
-                    id="email"
-                    value={formik.values.email}
+                <PhoneInput
+                    label="Phone Number"
+                    name="phone"
+                    countryCode={formik.values.countryCode}
+                    onCountryCodeChange={(code) => formik.setFieldValue('countryCode', code)}
+                    value={formik.values.phone}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    placeholder="you@example.com"
-                    error={formik.touched.email && formik.errors.email ? formik.errors.email : undefined}
-                />
-
-                <Input
-                    label="Password"
-                    type="password"
-                    id="password"
-                    value={formik.values.password}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    placeholder="••••••••"
-                    error={formik.touched.password && formik.errors.password ? formik.errors.password : undefined}
-                />
-
-                <Checkbox
-                    label="Remember me"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="mt-2"
+                    placeholder="Enter your  number"
+                    error={formik.touched.phone && formik.errors.phone ? formik.errors.phone : undefined}
                 />
 
                 <Button type="submit" fullWidth className="mt-4" disabled={formik.isSubmitting}>
-                    {formik.isSubmitting ? 'Signing in…' : 'Sign in'}
+                    {formik.isSubmitting ? 'Sending OTP…' : 'Send OTP'}
                 </Button>
 
             </form>
