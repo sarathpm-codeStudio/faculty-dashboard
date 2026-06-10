@@ -12,7 +12,7 @@ import { authService } from '@/services/authService'
 import logo from '@/assets/icons/brand_icon.svg'
 import title_logo from '@/assets/icons/title_logo.svg'
 
-import { Heading, Paragraph } from '../ui'
+import { Paragraph } from '../ui'
 
 const navLinks = [
     { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -25,7 +25,7 @@ const navLinks = [
     { to: '/coupon-management', label: 'Coupon Management', icon: RiCoupon2Line },
 ]
 
-const COLLAPSED_WIDTH = 72
+const COLLAPSED_WIDTH = 88
 const EXPANDED_WIDTH = 280
 const WIDTH_TRANSITION = 'width 0.4s cubic-bezier(0.33, 1, 0.68, 1)'
 const LABEL_TRANSITION = 'opacity 0.35s cubic-bezier(0.33, 1, 0.68, 1), max-width 0.4s cubic-bezier(0.33, 1, 0.68, 1)'
@@ -81,17 +81,20 @@ const SideNavBar = () => {
             >
             {/* Logo */}
             <div
-                className={`flex items-center border-b border-gray-100 pb-6 transition-[padding,gap] duration-300 ease-out ${collapsed ? 'justify-center px-2' : 'gap-3 px-6'}`}
+                className={`flex items-center border-b border-gray-100  transition-[padding] duration-300 ease-out ${collapsed ? 'justify-center px-1' : 'px-1'}`}
             >
-                <div className="w-[50px] h-[40px] rounded-xl flex items-center justify-center shrink-0">
-                    <img src={logo} alt="logo" />
-                </div>
-                {/* <Heading
-                    className={`text-[#000B60] whitespace-nowrap ${labelClass()}`}
+                <img
+                    src={logo}
+                    alt="logo"
+                    className={`shrink-0 object-contain ${collapsed ? 'w-20 h-auto opacity-100' : 'max-w-0 w-0 h-0 opacity-0'}`}
                     style={{ transition: LABEL_TRANSITION }}
-                >
-                    Learninough
-                </Heading> */}
+                />
+                <img
+                    src={title_logo}
+                    alt="Learninough"
+                    className={`h-20 w-auto shrink-0 object-contain object-left ${collapsed ? 'max-w-0 opacity-0 pointer-events-none' : 'opacity-100'}`}
+                    style={{ transition: LABEL_TRANSITION }}
+                />
             </div>
 
             {/* Nav links */}
