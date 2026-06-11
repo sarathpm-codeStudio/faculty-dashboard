@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { courseService } from '@/services/courseService'
 import type { CreateCoursePayload, UpdateCoursePayload } from '@/types/course.types'
+import { ChartPeriod } from '@/utils/helper/chart'
 
 export const courseKeys = {
   all: ['courses'] as const,
@@ -11,8 +12,8 @@ export const courseKeys = {
 
 export const useGetAllCourses = (filter: any, search?: string, enabled = true) =>
   useQuery({
-    queryKey: ['my-courses', {  filter,  search }],
-    queryFn: () => courseService.getAll({  filter,  search }),
+    queryKey: ['my-courses', { filter, search }],
+    queryFn: () => courseService.getAll({ filter, search }),
     enabled,
   })
 
@@ -61,6 +62,7 @@ export const useAddCoursePricing = (id: string) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: courseKeys.detail(id) })
       qc.invalidateQueries({ queryKey: ['my-courses'] })
+      qc.invalidateQueries({ queryKey: ['course-preview', id] })
     },
   })
 }
@@ -171,7 +173,7 @@ export const useDeleteMaterial = (courseId: string) => {
 export const useGetAllCategories = () => {
   return useQuery({
     queryKey: ['categories'],
-    queryFn: () => courseService.getAllCategories(), 
+    queryFn: () => courseService.getAllCategories(),
   })
 }
 
@@ -220,7 +222,7 @@ export const useGetAllContentInModule = (moduleId: string, enabled = true) => {
 }
 
 
-export const useGetCourseReviews = (courseId: string,payload: any, enabled = true) => {
+export const useGetCourseReviews = (courseId: string, payload: any, enabled = true) => {
   return useQuery({
     queryKey: ['course-reviews', courseId],
     queryFn: () => courseService.getCourseReviews(courseId, payload),
@@ -237,7 +239,7 @@ export const useGetCourseAnalytics = (courseId: string, enabled = true) => {
   })
 }
 
-export const useGetCourseEnrollmentCompletionChart = (courseId: string, period: string, enabled = true) => {
+export const useGetCourseEnrollmentCompletionChart = (courseId: string, period: ChartPeriod, enabled = true) => {
   return useQuery({
     queryKey: ['course-enrollment-completion-chart', courseId, period],
     queryFn: () => courseService.getCourseEnrollmentCompletionChart(courseId, period),
@@ -246,7 +248,7 @@ export const useGetCourseEnrollmentCompletionChart = (courseId: string, period: 
 }
 
 
-export const useGetCourseRevenueTrend = (courseId: string, period: string, enabled = true) => {
+export const useGetCourseRevenueTrend = (courseId: string, period: ChartPeriod, enabled = true) => {
   return useQuery({
     queryKey: ['course-revenue-trend', courseId, period],
     queryFn: () => courseService.getCourseRevenueTrend(courseId, period),

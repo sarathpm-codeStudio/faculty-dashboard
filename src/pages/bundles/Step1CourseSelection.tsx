@@ -51,8 +51,8 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
 
   // Pre-select courses when editing an existing bundle
   useEffect(() => {
-    if (bundle?.data?.course_bundle_courses) {
-      const preSelectedIds = bundle.data.course_bundle_courses.map(
+    if (bundle?.course_bundle_courses) {
+      const preSelectedIds = bundle.course_bundle_courses.map(
         (item: any) => item.courses.id
       )
       setSelected(preSelectedIds)
@@ -68,7 +68,7 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
   const toggle = (id: number) =>
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
 
-  const selectedCourses: any = courses?.data?.filter((c: any) => selected.includes(c.id))
+  const selectedCourses: any = courses?.filter((c: any) => selected.includes(c.id))
   const total = selectedCourses?.reduce((sum: any, c: any) => sum + c.final_price, 0)
 
   return (
@@ -106,14 +106,14 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
               </div>
             ) :
 
-              courses?.data?.length === 0 ? (
+              courses?.length === 0 ? (
                 <div className="flex col-span-2 items-center justify-center h-[500px]">
                   <Paragraph className="text-gray-400 !text-xs text-center py-4">
                     No courses found.
                   </Paragraph>
                 </div>
               ) : (
-                courses?.data?.map((course: any) => (
+                courses?.map((course: any) => (
                   <CourseCard
                     {...course}
                     selectable

@@ -1,6 +1,8 @@
 import type { TreeNode } from '@/pages/courses/create'
 
 export type CourseStatus = 'draft' | 'published' | 'archived'
+export enum MaterialType { VIDEO = "VIDEO", PDF = "PDF", LINK = "LINK", NOTES = "NOTES", IMAGE = "IMAGE", TEST = "TEST" }
+
 
 export interface Course {
 
@@ -56,3 +58,4 @@ export interface CoursesResponse {
   page: number
   limit: number
 }
+export enum MaterialStatus { PENDING = "PENDING", TRANSCODING = "TRANSCODING", COMPLETED = "COMPLETED", FAILED = "FAILED", READY = "READY", PROCESSING = "PROCESSING" }

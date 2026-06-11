@@ -40,11 +40,11 @@ const cardVariants: Variants = {
 const CoursesPage = () => {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<Tab>('active')
-  const [selectTab,setSelectTab] = useState<any>(false)
+  const [selectTab, setSelectTab] = useState<any>(false)
   const [isLoading, setIsLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; title: string } | null>(null)
 
-  const { data: courses, isLoading: coursesLoading } = useGetAllCourses(selectTab , "", true)
+  const { data: courses, isLoading: coursesLoading } = useGetAllCourses(selectTab, "", true)
   const { mutateAsync: deleteCourse, isPending: deleteCoursePending } = useDeleteCourse()
 
   useEffect(() => {
@@ -60,8 +60,8 @@ const CoursesPage = () => {
   }, [activeTab])
 
   const handleViewAnalytics = (id: number | string) => {
-    
-       navigate(`/courses/${id}/analytics`,{state: {course_title: courses?.data?.find((course: any) => course.id === id)?.title}})
+
+    navigate(`/courses/${id}/analytics`, { state: { course_title: courses?.find((course: any) => course.id === id)?.title } })
   }
 
   const handleEdit = (id: number | string) => {
@@ -69,7 +69,7 @@ const CoursesPage = () => {
   }
 
   const handleDelete = (id: number | string) => {
-    const course = courses?.data?.find((c: any) => c.id === id)
+    const course = courses?.find((c: any) => c.id === id)
     if (course) {
       setDeleteTarget({ id: course.id, title: course.title })
     }
@@ -98,7 +98,7 @@ const CoursesPage = () => {
       >
         <div>
           <Heading className="text-[#2c1452]">
-            My Courses ({String(courses?.data?.length ?? 0).padStart(2, '0')})
+            My Courses ({String(courses?.length ?? 0).padStart(2, '0')})
           </Heading>
           <Paragraph className="text-[#767683]">
             Manage and monitor your curriculum performance
@@ -180,7 +180,7 @@ const CoursesPage = () => {
             animate="visible"
             exit="exit"
           >
-            {courses?.data?.map((course: any) => (
+            {courses?.map((course: any) => (
               <motion.div key={course.id} variants={cardVariants}>
                 <CourseCard
                   {...course}

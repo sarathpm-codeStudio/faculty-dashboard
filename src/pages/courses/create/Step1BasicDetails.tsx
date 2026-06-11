@@ -95,8 +95,8 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   useEffect(() => {
     if (courseDetails) {
       console.log("edit data", courseDetails)
-      const assetId = courseDetails?.data?.video_asset_id
-      const transcodeStatus = courseDetails?.data?.video_uploading_status
+      const assetId = courseDetails?.video_asset_id
+      const transcodeStatus = courseDetails?.video_uploading_status
       if (assetId) {
         const orgId = import.meta.env.VITE_TPSTREAMS_ORG_ID
         const accessToken = import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN
@@ -108,26 +108,26 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
       }
       formik.setValues({
         ...form,
-        title: courseDetails?.data?.title || "",
-        unique_Id: courseDetails?.data?.unique_id || "",
-        description: courseDetails?.data?.description || "",
-        category: courseDetails?.data?.category || "",
-        level: courseDetails?.data?.level || "",
-        languages: courseDetails?.data?.languages || [],
-        cover_image_url: courseDetails?.data?.cover_image || null,
-        intro_video_url: courseDetails?.data?.intro_video_url || null,
+        title: courseDetails?.title || "",
+        unique_Id: courseDetails?.unique_id || "",
+        description: courseDetails?.description || "",
+        category: courseDetails?.category || "",
+        level: courseDetails?.level || "",
+        languages: courseDetails?.languages || [],
+        cover_image_url: courseDetails?.cover_image || null,
+        intro_video_url: courseDetails?.intro_video_url || null,
       })
       if (assetId) {
         formik.setFieldValue('intro_video_asset_id', assetId)
       }
-      if (courseDetails?.data?.cover_image) {
-        setImgPreview(courseDetails.data.cover_image)
+      if (courseDetails?.cover_image) {
+        setImgPreview(courseDetails?.cover_image)
       }
     }
   }, [courseDetails])
 
   const coverPreview =
-    imgPreview ?? formik.values.cover_image_url ?? courseDetails?.data?.cover_image ?? null
+    imgPreview ?? formik.values.cover_image_url ?? courseDetails?.cover_image ?? null
 
   const handleCoverFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {

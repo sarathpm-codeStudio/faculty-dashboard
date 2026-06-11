@@ -55,8 +55,8 @@ const TestDetailPage = () => {
   const [pageSize, setPageSize] = useState(5)
 
 
-  
-// queries
+
+  // queries
   const { data: test, isLoading: testLoading } = useGetTestById(id, !!id)
   const { data: testAnalytics, isLoading: testAnalyticsLoading } = useGetTestAnalytics(id, !!id)
   const { data: attempts, isLoading: attemptsLoading } = useGetAllAttemptsByTestId(id, { page, limit: pageSize }, !!id)
@@ -166,43 +166,43 @@ const TestDetailPage = () => {
           </>
         ) : (
           <>
-        <StatCard
-          icon={null}
-          label="Completion Rate"
-          value={`${testAnalytics?.data?.completedCount}/${testAnalytics?.data?.totalAttempts}`}
-          valueColor="#2c1452"
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-[#767683]">{testAnalytics?.data?.completionRate}%</span>
-          </div>
-          <div className="h-1.5 w-full rounded-full bg-gray-200">
-            <div
-              className="h-full rounded-full bg-[#2c1452]"
-              style={{ width: `${testAnalytics?.data?.completionRate}%` }}
-            />
-          </div>
-        </StatCard>
-        <StatCard
-          icon={null}
-          label="Avg. Duration"
-          value={testAnalytics?.data?.avgDuration?.display}
-          valueColor="#2c1452"
-        >
-          <Paragraph className="!text-xs text-[#767683]">Allocated: {testAnalytics?.data?.allocatedDuration?.display}</Paragraph>
-        </StatCard>
-        <StatCard
-          icon={null}
-          label="Top Student"
-          value={`${testAnalytics?.data?.topStudent?.score}/${testAnalytics?.data?.topStudent?.totalQuestions}`}
-          valueColor="#2c1452"
-        >
-          {topScorer && (
-            <div className="flex items-center gap-1.5">
-              <User size={13} className="text-[#2c1452]" />
-              <Paragraph className="!text-xs text-[#2c1452]">{testAnalytics?.data?.topStudent?.name}</Paragraph>
-            </div>
-          )}
-        </StatCard>
+            <StatCard
+              icon={null}
+              label="Completion Rate"
+              value={`${testAnalytics?.completedCount}/${testAnalytics?.totalAttempts}`}
+              valueColor="#2c1452"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xs font-bold text-[#767683]">{testAnalytics?.completionRate}%</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-gray-200">
+                <div
+                  className="h-full rounded-full bg-[#2c1452]"
+                  style={{ width: `${testAnalytics?.completionRate}%` }}
+                />
+              </div>
+            </StatCard>
+            <StatCard
+              icon={null}
+              label="Avg. Duration"
+              value={testAnalytics?.avgDuration?.display || "N/A"}
+              valueColor="#2c1452"
+            >
+              <Paragraph className="!text-xs text-[#767683]">Allocated: {testAnalytics?.allocatedDuration?.display}</Paragraph>
+            </StatCard>
+            <StatCard
+              icon={null}
+              label="Top Student"
+              value={`${testAnalytics?.topStudent?.score}/${testAnalytics?.topStudent?.totalQuestions}`}
+              valueColor="#2c1452"
+            >
+              {topScorer && (
+                <div className="flex items-center gap-1.5">
+                  <User size={13} className="text-[#2c1452]" />
+                  <Paragraph className="!text-xs text-[#2c1452]">{testAnalytics?.topStudent?.name}</Paragraph>
+                </div>
+              )}
+            </StatCard>
           </>
         )}
       </motion.div>
@@ -226,8 +226,8 @@ const TestDetailPage = () => {
         <div className="flex-1 min-h-0">
           <DataTable
             columns={COLUMNS}
-            data={attempts?.data?.data ?? []}
-            total={attempts?.data?.total ?? 0}
+            data={attempts?.data ?? []}
+            total={attempts?.total ?? 0}
             page={page}
             loading={attemptsLoading}
             pageSize={pageSize}
@@ -237,7 +237,7 @@ const TestDetailPage = () => {
               setPage(1)
             }}
             onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
-            
+
           />
         </div>
 

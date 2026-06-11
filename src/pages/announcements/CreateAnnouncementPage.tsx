@@ -37,7 +37,7 @@ const CreateAnnouncementPage = () => {
 
   useEffect(() => {
     if (courses) {
-      const data = courses?.data?.map((course: any) => ({
+      const data = courses?.map((course: any) => ({
         value: course.id,
         label: course.title,
       }))
@@ -51,12 +51,12 @@ const CreateAnnouncementPage = () => {
   useEffect(() => {
     if (announcement) {
       formik.setValues({
-        title: announcement.data.title,
-        audience: announcement.data.course_id || "all",
-        startDate: announcement.data.time_period.split('/')[0],
-        endDate: announcement.data.time_period.split('/')[1],
-        content: announcement.data.content,
-        image_url: announcement.data.image_url,
+        title: announcement?.title,
+        audience: announcement?.course_id || "all",
+        startDate: announcement?.time_period.split('/')[0],
+        endDate: announcement?.time_period.split('/')[1],
+        content: announcement?.content,
+        image_url: announcement?.image_url,
       })
     }
   }, [announcement])
@@ -88,11 +88,10 @@ const CreateAnnouncementPage = () => {
 
         if (id) {
 
-          const { data, error } = await updateAnnouncement({ id, payload })
-          if (error) {
-            toast.error(error)
-          }
-          if (data) {
+          try {
+
+            await updateAnnouncement({ id, payload })
+
             if (isDraft) {
               toast.success("Announcement saved as draft successfully")
             } else {
@@ -100,15 +99,18 @@ const CreateAnnouncementPage = () => {
             }
             formik.resetForm()
             navigate('/announcements')
+          } catch (error: any) {
+            if (error) {
+              toast.error(error)
+            }
           }
 
         } else {
 
-          const { data, error } = await createAnnouncement(payload)
-          if (error) {
-            toast.error(error)
-          }
-          if (data) {
+          try {
+
+            await createAnnouncement(payload)
+
             if (isDraft) {
               toast.success("Announcement saved as draft successfully")
             } else {
@@ -116,7 +118,12 @@ const CreateAnnouncementPage = () => {
             }
             formik.resetForm()
             navigate('/announcements')
+          } catch (error: any) {
+            if (error) {
+              toast.error(error)
+            }
           }
+
         }
 
 
@@ -295,7 +302,7 @@ const CreateAnnouncementPage = () => {
 
             <UploadBox
               accept="image/*"
-              preview={announcement?.data.image_url || coverPreview}
+              preview={announcement?.image_url || coverPreview}
               previewType="image"
               icon={<ImageIcon size={16} />}
               title="Upload Banner"

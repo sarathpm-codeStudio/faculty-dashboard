@@ -84,16 +84,16 @@ const CreateTestPage = () => {
         material_title: values.materialTitle,
       }
 
-      // call api 
-      const { data, error } = await createTest(payload)
-      console.log("data", data)
-      setTestId(data?.id)
-      if (error) {
+      try {
+        // call api 
+        const data = await createTest(payload)
+        console.log("data id ^^^^^^^^^^^^^^^^^^^^", data)
+        setTestId(data?.id)
+        toast.success("Add questions to this test")
+        setStep(2)
+      } catch (error: any) {
         toast.error(error.message)
-        return
       }
-      toast.success("Add questions to this test")
-      setStep(2)
 
     }
 

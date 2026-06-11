@@ -50,12 +50,11 @@ const AnnouncementDetailPage = () => {
 
     try {
 
-      const { data: response } = await deleteAnnouncement(id)
+      await deleteAnnouncement(id)
 
-      if (response) {
-        toast.success("Announcement deleted successfully", { id: toastId })
-        navigate('/announcements')
-      }
+
+      toast.success("Announcement deleted successfully", { id: toastId })
+      navigate('/announcements')
 
     } catch (error: any) {
 

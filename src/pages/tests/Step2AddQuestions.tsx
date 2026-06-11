@@ -184,14 +184,18 @@ const Step2AddQuestions = ({
         }
 
       } else {
-        const { data, error } = await addQuestion(payload)
 
-        if (error) {
-          toast.error(error.message)
-        }
-        if (data) {
+        try {
+
+          await addQuestion(payload)
+
           toast.success('Question added successfully')
           resetQuestionForm()
+
+        } catch (error: any) {
+
+          toast.error(error.message)
+
         }
       }
     },
@@ -541,13 +545,13 @@ const Step2AddQuestions = ({
         </div>
 
         {/* Added questions list */}
-        {questionsData?.data?.length > 0 && (
+        {questionsData?.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
             <Paragraph className="!text-xs font-bold text-[#767683] uppercase tracking-widest">
-              Added Questions ({questionsData?.data?.length})
+              Added Questions ({questionsData?.length})
             </Paragraph>
             <div className="flex flex-col divide-y divide-gray-100">
-              {questionsData?.data?.map((q: any, i: number) => (
+              {questionsData?.map((q: any, i: number) => (
                 <div key={q.id} className="flex items-start justify-between gap-3 py-4">
                   <div className="flex items-start gap-3">
                     <span className="text-sm font-bold text-[#767683] shrink-0">

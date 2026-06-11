@@ -102,18 +102,18 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
 
   useEffect(() => {
     if (courses) {
-      setCourseOptions(courses.data.map((course: any) => ({ value: course.id, label: course.title })))
+      setCourseOptions(courses?.map((course: any) => ({ value: course.id, label: course.title })))
     }
   }, [courses])
 
   useEffect(() => {
     if (folders) {
-      setModuleOptions(folders.data.map((folder: any) => ({ value: folder.id, label: folder.title })))
+      setModuleOptions(folders?.map((folder: any) => ({ value: folder.id, label: folder.title })))
     }
   }, [folders])
 
   useEffect(() => {
-    const materials = contentData?.data ?? contentData?.json?.data ?? []
+    const materials = contentData?.data ?? []
     setMaterialOptions(materials.map((material: any) => ({ value: material.id, label: material.title })))
   }, [contentData])
 
@@ -121,21 +121,21 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
     if (testData) {
       setIsEdit(true)
       formik.setValues({
-        title: testData?.data?.title,
-        course: testData?.data?.course_id,
-        module: testData?.data?.module_id,
-        moduleTitle: testData?.data?.module_title ?? '',
-        material: testData?.data?.material_id ?? '',
-        materialTitle: testData?.data?.material_title ?? '',
-        testType: testData?.data?.type,
-        duration: testData?.data?.duration_minutes,
-        instructions: testData?.data?.instructions,
+        title: testData?.title,
+        course: testData?.course_id,
+        module: testData?.folder_id,
+        moduleTitle: testData?.folder_title ?? '',
+        material: testData?.material_id ?? '',
+        materialTitle: testData?.material_title ?? '',
+        testType: testData?.type,
+        duration: testData?.duration_minutes,
+        instructions: testData?.instructions,
       })
-      if (testData?.data?.course_id) {
-        setCourseId(testData?.data?.course_id)
+      if (testData?.course_id) {
+        setCourseId(testData?.course_id)
       }
-      if (testData?.data?.module_id) {
-        setModuleId(testData?.data?.module_id)
+      if (testData?.folder_id) {
+        setModuleId(testData?.folder_id)
       }
       console.log("testData", testData)
     }

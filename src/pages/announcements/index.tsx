@@ -57,7 +57,7 @@ const AnnouncementsPage = () => {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(5)
+  const [pageSize, setPageSize] = useState(10)
   const [rangeLabel, setRangeLabel] = useState('')
 
   // query
@@ -74,8 +74,8 @@ const AnnouncementsPage = () => {
 
 
 
-  const announcementsData = announcements?.data?.data ?? []
-  const announcementsTotal = announcements?.data?.total ?? 0
+  const announcementsData = announcements?.data ?? []
+  const announcementsTotal = announcements?.total ?? 0
 
 
   useEffect(() => {
@@ -161,12 +161,12 @@ const AnnouncementsPage = () => {
 
     try {
 
-      const { data: response } = await deleteAnnouncement(id)
+      await deleteAnnouncement(id)
 
-      if (response) {
-        toast.success("Announcement deleted successfully", { id: toastId })
-        navigate('/announcements')
-      }
+
+      toast.success("Announcement deleted successfully", { id: toastId })
+      navigate('/announcements')
+
 
     } catch (error: any) {
 

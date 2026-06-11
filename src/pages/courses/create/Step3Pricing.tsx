@@ -77,8 +77,8 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
   const { mutateAsync: addCoursePricing } = useAddCoursePricing(courseId)
 
   useEffect(() => {
-    if (!courseDetails?.data) return
-    const d = courseDetails.data
+    if (!courseDetails) return
+    const d = courseDetails
     formik.setValues({
       validity: d.validity ?? '',
       price: d.price != null ? String(d.price) : '',
@@ -102,7 +102,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
 
   const saved = price - studentPrice
 
-  if (courseId && (isLoadingCourseDetails || !courseDetails?.data)) {
+  if (courseId && (isLoadingCourseDetails || !courseDetails)) {
     return (
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-8 space-y-4">

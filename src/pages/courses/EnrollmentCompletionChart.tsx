@@ -91,42 +91,42 @@ const EnrollmentCompletionChart = ({ courseId }: { courseId: string }) => {
                 {enrollmentCompletionChartLoading ? (
                     <SkeletonChart className="h-full" />
                 ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={enrollmentCompletionChart?.data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="30%" barGap={4}>
-                        <CartesianGrid vertical={false} stroke="#f0f1f5" strokeDasharray="4 4" />
-                        <XAxis
-                            dataKey="label"
-                            tick={{ fill: '#767683', fontSize: 11, fontWeight: 700 }}
-                            axisLine={{ stroke: '#e5e7eb' }}
-                            tickLine={false}
-                        />
-                        <YAxis
-                            tick={{ fill: '#a0a0ae', fontSize: 10, fontWeight: 600 }}
-                            axisLine={false}
-                            tickLine={false}
-                            width={36}
-                        />
-                        <Tooltip
-                            cursor={{ fill: 'rgba(0,0,0,0.04)' }}
-                            content={({ active, payload, label }) => {
-                                if (!active || !payload?.length) return null
-                                return (
-                                    <div className="rounded-lg bg-[#2c1452] px-3 py-2 shadow-lg space-y-1">
-                                        <p className="text-[10px] font-semibold text-indigo-200">{label}</p>
-                                        {payload.map((p: any) => (
-                                            <p key={p.dataKey} className="text-xs font-bold text-white">
-                                                {p.name}: {p.value}
-                                            </p>
-                                        ))}
-                                    </div>
-                                )
-                            }}
-                        />
-                        <Legend content={() => null} />
-                        <Bar dataKey="enrollments" name="Enrollments" fill="#2c1452" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="completions" name="Completions" fill="#00C6DE" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={enrollmentCompletionChart} margin={{ top: 10, right: 8, left: 0, bottom: 0 }} barCategoryGap="30%" barGap={4}>
+                            <CartesianGrid vertical={false} stroke="#f0f1f5" strokeDasharray="4 4" />
+                            <XAxis
+                                dataKey="label"
+                                tick={{ fill: '#767683', fontSize: 11, fontWeight: 700 }}
+                                axisLine={{ stroke: '#e5e7eb' }}
+                                tickLine={false}
+                            />
+                            <YAxis
+                                tick={{ fill: '#a0a0ae', fontSize: 10, fontWeight: 600 }}
+                                axisLine={false}
+                                tickLine={false}
+                                width={36}
+                            />
+                            <Tooltip
+                                cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                                content={({ active, payload, label }) => {
+                                    if (!active || !payload?.length) return null
+                                    return (
+                                        <div className="rounded-lg bg-[#2c1452] px-3 py-2 shadow-lg space-y-1">
+                                            <p className="text-[10px] font-semibold text-indigo-200">{label}</p>
+                                            {payload.map((p: any) => (
+                                                <p key={p.dataKey} className="text-xs font-bold text-white">
+                                                    {p.name}: {p.value}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    )
+                                }}
+                            />
+                            <Legend content={() => null} />
+                            <Bar dataKey="enrollments" name="Enrollments" fill="#2c1452" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="completions" name="Completions" fill="#00C6DE" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
                 )}
             </div>
         </SectionCard>

@@ -57,7 +57,7 @@ const StudentsPage = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [rangeLabel, setRangeLabel] = useState('')
-  const [selectedCourse, setSelectedCourse] = useState('')
+  const [selectedCourse, setSelectedCourse] = useState('all')
 
 
   const COLUMNS: TableColumn<Student>[] = [
@@ -125,7 +125,7 @@ const StudentsPage = () => {
   useEffect(() => {
 
     if (courses) {
-      const courseOptions = courses?.data?.map((course: any) => ({
+      const courseOptions = courses?.map((course: any) => ({
         value: course.id,
         label: course.title,
       }))
@@ -145,7 +145,7 @@ const StudentsPage = () => {
       <motion.div className="mb-6 px-2 pt-2" {...fadeUp(0.04)}>
         <Heading className="text-[#2c1452]">Enrolled Students</Heading>
         <Paragraph className="text-black font-bold mt-0.5">
-          {students?.data?.pagination?.total} Total Students
+          {students?.pagination?.total} Total Students
         </Paragraph>
       </motion.div>
 
@@ -178,8 +178,8 @@ const StudentsPage = () => {
       <motion.div className="flex-1 min-h-0" {...fadeUp(0.12)}>
         <DataTable
           columns={COLUMNS}
-          data={students?.data?.data}
-          total={students?.data?.pagination?.total}
+          data={students?.data}
+          total={students?.pagination?.total}
           page={page}
           pageSize={pageSize}
           loading={isLoading}

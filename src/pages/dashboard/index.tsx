@@ -89,22 +89,22 @@ const DashboardPage = () => {
             <StatCard
               icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#2c1452]" size={25} /></div>}
               label="Total Students"
-              value={formatNumber(dashboardCounters?.data?.total_students ?? 0)}
+              value={formatNumber(dashboardCounters?.total_students ?? 0)}
             />
             <StatCard
               icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
               label="Active Courses"
-              value={formatNumber(dashboardCounters?.data?.active_courses ?? 0)}
+              value={formatNumber(dashboardCounters?.active_courses ?? 0)}
             />
             <StatCard
               icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFDAD6]"><Tag className="text-[#BA1A1A]" size={25} /></div>}
               label="Active Coupons"
-              value={formatNumber(dashboardCounters?.data?.active_coupons ?? 0)}
+              value={formatNumber(dashboardCounters?.active_coupons ?? 0)}
             />
             <StatCard
               icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
               label="Total Revenue"
-              value={formatNumber(dashboardCounters?.data?.total_revenue ?? 0)}
+              value={formatNumber(dashboardCounters?.total_revenue ?? 0)}
               prefix="₹"
             />
           </>
@@ -117,8 +117,8 @@ const DashboardPage = () => {
           <EnrollmentChart />
         </div>
         <RevenueChart
-          data={revenueTrend?.data?.data ?? []}
-          trend={revenueTrend?.data?.trend}
+          data={revenueTrend?.data ?? []}
+          trend={revenueTrend?.trend}
           isLoading={revenueTrendLoading}
           period={revenuePeriod}
           onPeriodChange={setRevenuePeriod}
@@ -140,8 +140,8 @@ const DashboardPage = () => {
           >
             <div className="space-y-3">
               {
-                topCoursesPerformance?.data?.has_data ? (
-                  topCoursesPerformance?.data?.data?.map((c: any) => (
+                topCoursesPerformance?.has_data ? (
+                  topCoursesPerformance?.data?.map((c: any) => (
                     <CoursePerformanceRow
                       key={c.id}
                       title={c.title}
@@ -151,47 +151,47 @@ const DashboardPage = () => {
                     />
                   ))
                 )
-                : (
-                  <Paragraph className='text-[#767683] !text-[12px] text-center'>No Top Courses Performance found</Paragraph>
-                  
-                )
+                  : (
+                    <Paragraph className='text-[#767683] !text-[12px] text-center'>No Top Courses Performance found</Paragraph>
+
+                  )
               }
-              
+
             </div>
 
             {/* Transcoding Status */}
             {
               uploads && uploads?.length > 0 && (
                 <div className="mt-6 rounded-lg bg-[#f2f4f6] px-6 pt-7 pb-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex h-9 w-10 items-center justify-center rounded-[6px] bg-white">
-                    <MdVideoSettings className="text-[#1a237e] " size={25} />
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex h-9 w-10 items-center justify-center rounded-[6px] bg-white">
+                      <MdVideoSettings className="text-[#1a237e] " size={25} />
+                    </div>
+                    <p className="text-sm font-bold text-[#1a237e]">Content Transcoding Status</p>
                   </div>
-                  <p className="text-sm font-bold text-[#1a237e]">Content Transcoding Status</p>
+                  <div className='space-y-2 max-h-64 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0'>
+
+                    {
+                      uploads && uploads?.length < 1 ?
+                        <Paragraph className='text-[#767683] !text-[12px] text-center'>No Transcoding found</Paragraph>
+                        :
+                        uploads?.map((item: any, i: number) => (
+                          <ProgressBar
+                            key={item.unique_id ?? i}
+                            label={item.file_name ?? item.fileName ?? item.unique_id}
+                            value={item?.transcoding_progress ?? 0}
+                            status={item?.uploading_status === "uploaded" ? "waiting to transcode" : item?.uploading_status}
+                            data={item}
+                          />
+                        ))
+                    }
+
+                  </div>
+
                 </div>
-                <div className='space-y-2 max-h-64 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:w-0 [&::-webkit-scrollbar]:h-0'>
-  
-                  {
-                    uploads && uploads?.length < 1 ?
-                      <Paragraph className='text-[#767683] !text-[12px] text-center'>No Transcoding found</Paragraph>
-                      :
-                      uploads?.map((item: any, i: number) => (
-                        <ProgressBar
-                          key={item.unique_id ?? i}
-                          label={item.file_name ?? item.fileName ?? item.unique_id}
-                          value={item?.transcoding_progress ?? 0}
-                          status={item?.uploading_status === "uploaded" ? "waiting to transcode" : item?.uploading_status}
-                          data={item}
-                        />
-                      ))
-                  }
-  
-                </div>
-  
-              </div>
               )
             }
-           
+
           </SectionCard>
         </div>
 

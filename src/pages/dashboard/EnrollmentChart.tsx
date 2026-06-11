@@ -90,13 +90,13 @@ const EnrollmentChart = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-        
-        if (enrollmentTrend) {
-            setChartData(enrollmentTrend.data)
-          }
-        }
+
+      if (enrollmentTrend) {
+        setChartData(enrollmentTrend)
+      }
+    }
     fetchData()
-}, [period, enrollmentTrend])
+  }, [period, enrollmentTrend])
 
   return (
     <SectionCard
@@ -109,108 +109,108 @@ const EnrollmentChart = () => {
         {enrollmentTrendLoading ? (
           <SkeletonChart className="h-full" />
         ) : (
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            key={period}
-            data={chartData}
-            margin={{ top: 10, right: 16, left: 0, bottom: period === 'week' ? 28 : 8 }}
-          >
-            <defs>
-              <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#c7d2fe" stopOpacity={0.7} />
-                <stop offset="100%" stopColor="#c7d2fe" stopOpacity={0.02} />
-              </linearGradient>
-            </defs>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              key={period}
+              data={chartData}
+              margin={{ top: 10, right: 16, left: 0, bottom: period === 'week' ? 28 : 8 }}
+            >
+              <defs>
+                <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#c7d2fe" stopOpacity={0.7} />
+                  <stop offset="100%" stopColor="#c7d2fe" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
 
-            {/* Horizontal grid lines only */}
-            <CartesianGrid
-              vertical={false}
-              stroke="#f0f1f5"
-              strokeDasharray="4 4"
-            />
+              {/* Horizontal grid lines only */}
+              <CartesianGrid
+                vertical={false}
+                stroke="#f0f1f5"
+                strokeDasharray="4 4"
+              />
 
-            <XAxis
-              dataKey="primary"
-              axisLine={{ stroke: '#e5e7eb', strokeWidth: 1 }}
-              tickLine={{ stroke: '#e5e7eb', strokeWidth: 1 }}
-              interval={0}
-              height={period === 'week' ? 42 : 24}
-              padding={{ left: 24, right: 16 }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              tick={(props: any) => {
-                const { x, y, payload } = props
-                const datum = chartData.find(d => d.primary === payload?.value)
-                if (!datum) return <g />
-                return (
-                  <g transform={`translate(${x},${y})`}>
-                    <text
-                      x={0} y={0} dy={12}
-                      textAnchor="middle"
-                      fill="#767683"
-                      fontSize={9}
-                      fontWeight={700}
-                      letterSpacing={0.8}
-                    >
-                      {payload?.value}
-                    </text>
-                    {datum.secondary && (
+              <XAxis
+                dataKey="primary"
+                axisLine={{ stroke: '#e5e7eb', strokeWidth: 1 }}
+                tickLine={{ stroke: '#e5e7eb', strokeWidth: 1 }}
+                interval={0}
+                height={period === 'week' ? 42 : 24}
+                padding={{ left: 24, right: 16 }}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                tick={(props: any) => {
+                  const { x, y, payload } = props
+                  const datum = chartData.find(d => d.primary === payload?.value)
+                  if (!datum) return <g />
+                  return (
+                    <g transform={`translate(${x},${y})`}>
                       <text
-                        x={0} y={0} dy={25}
+                        x={0} y={0} dy={12}
                         textAnchor="middle"
-                        fill="#a0a0ae"
+                        fill="#767683"
                         fontSize={9}
-                        fontWeight={600}
+                        fontWeight={700}
+                        letterSpacing={0.8}
                       >
-                        {datum.secondary}
+                        {payload?.value}
                       </text>
-                    )}
-                  </g>
-                )
-              }}
-            />
+                      {datum.secondary && (
+                        <text
+                          x={0} y={0} dy={25}
+                          textAnchor="middle"
+                          fill="#a0a0ae"
+                          fontSize={9}
+                          fontWeight={600}
+                        >
+                          {datum.secondary}
+                        </text>
+                      )}
+                    </g>
+                  )
+                }}
+              />
 
-            <YAxis
-              ticks={[25, 50, 100, 150, 200]}
-              domain={[0, 210]}
-              tick={{ fill: '#a0a0ae', fontSize: 10, fontWeight: 600 }}
-              axisLine={{ stroke: '#e5e7eb', strokeWidth: 1 }}
-              tickLine={false}
-              width={40}
-            />
+              <YAxis
+                ticks={[25, 50, 100, 150, 200]}
+                domain={[0, 210]}
+                tick={{ fill: '#a0a0ae', fontSize: 10, fontWeight: 600 }}
+                axisLine={{ stroke: '#e5e7eb', strokeWidth: 1 }}
+                tickLine={false}
+                width={40}
+              />
 
-            <Tooltip
-              cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 4' }}
-              content={({ active, payload, label }) => {
-                if (!active || !payload?.length) return null
-                return (
-                  <div className="rounded-lg bg-[#2c1452] px-3 py-2 shadow-lg">
-                    <p className="text-[10px] font-semibold text-indigo-200 mb-0.5">{label}</p>
-                    <p className="text-sm font-bold text-white">{payload[0].value} students</p>
-                  </div>
-                )
-              }}
-            />
+              <Tooltip
+                cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '4 4' }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null
+                  return (
+                    <div className="rounded-lg bg-[#2c1452] px-3 py-2 shadow-lg">
+                      <p className="text-[10px] font-semibold text-indigo-200 mb-0.5">{label}</p>
+                      <p className="text-sm font-bold text-white">{payload[0].value} students</p>
+                    </div>
+                  )
+                }}
+              />
 
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="#6366f1"
-              strokeWidth={2.5}
-              fill="url(#enrollGrad)"
-              dot={false}
-              activeDot={{
-                r: 6,
-                fill: 'white',
-                stroke: '#6366f1',
-                strokeWidth: 3,
-              }}
-              isAnimationActive
-              animationBegin={0}
-              animationDuration={1800}
-              animationEasing="ease-out"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="#6366f1"
+                strokeWidth={2.5}
+                fill="url(#enrollGrad)"
+                dot={false}
+                activeDot={{
+                  r: 6,
+                  fill: 'white',
+                  stroke: '#6366f1',
+                  strokeWidth: 3,
+                }}
+                isAnimationActive
+                animationBegin={0}
+                animationDuration={1800}
+                animationEasing="ease-out"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         )}
       </div>
     </SectionCard>

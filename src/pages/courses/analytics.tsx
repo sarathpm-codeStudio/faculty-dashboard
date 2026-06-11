@@ -26,7 +26,7 @@ const CourseAnalyticsPage = () => {
     const [revenuePeriod, setRevenuePeriod] = useState<RevenuePeriod>('week')
 
     // query
-    const { data: analytics, isLoading: analyticsLoading } = useGetCourseAnalytics(id , true)
+    const { data: analytics, isLoading: analyticsLoading } = useGetCourseAnalytics(id, true)
     const { data: revenueTrend, isLoading: revenueTrendLoading } = useGetCourseRevenueTrend(id, revenuePeriod, true)
 
     return (
@@ -72,42 +72,42 @@ const CourseAnalyticsPage = () => {
                     </>
                 ) : (
                     <>
-                <StatCard
-                    icon={
-                        <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
+                        <StatCard
+                            icon={
+                                <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
 
 
-                    label="Total Revenue"
-                    value={analytics?.data?.totalRevenue || 0}
-                    prefix="₹"
-                />
-                <StatCard
+                            label="Total Revenue"
+                            value={analytics?.totalRevenue || 0}
+                            prefix="₹"
+                        />
+                        <StatCard
 
-                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#2c1452]" size={25} /></div>}
+                            icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><FaUsers className="text-[#2c1452]" size={25} /></div>}
 
-                    label="Total Students"
-                    value={analytics?.data?.activeStudents || 0}
-                />
-                <StatCard
-                    icon={
-                        <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]">
-                            <FaRegCircleCheck className="text-[#00875A]" size={24} />
-                        </div>
-                    }
-                    label="Completion Rate"
-                    value={`${analytics?.data?.completionRate || 0}%`}
-                // valueColor="#00875A"
-                />
-                <StatCard
-                    icon={
-                        <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFF3CC]">
-                            <BsFillStarFill className="text-[#E6A800]" size={20} />
-                        </div>
-                    }
-                    label="Test Score"
-                    value="4.8/5"
-                // valueColor="#E6A800"
-                />
+                            label="Total Students"
+                            value={analytics?.activeStudents || 0}
+                        />
+                        <StatCard
+                            icon={
+                                <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]">
+                                    <FaRegCircleCheck className="text-[#00875A]" size={24} />
+                                </div>
+                            }
+                            label="Completion Rate"
+                            value={`${analytics?.completionRate || 0}%`}
+                        // valueColor="#00875A"
+                        />
+                        <StatCard
+                            icon={
+                                <div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#FFF3CC]">
+                                    <BsFillStarFill className="text-[#E6A800]" size={20} />
+                                </div>
+                            }
+                            label="Test Score"
+                            value="4.8/5"
+                        // valueColor="#E6A800"
+                        />
                     </>
                 )}
             </motion.div>
@@ -118,8 +118,8 @@ const CourseAnalyticsPage = () => {
                     <EnrollmentCompletionChart courseId={id} />
                 </div>
                 <RevenueChart
-                    data={revenueTrend?.data?.data ?? []}
-                    trend={revenueTrend?.data?.trend}
+                    data={revenueTrend?.data ?? []}
+                    trend={revenueTrend?.trend}
                     isLoading={revenueTrendLoading}
                     period={revenuePeriod}
                     onPeriodChange={setRevenuePeriod}

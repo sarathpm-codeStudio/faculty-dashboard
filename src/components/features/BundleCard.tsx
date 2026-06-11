@@ -3,6 +3,7 @@ import { MoreVertical, BarChart2, Pencil, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Paragraph, Subheading } from '../ui'
 import { PiStackFill } from 'react-icons/pi'
+import formatNumber from '@/utils/helper/numberFormating'
 
 export type BundleCardProps = {
   id: number | string
@@ -14,6 +15,8 @@ export type BundleCardProps = {
   price: string
   final_price: string
   originalPrice: string
+  totalStudents: number
+  totalRevenue: number
   total_courses_count: number
   onViewAnalytics?: (id: number | string) => void
   onEdit?: (id: number | string) => void
@@ -31,6 +34,8 @@ const BundleCard = ({
   price,
   final_price,
   total_courses_count,
+  totalStudents,
+  totalRevenue,
   originalPrice,
   onViewAnalytics,
   onEdit,
@@ -57,11 +62,13 @@ const BundleCard = ({
       transition={{ duration: 0.22, ease: 'easeOut' }}
       onClick={() => onClick?.(id)}
     >
-      {image_url ? (
-        <img src={image_url} alt={title} className="w-full h-44 object-cover" />
-      ) : (
-        <div className="w-full h-44 bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
-      )}
+      <div className="relative">
+        {image_url ? (
+          <img src={image_url} alt={title} className="w-full h-44 object-fill" />
+        ) : (
+          <div className="w-full h-44 bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
+        )}
+      </div>
 
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center gap-1 text-[#00A6BF] text-xs font-semibold mb-2">
@@ -74,12 +81,12 @@ const BundleCard = ({
         <div className="flex  items-center justify-center gap-3 mb-4 bg-[#F2F4F6] rounded-lg px-3 py-2">
           <div className="flex-1">
             <p className="text-[10px] text-[#767683] font-semibold uppercase tracking-wide">Students</p>
-            <Paragraph className="text-sm font-bold text-[#2c1452]">{students || "100K"}</Paragraph>
+            <Paragraph className="text-sm font-bold text-[#2c1452]">{formatNumber(totalStudents)}</Paragraph>
           </div>
           {/* <div className="w-px h-8 bg-gray-300" /> */}
           <div className="flex-1">
             <p className="text-[10px] text-[#767683] font-semibold uppercase tracking-wide">Revenue</p>
-            <Paragraph className="text-sm font-bold text-[#2c1452]">₹{revenue || "10M"}</Paragraph>
+            <Paragraph className="text-sm font-bold text-[#2c1452]">₹{formatNumber(totalRevenue)}</Paragraph>
           </div>
         </div>
 

@@ -15,7 +15,7 @@ type EnrolledCourse = {
     title: string
     progress: number
     test_score: number
-    completed:boolean
+    completed: boolean
     status: 'Completed' | 'Active'
 }
 
@@ -31,12 +31,12 @@ const StudentDetailPage = () => {
     const navigate = useNavigate()
     const { id } = useParams()
     const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const [rangeLabel, setRangeLabel] = useState('')
+    const [pageSize, setPageSize] = useState(10)
+    const [rangeLabel, setRangeLabel] = useState('')
 
 
-    
-    
+
+
     const COURSE_COLUMNS: TableColumn<EnrolledCourse>[] = [
         {
             key: 'details',
@@ -72,14 +72,12 @@ const StudentDetailPage = () => {
             header: 'Status',
             render: row => (
                 <span
-                    className={`inline-flex items-center gap-1 text-xs font-bold ${
-                        row.status === 'Completed' ? 'text-[#00875A]' : 'text-[#B49C00]'
-                    }`}
+                    className={`inline-flex items-center gap-1 text-xs font-bold ${row.status === 'Completed' ? 'text-[#00875A]' : 'text-[#B49C00]'
+                        }`}
                 >
                     <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                            row.status === 'Completed' ? 'bg-[#00875A]' : 'bg-[#B49C00]'
-                        }`}
+                        className={`w-1.5 h-1.5 rounded-full ${row.status === 'Completed' ? 'bg-[#00875A]' : 'bg-[#B49C00]'
+                            }`}
                     />
                     {row.status}
                 </span>
@@ -89,10 +87,10 @@ const StudentDetailPage = () => {
 
     // query
 
-    const { data: studentCourses, isLoading: studentCoursesLoading } = useGetStudentCourses(id,{
+    const { data: studentCourses, isLoading: studentCoursesLoading } = useGetStudentCourses(id, {
         page,
         limit: pageSize,
-      } ,!!id)
+    }, !!id)
     const { data: studentAnalytics, isLoading: studentAnalyticsLoading } = useGetStudentAnalytics(id, !!id)
 
     return (
@@ -121,7 +119,7 @@ const StudentDetailPage = () => {
                             {studentAnalyticsLoading ? (
                                 <Skeleton className="w-30 h-30 rounded-2xl" />
                             ) : (
-                                <img src={studentAnalytics?.data?.student?.avatar_url} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
+                                <img src={studentAnalytics?.student?.avatar_url} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
                             )}
                         </div>
                         <div className="mt-1 flex-1">
@@ -132,12 +130,12 @@ const StudentDetailPage = () => {
                                 </div>
                             ) : (
                                 <>
-                            <Heading className="text-[#2c1452] mb-3">{studentAnalytics?.data?.student?.first_name} {studentAnalytics?.data?.student?.last_name}</Heading>
-                            <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
-                                <span className="flex items-center gap-1.5 text-xs text-black font-medium">
-                                    <Clock className='text-[#00A6BF]' size={15} /> Recent Active: {studentAnalytics?.data?.recentActive?.display}
-                                </span>
-                            </div>
+                                    <Heading className="text-[#2c1452] mb-3">{studentAnalytics?.student?.first_name} {studentAnalytics?.student?.last_name}</Heading>
+                                    <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
+                                        <span className="flex items-center gap-1.5 text-xs text-black font-medium">
+                                            <Clock className='text-[#00A6BF]' size={15} /> Recent Active: {studentAnalytics?.recentActive?.display}
+                                        </span>
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -167,28 +165,28 @@ const StudentDetailPage = () => {
                     </>
                 ) : (
                     <>
-                <StatCard
+                        <StatCard
 
-                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
+                            icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
 
-                    label="Course Enrolled"
-                    value={studentAnalytics?.data?.totalCourseCount ?? 0}
-                />
-                <StatCard
-                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><BsPencilFill className="text-[#00875A]" size={18} /></div>}
-                    label="Test Score"
-                    value={`${studentAnalytics?.data?.testScoreRate ?? 0}%`}
-                // valueColor="#00875A"
-                />
-                <StatCard
+                            label="Course Enrolled"
+                            value={studentAnalytics?.totalCourseCount ?? 0}
+                        />
+                        <StatCard
+                            icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><BsPencilFill className="text-[#00875A]" size={18} /></div>}
+                            label="Test Score"
+                            value={`${studentAnalytics?.testScoreRate ?? 0}%`}
+                        // valueColor="#00875A"
+                        />
+                        <StatCard
 
-                    icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
+                            icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
 
-                    label="Total Spend"
-                    value={studentAnalytics?.data?.totalAmountSpent ?? 0}
-                    prefix="₹"
-                // valueColor="#00875A"
-                />
+                            label="Total Spend"
+                            value={studentAnalytics?.totalAmountSpent ?? 0}
+                            prefix="₹"
+                        // valueColor="#00875A"
+                        />
                     </>
                 )}
             </motion.div>
@@ -204,8 +202,8 @@ const StudentDetailPage = () => {
                 <div className="flex-1 min-h-0">
                     <DataTable
                         columns={COURSE_COLUMNS}
-                        data={studentCourses?.data?.data ?? []}
-                        total={studentCourses?.data?.total ?? 0}
+                        data={studentCourses?.data ?? []}
+                        total={studentCourses?.total ?? 0}
                         page={page}
                         loading={studentCoursesLoading}
                         pageSize={pageSize}

@@ -363,7 +363,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     courseId,
     currentParentId ?? undefined,
   )
-  const currentItems: any[] = content?.data ?? []
+  const currentItems: any[] = content ?? []
 
   // ── Navigation ──
   const drillInto = (folder: FolderNode) =>
@@ -429,7 +429,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   // ── Content modal ──
   const openContentModal = (kind: ContentKind) => {
 
-    if(currentParentId===null){
+    if (currentParentId === null) {
       toast.error('Please select a folder first')
       return
     }
@@ -631,7 +631,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     const title = contentTitle.trim() || 'Untitled'
     const type = MATERIAL_TYPE_MAP[contentKind]
 
-    if(currentParentId===null){
+    if (currentParentId === null) {
       toast.error('Please select a folder first')
       return
     }

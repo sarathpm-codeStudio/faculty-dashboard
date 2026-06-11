@@ -89,7 +89,7 @@ const CreateCouponPage = () => {
 
   useEffect(() => {
     if (Courses) {
-      setEnabledCourses(Courses.data.map((course: any) => ({ value: course.id, label: course.title })))
+      setEnabledCourses(Courses.map((course: any) => ({ value: course.id, label: course.title })))
     }
   }, [Courses])
 
@@ -156,7 +156,7 @@ const CreateCouponPage = () => {
           await updateCoupon({
             id: editingCoupon?.id ?? id,
             payload: {
-              
+
               expiryDate: values.expiryDate,
               maxUsage: Number(values.maxUsage),
               usagePerPerson: Number(values.usagePerPerson),
@@ -356,9 +356,8 @@ const CreateCouponPage = () => {
           <div className="flex flex-col gap-2">
             <label className={LABEL_CLS}>Applicable Courses</label>
             <div
-              className={`relative min-h-[52px] px-3 py-2.5 rounded-lg border bg-[#F2F4F6] flex flex-wrap items-center gap-2 ${
-                formik.touched.courses && formik.errors.courses ? 'border-red-500' : 'border-gray-100'
-              }`}
+              className={`relative min-h-[52px] px-3 py-2.5 rounded-lg border bg-[#F2F4F6] flex flex-wrap items-center gap-2 ${formik.touched.courses && formik.errors.courses ? 'border-red-500' : 'border-gray-100'
+                }`}
             >
               {selectedCourses.map(course => (
                 <span
@@ -403,11 +402,10 @@ const CreateCouponPage = () => {
                           key={course.value}
                           type="button"
                           onClick={() => addCourse(course)}
-                          className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#F2F4F6] transition-colors ${
-                            isAllOption
+                          className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#F2F4F6] transition-colors ${isAllOption
                               ? 'font-semibold text-[#2c1452] border-b border-gray-100'
                               : 'text-[#191c1e]'
-                          }`}
+                            }`}
                         >
                           {course.label}
                         </button>

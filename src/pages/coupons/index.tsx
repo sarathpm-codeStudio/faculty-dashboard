@@ -35,7 +35,7 @@ const STATUS_STYLES: Record<CouponStatus, string> = {
   Draft: 'text-[#767683]',
 }
 
-type FilterTab = 'active' | 'deactivate' |'expired'
+type FilterTab = 'active' | 'deactivate' | 'expired'
 const FILTER_TABS: FilterTab[] = ['active', 'deactivate', 'expired']
 
 
@@ -56,23 +56,24 @@ const CouponsPage = () => {
   const [rangeLabel, setRangeLabel] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null)
 
- 
+
 
   // query
   const { data: coupons, isLoading: couponsLoading } = useGetAllCoupons(
-    { filter:activeFilter,
-      search:'', 
+    {
+      filter: activeFilter,
+      search: '',
       page,
       limit: pageSize,
     }, true
   )
   const { data: couponAnalytics, isLoading: couponAnalyticsLoading } = useGetCouponAnalytics(true)
- // mutation
+  // mutation
   const { mutateAsync: updateCouponStatus, isPending: updateCouponStatusPending } = useUpdateCouponStatus()
   const { mutateAsync: deleteCoupon, isPending: deleteCouponPending } = useDeleteCoupon()
 
-  const handleToggleCoupon = async(row: Coupon, next: boolean) => {
-   
+  const handleToggleCoupon = async (row: Coupon, next: boolean) => {
+
     const toastId = toast.loading('Updating coupon status...')
 
     try {
@@ -82,8 +83,8 @@ const CouponsPage = () => {
     } catch (error: any) {
       console.log('error', error)
       toast.error(error.message, { id: toastId })
-    } 
-   
+    }
+
   }
 
   const handleDeleteCoupon = (coupon: Coupon) => {
@@ -195,8 +196,8 @@ const CouponsPage = () => {
   ]
 
 
-  
-  const filtered = coupons?.data?.data ?? []
+
+  const filtered = coupons ?? []
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -219,17 +220,17 @@ const CouponsPage = () => {
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><Tag className="text-[#2c1452]" size={20} /></div>}
           label="Active Coupons"
-          value={couponAnalytics?.data?.active_coupons ?? 0}
+          value={couponAnalytics?.active_coupons ?? 0}
         />
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCE5FF]"><Users className="text-[#1565C0]" size={20} /></div>}
           label="Total Redeemed Users"
-          value={couponAnalytics?.data?.total_redeemed_users ?? 0}
+          value={couponAnalytics?.total_redeemed_users ?? 0}
         />
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><PiggyBank className="text-[#00875A]" size={24} /></div>}
           label="Total Savings Generated"
-          value={couponAnalytics?.data?.total_savings_generated ?? 0}
+          value={couponAnalytics?.total_savings_generated ?? 0}
           prefix="₹"
         // valueColor="#00875A"
         />
@@ -268,17 +269,17 @@ const CouponsPage = () => {
       <motion.div className="flex-1 min-h-0 px-2" {...fadeUp(0.12)}>
         <DataTable
           columns={COLUMNS}
-          data={coupons?.data?.coupons ?? []}
-          total={coupons?.data?.pagination?.total ?? 0}
-            page={page}
-            loading={couponsLoading}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={(size) => {
-              setPageSize(size)
-              setPage(1)
-            }}
-            onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
+          data={coupons?.coupons ?? []}
+          total={coupons?.pagination?.total ?? 0}
+          page={page}
+          loading={couponsLoading}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size)
+            setPage(1)
+          }}
+          onRangeChange={(s, e, t) => setRangeLabel(`Showing ${s} to ${e} of ${t}`)}
         />
       </motion.div>
 

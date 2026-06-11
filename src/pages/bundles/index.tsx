@@ -90,7 +90,7 @@ const BundlesPage = () => {
         transition={{ duration: 0.4, ease: 'easeOut' }}
       >
         <Heading className="text-[#2c1452]">
-          Course Bundles ({String(bundles?.data?.length || 0).padStart(2, '0')})
+          Course Bundles ({String(bundles?.length || 0).padStart(2, '0')})
         </Heading>
 
         <Button
@@ -157,12 +157,12 @@ const BundlesPage = () => {
           >
             {
 
-              bundles?.data?.length === 0 ? (
+              bundles?.length === 0 ? (
                 <div className="col-span-full flex items-center justify-center min-h-[40vh] w-full">
                   <p className="text-gray-500">No bundles found</p>
                 </div>
               ) : (
-                bundles?.data?.map((bundle: any) => (
+                bundles?.map((bundle: any) => (
                   <motion.div key={bundle.id} variants={cardVariants}>
                     <BundleCard
                       {...bundle}

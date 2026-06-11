@@ -6,9 +6,16 @@ import Button from '@/components/ui/Button'
 import { Formik, useFormik } from 'formik'
 import { bundleValidator } from '@/utils/validator/bundle.validator'
 import { UploadBox } from '@/components/features/UploadBox'
+import { ImageCropperModal } from '@/components/ui'
 import { storageService } from '@/services'
 import { toast } from 'sonner'
 import { useCreateBundle, useUpdateBundle } from '@/hooks/useBundle'
+import {
+  ASPECT_RATIO_16_9,
+  dataUrlToFile,
+  getImageDimensions,
+  isAspectRatio16x9,
+} from '@/utils/imageAspectRatio'
 
 interface Props {
   sumOfCourses: number
@@ -23,6 +30,8 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
   const [coverImage, setCoverImage] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
   const [coverUploading, setCoverUploading] = useState(false)
+  const [rawCoverImage, setRawCoverImage] = useState<string | null>(null)
+  const [coverCropperOpen, setCoverCropperOpen] = useState(false)
   const [isDraft, setIsDraft] = useState(false)
 
   console.log("selected courses", selectedCourses)
@@ -41,12 +50,12 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
   useEffect(() => {
     if (bundle) {
       formik.setValues({
-        title: bundle?.data?.title,
-        description: bundle?.data?.description,
-        discount: bundle?.data?.discount,
-        coverImage: bundle?.data?.image_url,
+        title: bundle?.title,
+        description: bundle?.description,
+        discount: bundle?.discount,
+        coverImage: bundle?.image_url,
       })
-      setEnableCoupons(bundle?.data?.enable_coupons)
+      setEnableCoupons(bundle?.enable_coupons)
 
     }
   }, [bundle])
@@ -106,8 +115,62 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
   const bundleOffer = useMemo(() => Math.max(0, sumOfCourses - (sumOfCourses * discountPct) / 100), [sumOfCourses, discountPct])
   const studentSavings = sumOfCourses - bundleOffer
 
+  const handleCoverFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload a JPEG, PNG, or WebP image')
+      return
+    }
 
+    try {
+      const { width, height } = await getImageDimensions(file)
+      if (!isAspectRatio16x9(width, height)) {
+        toast.info('Image is not 16:9. Crop it to fit the frame below.')
+      }
+    } catch {
+      toast.error('Could not read image file')
+      return
+    }
 
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setRawCoverImage(reader.result as string)
+      setCoverCropperOpen(true)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleCoverCropSave = async (cropped: string) => {
+    setCoverCropperOpen(false)
+    setRawCoverImage(null)
+    setCoverPreview(cropped)
+
+    const file = dataUrlToFile(cropped, `bundle-cover-${Date.now()}.jpg`)
+    setCoverImage(file)
+    try {
+      setCoverUploading(true)
+      const url = await storageService.uploadCourseCover(file)
+      formik.setFieldValue('coverImage', url)
+      toast.success('Cover image uploaded')
+    } catch (error) {
+      console.log('file uploading error', error)
+      toast.error('Failed to upload cover image')
+      formik.setFieldValue('coverImage', null)
+      setCoverPreview(null)
+    } finally {
+      setCoverUploading(false)
+    }
+  }
+
+  const handleCoverCropCancel = () => {
+    setCoverCropperOpen(false)
+    setRawCoverImage(null)
+  }
+
+  const handleCoverClear = () => {
+    setCoverImage(null)
+    setCoverPreview(null)
+    formik.setFieldValue('coverImage', null)
+  }
 
   return (
     <div className="grid grid-cols-12 gap-6 h-full min-h-0">
@@ -230,35 +293,15 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
         </div> */}
         <UploadBox
           accept="image/jpeg,image/png,image/webp"
-          preview={bundle?.data?.image_url || coverPreview}
+          preview={coverPreview || bundle?.image_url}
           previewType="image"
+          aspectRatio={ASPECT_RATIO_16_9}
           loading={coverUploading}
           icon={<ImagePlus size={20} />}
           title="Cover Image"
           hint="High resolution JPEG or PNG (16:9)"
-          onFile={async (f) => {
-            setCoverPreview(URL.createObjectURL(f))
-            try {
-              setCoverUploading(true)
-              const url = await storageService.uploadCourseCover(f)
-              formik.setFieldValue('coverImage', url)
-              toast.success('Cover image uploaded')
-            } catch (error) {
-              console.log("file uploading error", error)
-              toast.error('Failed to upload cover image')
-              formik.setFieldValue('coverImage', null)
-              setCoverPreview(null)
-            } finally {
-              setCoverUploading(false)
-            }
-
-          }}
-          onClear={() => {
-            setCoverImage(null)
-            setCoverPreview(null)
-            formik.setFieldValue('coverImage', null)
-          }}
-
+          onFile={handleCoverFile}
+          onClear={handleCoverClear}
         />
 
         {/* Bundle Offer Price */}
@@ -316,7 +359,18 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
         }
       </div>
 
-
+      <ImageCropperModal
+        open={coverCropperOpen}
+        image={rawCoverImage}
+        onClose={handleCoverCropCancel}
+        onSave={handleCoverCropSave}
+        title="Crop cover image (16:9)"
+        aspect={ASPECT_RATIO_16_9}
+        cropShape="rect"
+        outputType="image/jpeg"
+        saveLabel="Use cover image"
+        hint="Position and zoom your image. The frame is fixed to 16:9 — same as the bundle card preview."
+      />
     </div>
   )
 }

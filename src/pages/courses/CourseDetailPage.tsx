@@ -63,14 +63,14 @@ const CourseDetailPage = () => {
     }
 
     const MOCK_STATS = [
-    { icon: <Clock size={15} className="text-[#00A6BF]" />, label: course?.data?.validity === '1' ? '1 Month Validity' : course?.data?.validity === '3' ? '3 Months Validity' : course?.data?.validity === '6' ? '6 Months Validity' : course?.data?.validity === '12' ? '1 Year Validity' : 'Lifetime Validity' },
-    { icon: <Layers size={15} className="text-[#00A6BF]" />, label: `${course?.data?.level} Level` },
-    { icon: <BookOpen size={15} className="text-[#00A6BF]" />, label: `${course?.data?.total_folders} Modules + ${course?.data?.total_materials} Lessons`},
-    { icon: <Wallet size={15} className="text-[#00A6BF]" />, label: `₹${formatNumber(course?.data?.total_revenue)} Revenue Earned` },
-    { icon: <Users size={15} className="text-[#00A6BF]" />, label:  `${course?.data?.total_enrolled} Students Enrolled` },
-    { icon: <MousePointer2 size={15} className="text-[#00A6BF]" />, label: '45 Clicks' },
-    { icon: <Globe size={15} className="text-[#00A6BF]" />, label: `${course?.data?.languages.join(', ')} Instruction` },
-]
+        { icon: <Clock size={15} className="text-[#00A6BF]" />, label: course?.validity === '1' ? '1 Month Validity' : course?.validity === '3' ? '3 Months Validity' : course?.validity === '6' ? '6 Months Validity' : course?.validity === '12' ? '1 Year Validity' : 'Lifetime Validity' },
+        { icon: <Layers size={15} className="text-[#00A6BF]" />, label: `${course?.level} Level` },
+        { icon: <BookOpen size={15} className="text-[#00A6BF]" />, label: `${course?.total_folders} Modules + ${course?.total_materials} Lessons` },
+        { icon: <Wallet size={15} className="text-[#00A6BF]" />, label: `₹${formatNumber(course?.total_revenue)} Revenue Earned` },
+        { icon: <Users size={15} className="text-[#00A6BF]" />, label: `${course?.total_enrolled} Students Enrolled` },
+        { icon: <MousePointer2 size={15} className="text-[#00A6BF]" />, label: '45 Clicks' },
+        { icon: <Globe size={15} className="text-[#00A6BF]" />, label: `${course?.languages.join(', ')} Instruction` },
+    ]
 
 
 
@@ -133,7 +133,7 @@ const CourseDetailPage = () => {
                 {...fadeUp(0.05)}
             >
                 <div>
-                    <Heading className="text-[#2c1452]">{course?.data?.title}</Heading>
+                    <Heading className="text-[#2c1452]">{course?.title}</Heading>
                     <Paragraph className="text-[#767683] mt-1 max-w-lg ">
                         Comprehensive module covering advanced management accounting
                         and cost control techniques.
@@ -189,17 +189,17 @@ const CourseDetailPage = () => {
                         {...fadeUp(0.1)}
                     >
                         {/* Intro video — course cover shown as thumbnail until play */}
-                        {course?.data?.video_asset_id ? (
+                        {course?.video_asset_id ? (
                             <VideoPlayer
                                 embed
-                                src={`https://app.tpstreams.com/embed/${import.meta.env.VITE_TPSTREAMS_ORG_ID}/${course.data.video_asset_id}/?access_token=${import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN}`}
-                                poster={course?.data?.cover_image || coverImge}
+                                src={`https://app.tpstreams.com/embed/${import.meta.env.VITE_TPSTREAMS_ORG_ID}/${course.video_asset_id}/?access_token=${import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN}`}
+                                poster={course?.cover_image || coverImge}
                             />
-                        ) : course?.data?.cover_image ? (
+                        ) : course?.cover_image ? (
                             <div className="w-full aspect-video relative bg-[#F8F9FB]">
                                 <img
-                                    src={course.data.cover_image}
-                                    alt={course.data.title}
+                                    src={course.cover_image}
+                                    alt={course.title}
                                     className="absolute inset-0 w-full h-full object-cover"
                                 />
                             </div>
@@ -220,12 +220,12 @@ const CourseDetailPage = () => {
                                 <Subheading className="font-bold text-[#2c1452]">About this Course</Subheading>
                                 <div className="text-right shrink-0">
                                     <Paragraph className="!text-[12px] uppercase tracking-widest text-gray-500 ">Category</Paragraph>
-                                    <Paragraph className="text-sm font-bold text-[#2c1452] mt-0.5">{course?.data?.category} : {course?.data?.level}</Paragraph>
+                                    <Paragraph className="text-sm font-bold text-[#2c1452] mt-0.5">{course?.category} : {course?.level}</Paragraph>
                                 </div>
                             </div>
                             <Paragraph className="text-[#767683] leading-relaxed text-sm">
                                 {
-                                    course?.data?.description
+                                    course?.description
                                 }
                             </Paragraph>
                         </div>
@@ -235,24 +235,24 @@ const CourseDetailPage = () => {
                     <motion.div {...fadeUp(0.24)} className='w-[1000px]'>
                         <div className="flex items-center justify-between mb-4 w-[1045px]">
                             <Subheading className="font-bold text-[#2c1452]">Students Reviews</Subheading>
-                            
+
                             {
-                                reviews?.data?.total_reviews > 0 && (
+                                reviews?.total_reviews > 0 && (
                                     <button
-                                onClick={() => navigate(`/courses/${id}/reviews`)}
-                                className="text-sm font-semibold text-[#2c1452] hover:underline underline-offset-2"
-                            >
-                                View All {reviews?.data?.total_reviews} Reviews
-                            </button>
+                                        onClick={() => navigate(`/courses/${id}/reviews`)}
+                                        className="text-sm font-semibold text-[#2c1452] hover:underline underline-offset-2"
+                                    >
+                                        View All {reviews?.total_reviews} Reviews
+                                    </button>
                                 )
 
                             }
-                            
+
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                             {
-                                reviews?.data?.reviews?.length > 0 ? (
-                                    reviews?.data?.reviews?.map((r: any) => (
+                                reviews?.reviews?.length > 0 ? (
+                                    reviews?.reviews?.map((r: any) => (
                                         <ReviewCard key={r.id} {...r} />
                                     ))
                                 ) : (
@@ -276,14 +276,14 @@ const CourseDetailPage = () => {
                     >
                         {/* Price row */}
                         <div className="flex items-baseline gap-2 mb-2">
-                            <Heading className="font-bold text-[#2c1452]">₹{formatNumber(course?.data?.final_price)}</Heading>
+                            <Heading className="font-bold text-[#2c1452]">₹{formatNumber(course?.final_price)}</Heading>
                             {/* <span className="text-3xl font-extrabold text-[#191c1e]">₹3,500</span> */}
-                            <Paragraph className="text-[#767683] line-through font-bold">₹{formatNumber(course?.data?.price)}</Paragraph>
+                            <Paragraph className="text-[#767683] line-through font-bold">₹{formatNumber(course?.price)}</Paragraph>
                             {/* <span className="text-sm text-[#767683] line-through">₹4,500</span> */}
                         </div>
 
                         {/* Stars */}
-                        <StarRating rating={course?.data?.avg_rating} />
+                        <StarRating rating={course?.avg_rating} />
 
                         {/* Divider */}
                         <div className="border-t border-gray-100 my-4" />
@@ -302,7 +302,7 @@ const CourseDetailPage = () => {
 
                     {/* View Analytics */}
                     <motion.div
-                        onClick={() => navigate(`/courses/${id}/analytics`,{state: {course_title: course?.data?.title}})}
+                        onClick={() => navigate(`/courses/${id}/analytics`, { state: { course_title: course?.title } })}
                         className="rounded-2xl p-5 cursor-pointer overflow-hidden"
                         style={{ background: 'linear-gradient(135deg, #2c1452 0%, #1a2a9c 100%)' }}
                         {...fadeUp(0.22)}
@@ -327,7 +327,7 @@ const CourseDetailPage = () => {
                 onClose={() => !deleteCoursePending && setDeleteModalOpen(false)}
                 onConfirm={confirmDeleteCourse}
                 title="Delete Course"
-                itemName={course?.data?.title}
+                itemName={course?.title}
                 loading={deleteCoursePending}
             />
         </div>

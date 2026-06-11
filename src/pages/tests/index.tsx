@@ -166,8 +166,8 @@ const TestsPage = () => {
     filter: 'all',
   })
 
-  const testsData = tests?.data?.data ?? []
-  const testsTotal = tests?.data?.total ?? 0
+  const testsData = tests?.data ?? []
+  const testsTotal = tests?.total ?? 0
 
   // Stat counts derived from API summary or fallback to local calc
   const activeCount = testsData.filter((t: any) => t.is_draft === false).length
@@ -228,17 +228,17 @@ const TestsPage = () => {
           <>
             <StatCard
               icon={<CheckCircle2 size={28} className="text-[#2c1452]" />}
-              value={String(testsPageAnalytics?.data?.activeTests ?? 0)}
+              value={String(testsPageAnalytics?.activeTests ?? 0)}
               label="Active Tests"
             />
             <StatCard
               icon={<FileText size={28} className="text-orange-400" />}
-              value={String(testsPageAnalytics?.data?.draftTests ?? 0)}
+              value={String(testsPageAnalytics?.draftTests ?? 0)}
               label="Drafts"
             />
             <StatCard
               icon={<BarChart2 size={28} className="text-green-500" />}
-              value={String(testsPageAnalytics?.data?.totalCompletedAttempts ?? 0)}
+              value={String(testsPageAnalytics?.totalCompletedAttempts ?? 0)}
               label="Total Completed Attempts"
             />
           </>
