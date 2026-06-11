@@ -60,6 +60,7 @@ const Step2AddQuestions = ({
   const activeModuleId = testModuleId || questionModuleId
 
   const { data: questionsData } = useGetQuestionsByTestId(testId, true)
+  const questions: any[] = Array.isArray(questionsData) ? questionsData : []
   const { data: folders, isLoading: foldersLoading } = useGetAllFoldersInCourse(
     courseId,
     !!courseId && (needsModuleSelect || hasPreselectedModule),
@@ -545,13 +546,13 @@ const Step2AddQuestions = ({
         </div>
 
         {/* Added questions list */}
-        {questionsData?.length > 0 && (
+        {questions.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
             <Paragraph className="!text-xs font-bold text-[#767683] uppercase tracking-widest">
-              Added Questions ({questionsData?.length})
+              Added Questions ({questions.length})
             </Paragraph>
             <div className="flex flex-col divide-y divide-gray-100">
-              {questionsData?.map((q: any, i: number) => (
+              {questions.map((q: any, i: number) => (
                 <div key={q.id} className="flex items-start justify-between gap-3 py-4">
                   <div className="flex items-start gap-3">
                     <span className="text-sm font-bold text-[#767683] shrink-0">

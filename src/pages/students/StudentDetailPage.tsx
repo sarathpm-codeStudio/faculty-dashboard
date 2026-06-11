@@ -11,12 +11,13 @@ import { StatCard } from '@/components/features'
 import { useGetStudentAnalytics, useGetStudentCourses } from '@/hooks/student'
 
 type EnrolledCourse = {
-    id: number
+    id: string
     title: string
+    total_materials: number
+    completed_materials: number
     progress: number
     test_score: number
-    completed: boolean
-    status: 'Completed' | 'Active'
+    status: 'Completed' | 'Active' | 'Not start'
 }
 
 
@@ -170,7 +171,7 @@ const StudentDetailPage = () => {
                             icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#A8EDFF]"><MdOutlineMenuBook className="text-[#00A6BF]" size={25} /></div>}
 
                             label="Course Enrolled"
-                            value={studentAnalytics?.totalCourseCount ?? 0}
+                            value={String(studentAnalytics?.totalCourseCount ?? 0)}
                         />
                         <StatCard
                             icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#CCFFE8]"><BsPencilFill className="text-[#00875A]" size={18} /></div>}
@@ -183,7 +184,7 @@ const StudentDetailPage = () => {
                             icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
 
                             label="Total Spend"
-                            value={studentAnalytics?.totalAmountSpent ?? 0}
+                            value={String(studentAnalytics?.totalAmountSpent ?? 0)}
                             prefix="₹"
                         // valueColor="#00875A"
                         />

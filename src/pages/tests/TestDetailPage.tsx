@@ -24,6 +24,52 @@ type Candidate = {
   resultPct: number
 }
 
+// Shape returned by getAllAttemptsByTestId
+type Attempt = {
+  id: string
+  test_id: string
+  student_id: string
+  attempt_number: number
+  first_name: string
+  last_name: string
+  studentName: string
+  started_at: string
+  submitted_at: string | null
+  total_questions: number
+  attempted_count: number
+  correct_count: number
+  isCompleted: boolean
+  timing: {
+    start: string
+    end: string | null
+    rangeDisplay: string
+    durationSeconds: number | null
+    durationDisplay: string | null
+  }
+  score: { correct: number; total: number; display: string }
+  result: {
+    status: 'PASS' | 'FAIL' | 'IN_PROGRESS'
+    percentage: number | null
+    display: string
+  }
+}
+
+const AVATAR_COLORS = ['#4F6EF7', '#8B5CF6', '#10B981', '#0EA5E9', '#F59E0B', '#EF4444']
+
+const getInitials = (name: string) =>
+  name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? '')
+    .join('') || '?'
+
+const getAvatarColor = (seed: string) => {
+  let hash = 0
+  for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash)
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
+}
+
 const MOCK_CANDIDATES: Candidate[] = [
   { id: 1, name: 'Julian Martinez', studentId: '#44500', initials: 'JM', avatarColor: '#4F6EF7', startTime: '09:02 AM', endTime: '10:45 AM', duration: '1h 43m total', score: 92, total: 100, result: 'PASS', resultPct: 92 },
   { id: 2, name: 'Elena Rossi', studentId: '#44521', initials: 'ER', avatarColor: '#8B5CF6', startTime: '08:00 AM', endTime: '09:58 AM', duration: '58m total', score: 88, total: 100, result: 'PASS', resultPct: 88 },
@@ -37,6 +83,7 @@ const resultStyle: Record<string, { bg: string; text: string }> = {
   PASS: { bg: '#E6FBF7', text: '#00A98F' },
   MERIT: { bg: '#FFF4E5', text: '#F59E0B' },
   FAIL: { bg: '#FEE2E2', text: '#EF4444' },
+  IN_PROGRESS: { bg: '#EEF2FF', text: '#4F6EF7' },
 }
 
 
@@ -64,7 +111,7 @@ const TestDetailPage = () => {
   const statsLoading = testLoading || testAnalyticsLoading
 
 
-  const COLUMNS: TableColumn<Candidate>[] = [
+  const COLUMNS: TableColumn<Attempt>[] = [
     {
       key: 'student',
       header: 'Students',
@@ -72,13 +119,13 @@ const TestDetailPage = () => {
         <div className="flex items-center gap-3">
           <div
             className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-            style={{ backgroundColor: row.avatarColor }}
+            style={{ backgroundColor: getAvatarColor(row.student_id) }}
           >
-            {row.initials}
+            {getInitials(row.studentName)}
           </div>
           <div>
-            <p className="font-semibold text-[#191c1e] text-sm">{row.name}</p>
-            <p className="text-[11px] text-[#767683]">ID: {row.studentId}</p>
+            <p className="font-semibold text-[#191c1e] text-sm">{row.studentName}</p>
+            <p className="text-[11px] text-[#767683]">ID: {row.student_id}</p>
           </div>
         </div>
       ),
@@ -88,8 +135,10 @@ const TestDetailPage = () => {
       header: 'Timing (Start/End)',
       render: row => (
         <div>
-          <p className="text-sm text-[#191c1e] font-medium">{row.startTime} – {row.endTime}</p>
-          <p className="text-[11px] text-[#767683]">{row.duration}</p>
+          <p className="text-sm text-[#191c1e] font-medium">{row.timing.rangeDisplay}</p>
+          {row.timing.durationDisplay && (
+            <p className="text-[11px] text-[#767683]">{row.timing.durationDisplay}</p>
+          )}
         </div>
       ),
     },
@@ -97,20 +146,20 @@ const TestDetailPage = () => {
       key: 'score',
       header: 'Score Detail',
       render: row => (
-        <span className="text-sm font-semibold text-[#191c1e]">{row.score} / {row.total}</span>
+        <span className="text-sm font-semibold text-[#191c1e]">{row.score.display}</span>
       ),
     },
     {
       key: 'result',
       header: 'Result',
       render: row => {
-        const style = resultStyle[row.result]
+        const style = resultStyle[row.result.status]
         return (
           <span
             className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold"
             style={{ backgroundColor: style.bg, color: style.text }}
           >
-            {row.result} • {row.resultPct}%
+            {row.result.display}
           </span>
         )
       },
@@ -131,9 +180,6 @@ const TestDetailPage = () => {
 
 
 
-  const totalCandidates = MOCK_CANDIDATES.length
-  const passed = MOCK_CANDIDATES.filter(c => c.result !== 'FAIL').length
-  const completionRate = Math.round((passed / totalCandidates) * 100)
   const topScore = Math.max(...MOCK_CANDIDATES.map(c => c.score))
   const topScorer = MOCK_CANDIDATES.find(c => c.score === topScore)
 

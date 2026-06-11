@@ -178,8 +178,8 @@ const StudentsPage = () => {
       <motion.div className="flex-1 min-h-0" {...fadeUp(0.12)}>
         <DataTable
           columns={COLUMNS}
-          data={students?.data}
-          total={students?.pagination?.total}
+          data={students?.data ?? []}
+          total={students?.pagination?.total ?? 0}
           page={page}
           pageSize={pageSize}
           loading={isLoading}
