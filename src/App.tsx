@@ -30,14 +30,50 @@ import EditProfilePage from '@/pages/profile/EditProfilePage'
 import BankDetailsAndTransaction from '@/pages/profile/BankDetails&Transaction'
 import UpdateBankDetails from '@/pages/profile/UpdateBankDetails'
 import FullTransactionHistory from '@/pages/profile/FullTransactionHistory'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
+import BrandSplash from '@/components/layout/BrandSplash'
+import { useAuthStore } from '@/store/authStore'
+
+// Root entry: send logged-in users to the dashboard, everyone else to login.
+const RootRedirect = () => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  return <Navigate to={isAuthenticated ? '/dashboard' : '/auth/login'} replace />
+}
 
 const App = () => {
+  // Always start with the splash visible on initial load / page reload while we
+  // restore the persisted auth session, then decide where to send the user.
+  const [authReady, setAuthReady] = useState(false)
 
   useEffect(() => {
     tpstreamsUploadService.init()
+
+    // Wait until the persisted auth state has been rehydrated from storage
+    // before deciding login vs. dashboard. Keep the splash up a short minimum
+    // so the brand mark is actually visible.
+    const minSplash = new Promise<void>((resolve) => setTimeout(resolve, 1000))
+    const hydrated = useAuthStore.persist.hasHydrated()
+      ? Promise.resolve()
+      : new Promise<void>((resolve) => {
+          const unsub = useAuthStore.persist.onFinishHydration(() => {
+            unsub()
+            resolve()
+          })
+        })
+
+    let active = true
+    Promise.all([minSplash, hydrated]).then(() => {
+      if (active) setAuthReady(true)
+    })
+    return () => {
+      active = false
+    }
   }, [])
+
+  if (!authReady) {
+    return <BrandSplash />
+  }
 
   return (
     <>
@@ -85,9 +121,9 @@ const App = () => {
             </Route>
           </Route>
 
-          {/* ✅ Fallback */}
-          <Route path="/" element={<Navigate to="/auth/login" replace />} />
-          <Route path="*" element={<Navigate to="/auth/login" replace />} />
+          {/* ✅ Root — decide based on whether the user is logged in */}
+          <Route path="/" element={<RootRedirect />} />
+          <Route path="*" element={<RootRedirect />} />
 
         </Routes>
       </BrowserRouter>
