@@ -182,8 +182,8 @@ const CreateCouponPage = () => {
         toast.success('Coupon created successfully')
         navigate('/coupon-management')
       } catch (error: any) {
+        // Error toast handled globally by the query client; just stop here.
         console.log("error response", error)
-        toast.error(error.message || 'Something went wrong')
       }
     }
   })
@@ -214,7 +214,11 @@ const CreateCouponPage = () => {
       setSelectedCourses([ALL_COURSES_OPTION])
       return
     }
-    const courses = normalizeCourseList(detail?.courses)
+    // getCouponById attaches per-course rows under `attachedCourses`, each
+    // shaped `{ courses: { id, title } }` — unwrap the nested course object.
+    const raw = detail?.attachedCourses ?? detail?.courses
+    const unwrapped = Array.isArray(raw) ? raw.map((c: any) => c?.courses ?? c) : raw
+    const courses = normalizeCourseList(unwrapped)
     if (courses.length > 0) setSelectedCourses(courses)
   }, [isEditMode, couponDetail])
 
@@ -403,8 +407,8 @@ const CreateCouponPage = () => {
                           type="button"
                           onClick={() => addCourse(course)}
                           className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[#F2F4F6] transition-colors ${isAllOption
-                              ? 'font-semibold text-[#2c1452] border-b border-gray-100'
-                              : 'text-[#191c1e]'
+                            ? 'font-semibold text-[#2c1452] border-b border-gray-100'
+                            : 'text-[#191c1e]'
                             }`}
                         >
                           {course.label}

@@ -73,11 +73,9 @@ const BundlesPage = () => {
     try {
       await deleteBundle(id)
       toast.success("Bundle deleted successfully", { id: toastId })
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || error?.message || 'Something went wrong',
-        { id: toastId }
-      )
+    } catch {
+      // Error toast handled globally; just clear the loading spinner.
+      toast.dismiss(toastId)
     }
   }
 

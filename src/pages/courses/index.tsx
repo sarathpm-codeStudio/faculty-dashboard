@@ -82,8 +82,9 @@ const CoursesPage = () => {
       await deleteCourse(String(deleteTarget.id))
       toast.success('Course deleted successfully', { id: toastId })
       setDeleteTarget(null)
-    } catch (error: any) {
-      toast.error(error?.message ?? 'Failed to delete course', { id: toastId })
+    } catch {
+      // Error toast handled globally; just clear the loading spinner.
+      toast.dismiss(toastId)
     }
   }
 

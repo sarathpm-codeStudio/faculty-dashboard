@@ -87,8 +87,8 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
             const response = await updateBundle({ id: bundleId, payload })
             toast.success("Course bundle updated successfully")
             onPublish() // navigate to bundle list
-          } catch (error: any) {
-            toast.error(error.message)
+          } catch {
+            // Error toast handled globally by the query client.
           }
 
         } else {
@@ -105,7 +105,8 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
         }
 
       } catch (error: any) {
-        toast.error(error.message)
+        // Error toast handled globally by the query client.
+        console.error(error)
       }
 
     }

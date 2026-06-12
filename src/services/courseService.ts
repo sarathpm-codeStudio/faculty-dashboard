@@ -978,12 +978,124 @@ export const courseService = {
   },
 
   publishCourse: async (courseId: string): Promise<any> => {
+    // try {
+    //   const { data } = await apiClient.patch(`/courses/${courseId}/publish`)
+    //   return data
+    // } catch (error: any) {
+    //   const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+    //   throw new Error(message)
+    // }
+
     try {
-      const { data } = await apiClient.patch(`/courses/${courseId}/publish`)
-      return data
+
+      // 1. Check course ownership
+      const { data: course, error: courseError } = await supabase
+        .from("courses")
+        .select("id, faculty_id, title, video_uploading_status")
+        .eq("id", courseId)
+        .eq("faculty_id", facultyId)
+        .single()
+
+      if (courseError) throw new Error(courseError.message)
+      if (!course) throw new Error("Course not found")
+
+      // 2. Get all material videos
+      const { data: materials, error: matError } = await supabase
+        .from("course_materials")
+        .select("id, title, video_uploading_status")
+        .eq("course_id", courseId)
+        .eq("is_deleted", false)
+        .eq("type", "VIDEO")
+
+      if (matError) throw new Error(matError.message)
+
+      // 3. Check intro video status from courses table ✅
+      const introFailed = course.video_uploading_status === MaterialStatus.FAILED
+      const introProcessing = course.video_uploading_status !== MaterialStatus.COMPLETED
+        && course.video_uploading_status !== MaterialStatus.FAILED
+        && course.video_uploading_status !== null
+      // null = no intro video uploaded → skip check ✅
+
+      // 4. Combine intro + material failed videos
+      const failedVideos = [
+        // Failed material videos
+        ...(materials?.filter(
+          (m: any) => m.video_uploading_status === MaterialStatus.FAILED
+        ) ?? []),
+        // Failed intro video ✅
+        ...(introFailed ? [{
+          id: courseId,
+          title: 'Intro Video',
+        }] : []),
+      ]
+
+      // 5. Combine intro + material processing videos
+      const processingVideos = [
+        // Processing material videos
+        ...(materials?.filter(
+          (m: any) =>
+            m.video_uploading_status !== MaterialStatus.COMPLETED &&
+            m.video_uploading_status !== MaterialStatus.FAILED
+        ) ?? []),
+        // Processing intro video ✅
+        ...(introProcessing ? [{
+          id: courseId,
+          title: 'Intro Video',
+        }] : []),
+      ]
+
+      // 6. Has FAILED videos → abort ❌
+      if (failedVideos.length > 0) {
+        return {
+          course: null,
+          status: 'failed',
+          message: "Course cannot be published because some videos failed to process. Please re-upload them and try again.",
+
+        }
+      }
+
+
+      console.log("processingVideos", processingVideos)
+
+      // 7. Still processing → pending_publish ⏳
+      if (processingVideos.length > 0) {
+        const { data: updated, error: updateError } = await supabase
+          .from("courses")
+          .update({ pending_publish: true })
+          .eq("id", courseId)
+          .select()
+          .single()
+
+        if (updateError) throw new Error(updateError.message)
+
+        return {
+          // course: updated,
+          status: 'pending',
+          message: "Course will publish automatically when all videos are ready.",
+        }
+      }
+
+      // 8. All COMPLETED → publish now ✅
+      const { data: updated, error: updateError } = await supabase
+        .from("courses")
+        .update({
+          is_draft: false,
+          pending_publish: false,
+        })
+        .eq("id", courseId)
+        .select()
+        .single()
+
+      if (updateError) throw new Error(updateError.message)
+
+      return {
+        // course: updated,
+        status: 'published',
+        message: 'Course published successfully! 🎉',
+      }
+
     } catch (error: any) {
-      const message = error?.response?.data?.message || error?.message || 'Something went wrong'
-      throw new Error(message)
+      throw new Error(error.message)
     }
   },
 

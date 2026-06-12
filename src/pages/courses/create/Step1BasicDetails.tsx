@@ -431,17 +431,21 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
 
           {/* ── Action buttons ── */}
           <div className="flex flex-col gap-3 mt-auto pt-1">
-            <Button
-              variant="white"
-              onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
-              fullWidth
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting && activeBtn === 'draft'
-                ? <Loader2 size={16} className="animate-spin" />
-                : 'Save as draft'}
-            </Button>
+            {
+              courseDetails?.is_draft && (
+                <Button
+                  variant="white"
+                  onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
+                  fullWidth
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting && activeBtn === 'draft'
+                    ? <Loader2 size={16} className="animate-spin" />
+                    : 'Save as draft'}
+                </Button>
+              )
+            }
             <Button
               variant="primary"
               fullWidth

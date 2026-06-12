@@ -56,10 +56,9 @@ const AnnouncementDetailPage = () => {
       toast.success("Announcement deleted successfully", { id: toastId })
       navigate('/announcements')
 
-    } catch (error: any) {
-
-      toast.error(error.message, { id: toastId })
-
+    } catch {
+      // Error toast handled globally; just clear the loading spinner.
+      toast.dismiss(toastId)
     }
   }
 

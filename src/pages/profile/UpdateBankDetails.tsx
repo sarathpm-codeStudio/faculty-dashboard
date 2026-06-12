@@ -50,7 +50,7 @@ const UpdateBankDetails = () => {
                 toast.success("Bank details created successfully")
                 navigate('/account/bank')
             } catch (error: any) {
-                toast.error("Could not create bank details")
+                // Error toast handled globally by the query client.
                 console.log("error", error)
             }
         },

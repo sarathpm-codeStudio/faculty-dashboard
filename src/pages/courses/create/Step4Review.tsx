@@ -10,7 +10,6 @@ import { HiDocumentDuplicate } from "react-icons/hi";
 import { FaRegImage } from "react-icons/fa6";
 import { MdRocketLaunch } from "react-icons/md";
 import { useGetCoursePreview, usePublishCourse } from '@/hooks/useCourse'
-import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 
 interface Props {
@@ -125,8 +124,8 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
       }
       setResultMessage(message)
       setResultOpen(true)
-    } catch (error) {
-      toast.error('Failed to publish course')
+    } catch {
+      // Error toast handled globally by the query client.
     }
   }
 

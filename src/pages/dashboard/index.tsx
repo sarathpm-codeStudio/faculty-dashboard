@@ -62,7 +62,7 @@ const DashboardPage = () => {
 
           {/* </p> */}
         </div>
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <span className="text-[11px] font-bold uppercase tracking-[0.6px] text-[#767683]">
             Filter View
           </span>
@@ -72,7 +72,7 @@ const DashboardPage = () => {
             </select>
             <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#767683]" />
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* ── Stat Cards ── */}

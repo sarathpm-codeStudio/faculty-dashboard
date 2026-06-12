@@ -61,19 +61,13 @@ const TestsPage = () => {
 
 
   const handleDeleteTest = async (id: any) => {
+    const toastId = toast.loading("Deleting test...")
     try {
-      toast.loading("Deleting test...")
-      const { data, error } = await deleteTest(id)
-      if (error) {
-        toast.error(error.message)
-        return
-      }
-      toast.success('Test deleted successfully')
-    } catch (error: any) {
-      toast.error(error.message)
-    }
-    finally {
-      toast.dismiss()
+      await deleteTest(id)
+      toast.success('Test deleted successfully', { id: toastId })
+    } catch {
+      // Error toast handled globally; just clear the loading spinner.
+      toast.dismiss(toastId)
     }
   }
 

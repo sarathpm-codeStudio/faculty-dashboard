@@ -368,12 +368,27 @@ export const couponServices = {
 
     getCouponById: async (id: any) => {
         try {
-            const response = await supabase
+            const response: any = await supabase
                 .from("coupons")
                 .select("*", { count: "exact" })
                 .eq("id", id)
                 .single();
+
+            if (response && !response?.is_all_courses) {
+
+                // get all coupon attached courses
+                const { data: couponCourses, error: couponCoursesError } = await supabase
+                    .from("coupon_courses")
+                    .select("courses(id,title)")
+                    .eq("coupon_id", id);
+                if (couponCoursesError) throw new Error(couponCoursesError.message);
+
+                response.data.attachedCourses = couponCourses;
+
+            }
+
             return response
+
         } catch (error: any) {
             throw new Error(error.message)
         }

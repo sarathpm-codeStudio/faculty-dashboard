@@ -80,7 +80,7 @@ const Step2AddQuestions = ({
   const { mutateAsync: publishTest, isPending: isPublishingTest } = usePublishTest()
 
   const moduleOptions = useMemo(() => {
-    const modules = folders?.data ?? []
+    const modules = folders ?? []
     return modules.map((folder: any) => ({
       value: folder.id,
       label: folder.title,
@@ -172,16 +172,14 @@ const Step2AddQuestions = ({
       // edit questions
       if (isEditQuestion) {
         console.log("edit questions")
-        const { data, error } = await updateQuestion(payload)
-
-        if (error) {
-          toast.error(error.message)
-        }
-        if (data) {
+        try {
+          await updateQuestion(payload)
           toast.success('Question updated successfully')
           setIsEditQuestion(false)
           setEditQuestionId(null)
           resetQuestionForm()
+        } catch {
+          // Error toast handled globally by the query client.
         }
 
       } else {
@@ -193,10 +191,8 @@ const Step2AddQuestions = ({
           toast.success('Question added successfully')
           resetQuestionForm()
 
-        } catch (error: any) {
-
-          toast.error(error.message)
-
+        } catch {
+          // Error toast handled globally by the query client.
         }
       }
     },
@@ -339,16 +335,11 @@ const Step2AddQuestions = ({
   const handlePublishTest = async () => {
     toast.loading("Publishing test...")
     try {
-      const { data, error } = await publishTest(testId)
-      if (error) {
-        toast.error(error.message)
-        // toast.dismiss()
-      }
-      if (data) {
-        toast.success('Test published successfully')
-        navigate('/tests')
-        // toast.dismiss()
-      }
+      await publishTest(testId)
+      toast.success('Test published successfully')
+      navigate('/tests')
+      // toast.dismiss()
+
     } catch (error: any) {
       toast.error(error.message)
       // toast.dismiss()

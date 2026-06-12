@@ -97,12 +97,26 @@ class TPStreamsUploadService {
 
         this.createUploader(protection)
 
-        await new Promise<void>((resolve) => {
-            if (this.uploader?.on) {
-                this.uploader.on('ready', () => resolve())
+        await this.waitForUploaderReady()
+    }
+
+    /**
+     * The TPStreams SDK fetches its uploader config (which holds `assets_create_url`,
+     * `multipart_upload_url`, etc.) asynchronously in its constructor and exposes no
+     * 'ready' event. Until that fetch resolves, `_uploaderURLs` is undefined and any
+     * upload() call crashes with "Cannot read properties of undefined (reading
+     * 'assets_create_url')". Poll until the config is in place before proceeding.
+     */
+    private async waitForUploaderReady(timeoutMs = 15000): Promise<void> {
+        const start = Date.now()
+        while (!this.uploader?._uploaderURLs) {
+            if (Date.now() - start > timeoutMs) {
+                throw new Error(
+                    'Uploader configuration not ready. Please check your network or credentials.'
+                )
             }
-            setTimeout(resolve, 500)
-        })
+            await new Promise<void>((resolve) => setTimeout(resolve, 100))
+        }
     }
 
     private linkAssetToMeta(assetId: string): UploadMeta | undefined {

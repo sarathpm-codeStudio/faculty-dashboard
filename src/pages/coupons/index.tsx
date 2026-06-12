@@ -81,8 +81,9 @@ const CouponsPage = () => {
       await updateCouponStatus({ id: row.id, status: next })
       toast.success('Coupon status updated successfully', { id: toastId })
     } catch (error: any) {
+      // Error toast handled globally; just clear the loading spinner.
       console.log('error', error)
-      toast.error(error.message, { id: toastId })
+      toast.dismiss(toastId)
     }
 
   }
@@ -99,8 +100,9 @@ const CouponsPage = () => {
       toast.success('Coupon deleted successfully', { id: toastId })
       setDeleteTarget(null)
     } catch (error: any) {
+      // Error toast handled globally; just clear the loading spinner.
       console.log('error', error)
-      toast.error(error.message, { id: toastId })
+      toast.dismiss(toastId)
     }
   }
 

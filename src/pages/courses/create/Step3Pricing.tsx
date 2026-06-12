@@ -62,8 +62,8 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
         await addCoursePricing(payload)
         toast.success('Course pricing added successfully')
         onNext()
-      } catch (error: any) {
-        toast.error(error.message)
+      } catch {
+        // Error toast handled globally by the query client.
       }
     },
   })

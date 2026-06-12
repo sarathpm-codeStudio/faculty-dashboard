@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 type StatCardProps = {
   icon: ReactNode
   label: string
-  value: string
+  value: any
   valueColor?: string
   prefix?: string
   children?: ReactNode

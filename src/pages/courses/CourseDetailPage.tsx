@@ -57,8 +57,9 @@ const CourseDetailPage = () => {
             toast.success('Course deleted successfully', { id: toastId })
             setDeleteModalOpen(false)
             navigate('/courses')
-        } catch (error: any) {
-            toast.error(error?.message ?? 'Failed to delete course', { id: toastId })
+        } catch {
+            // Error toast handled globally; just clear the loading spinner.
+            toast.dismiss(toastId)
         }
     }
 

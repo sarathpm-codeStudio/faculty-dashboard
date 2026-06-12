@@ -58,14 +58,14 @@ const CreateTestPage = () => {
         material_title: values.materialTitle,
       }
 
-      // call api 
-      const { data, error } = await updateTest({ id, payload })
-      if (error) {
-        toast.error(error.message)
-        return
+      // call api
+      try {
+        await updateTest({ id, payload })
+        toast.success("Test updated successfully")
+        setStep(2)
+      } catch {
+        // Error toast handled globally by the query client.
       }
-      toast.success("Test updated successfully")
-      setStep(2)
 
     } else {
 
@@ -91,8 +91,8 @@ const CreateTestPage = () => {
         setTestId(data?.id)
         toast.success("Add questions to this test")
         setStep(2)
-      } catch (error: any) {
-        toast.error(error.message)
+      } catch {
+        // Error toast handled globally by the query client.
       }
 
     }

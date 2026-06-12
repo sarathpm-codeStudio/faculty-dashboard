@@ -66,7 +66,7 @@ const CONTENT_TYPES: { kind: ContentKind; label: string }[] = [
   { kind: 'video', label: 'Video' },
   { kind: 'test', label: 'Online Test' },
   { kind: 'document', label: 'Document' },
-  { kind: 'image', label: 'Image' },
+  // { kind: 'image', label: 'Image' },
 ]
 
 const listVariants: Variants = {
@@ -995,7 +995,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         </div>
 
         {/* Advance Settings */}
-        <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-4">
+        {/* <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-4">
           <h3 className="text-xs font-bold text-[#2c1452] uppercase tracking-widest">Advance Settings</h3>
           {[
             { key: 'offlineDownload' as const, label: 'Offline Download', icon: <Download size={16} className="text-[#2c1452]" /> },
@@ -1015,7 +1015,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               </button>
             </div>
           ))}
-        </div>
+        </div> */}
 
         <Button variant="primary" fullWidth onClick={onNext}>
           Add Price <ArrowRight size={18} />

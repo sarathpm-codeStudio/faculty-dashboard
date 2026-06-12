@@ -99,10 +99,8 @@ const CreateAnnouncementPage = () => {
             }
             formik.resetForm()
             navigate('/announcements')
-          } catch (error: any) {
-            if (error) {
-              toast.error(error)
-            }
+          } catch {
+            // Error toast handled globally by the query client.
           }
 
         } else {
@@ -118,17 +116,16 @@ const CreateAnnouncementPage = () => {
             }
             formik.resetForm()
             navigate('/announcements')
-          } catch (error: any) {
-            if (error) {
-              toast.error(error)
-            }
+          } catch {
+            // Error toast handled globally by the query client.
           }
 
         }
 
 
       } catch (error: any) {
-        toast.error(error)
+        // Error toast handled globally by the query client.
+        console.error(error)
       }
 
     },
