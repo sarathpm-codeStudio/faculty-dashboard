@@ -13,8 +13,12 @@ interface Props {
 }
 
 const TopNavBar = ({ onNotifClick }: Props) => {
-    const { user, logout, isPending } = useAuthStore()
+    const { user, logout, isPending, isSuspended } = useAuthStore()
     const navigate = useNavigate()
+
+    // A suspended account is locked out just like a pending/rejected one, so the
+    // top bar hides search, create-course and notifications in both cases.
+    const locked = isPending || isSuspended
     const [dropdownOpen, setDropdownOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -38,7 +42,7 @@ const TopNavBar = ({ onNotifClick }: Props) => {
         <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 pt-7 bg-gray-50 z-20 sticky top-0">
 
             {/* Search */}
-            {!isPending && (
+            {!locked && (
                 <div className="w-[700px]">
                     <Input
                         placeholder="Search by course and students..."
@@ -46,12 +50,12 @@ const TopNavBar = ({ onNotifClick }: Props) => {
                     />
                 </div>
             )}
-            {isPending && <div />}
+            {locked && <div />}
 
             {/* Right side */}
             <div className="flex items-center gap-4">
 
-                {!isPending && (
+                {!locked && (
                     <Button
                         variant="primary"
                         className="!h-10 !text-sm !px-4 !font-semibold"
@@ -62,7 +66,7 @@ const TopNavBar = ({ onNotifClick }: Props) => {
                 )}
 
                 {/* Notification bell */}
-                {!isPending && (
+                {!locked && (
                     <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
                         <Bell size={20} className="text-gray-500" />
                         <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-medium">

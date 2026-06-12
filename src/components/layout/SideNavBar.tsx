@@ -35,7 +35,11 @@ const SideNavBar = () => {
     const [accountOpen, setAccountOpen] = useState(false)
     const accountRef = useRef<HTMLDivElement>(null)
     const navigate = useNavigate()
-    const { user, logout, isPending } = useAuthStore()
+    const { user, logout, isPending, isSuspended } = useAuthStore()
+
+    // A suspended account is locked out of the dashboard exactly like a
+    // pending/rejected one, so the nav behaves the same in both cases.
+    const locked = isPending || isSuspended
 
     const expanded = isHovered || accountOpen
     const collapsed = !expanded
@@ -100,7 +104,7 @@ const SideNavBar = () => {
             {/* Nav links */}
             <nav className={`flex-1 flex flex-col gap-1 pt-4 overflow-y-auto overflow-x-hidden transition-[padding] duration-300 ease-out ${collapsed ? 'px-2' : 'px-3'}`}>
                 {navLinks.map(({ to, label, icon: Icon }) => (
-                    isPending ? (
+                    locked ? (
                         <div
                             key={to}
                             title={collapsed ? label : undefined}
@@ -137,10 +141,10 @@ const SideNavBar = () => {
             <div className={`pt-4 border-t border-gray-100 flex flex-col gap-1 transition-[padding] duration-300 ease-out ${collapsed ? 'px-2' : 'px-3'}`}>
                 <button
                     type="button"
-                    disabled={isPending}
+                    disabled={locked}
                     title={collapsed ? 'Help Center' : undefined}
                     className={navItemClass(
-                        isPending ? 'text-gray-300 blur-[1.5px] cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                        locked ? 'text-gray-300 blur-[1.5px] cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                     )}
                 >
                     <HelpCircle size={18} className="shrink-0" />
