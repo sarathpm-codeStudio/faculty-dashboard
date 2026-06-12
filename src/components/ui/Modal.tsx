@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 interface ModalProps {
   open: boolean
   onClose: () => void
-  title: string
+  title: any
   children: ReactNode
   footer?: ReactNode
   maxWidth?: string

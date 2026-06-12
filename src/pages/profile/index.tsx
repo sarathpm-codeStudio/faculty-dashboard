@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Pencil, ChevronRight, FileText, GraduationCap, Eye, Download, User } from 'lucide-react'
+import { Pencil, ChevronRight, FileText, GraduationCap, Eye, Download, User, AlertTriangle } from 'lucide-react'
 import { HiOutlineBadgeCheck } from 'react-icons/hi'
 import { Heading, Paragraph, Skeleton, SkeletonStatCard, Button2, Modal, Button } from '@/components/ui'
 import { useAuthStore } from '@/store/authStore'
@@ -68,6 +68,7 @@ const ProfilePage = () => {
     const [academics, setAcademics] = useState<AcademicProfile[]>([])
     const [selectedQualification, setSelectedQualification] = useState<AcademicProfile | null>(null)
     const [rejectedModalOpen, setRejectedModalOpen] = useState(false)
+    const [adminNoteOpen, setAdminNoteOpen] = useState(false)
 
     useEffect(() => {
         const load = async () => {
@@ -80,10 +81,14 @@ const ProfilePage = () => {
                     profileService.getProfile(authUser.id),
                     profileService.getAcademicProfiles(authUser.id),
                 ])
+                console.log("profile", p)
                 setProfile(p)
                 setAcademics(a)
                 if (p?.account_verified === 'REJECTED') {
                     setRejectedModalOpen(true)
+                }
+                if (p?.admin_note?.trim()) {
+                    setAdminNoteOpen(true)
                 }
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : 'Failed to load profile'
@@ -151,10 +156,10 @@ const ProfilePage = () => {
     const certificates =
         certificatesWithDocs.length > 0
             ? certificatesWithDocs.map((a) => ({
-                  name: certificateFileName(a.document_url),
-                  meta: `Degree Verification - ${a.type ?? 'Document'}`,
-                  document_url: a.document_url!,
-              }))
+                name: certificateFileName(a.document_url),
+                meta: `Degree Verification - ${a.type ?? 'Document'}`,
+                document_url: a.document_url!,
+            }))
             : [{ name: 'No certificates found', meta: 'Upload certificates during onboarding', document_url: '' }]
 
     return (
@@ -212,26 +217,25 @@ const ProfilePage = () => {
                             <div className="flex-1 min-w-0">
                                 <div className="flex flex-wrap items-center gap-3">
                                     <Paragraph className="!text-xl font-bold text-[#191c1e]">{fullName}</Paragraph>
-                                    
-                                        <span
-                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase ${
-                                                profile?.account_verified === 'REJECTED'
-                                                    ? 'bg-[#FFE5E5] text-[#BA1A1A]'
-                                                    : profile?.account_verified === 'PENDING'
-                                                      ? 'bg-[#FFF4E5] text-[#B86E00]'
-                                                      : 'bg-[#A8EDFF] text-[#00A6BF]'
+
+                                    <span
+                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase ${profile?.account_verified === 'REJECTED'
+                                            ? 'bg-[#FFE5E5] text-[#BA1A1A]'
+                                            : profile?.account_verified === 'PENDING'
+                                                ? 'bg-[#FFF4E5] text-[#B86E00]'
+                                                : 'bg-[#A8EDFF] text-[#00A6BF]'
                                             }`}
-                                        >
-                                            {profile?.account_verified === 'PENDING'
-                                                ? 'Verification Pending'
-                                                : profile?.account_verified === 'REJECTED'
-                                                  ? 'Verification Rejected'
-                                                  : 'Verified'}
-                                            {profile?.account_verified !== 'REJECTED' && (
-                                                <HiOutlineBadgeCheck size={16} className="text-[#00875A] shrink-0 ml-1" />
-                                            )}
-                                        </span>
-                                   
+                                    >
+                                        {profile?.account_verified === 'PENDING'
+                                            ? 'Verification Pending'
+                                            : profile?.account_verified === 'REJECTED'
+                                                ? 'Verification Rejected'
+                                                : 'Verified'}
+                                        {profile?.account_verified !== 'REJECTED' && (
+                                            <HiOutlineBadgeCheck size={16} className="text-[#00875A] shrink-0 ml-1" />
+                                        )}
+                                    </span>
+
                                 </div>
 
                                 <div className="flex flex-wrap gap-3 mt-4">
@@ -297,8 +301,8 @@ const ProfilePage = () => {
                                         key={item.id}
                                         type="button"
                                         onClick={() => setSelectedQualification(item)}
-                                            className="flex items-center justify-between w-full rounded-xl border border-gray-200 px-4 py-3.5 text-left bg-white"
-                                        >
+                                        className="flex items-center justify-between w-full rounded-xl border border-gray-200 px-4 py-3.5 text-left bg-white"
+                                    >
                                         <Paragraph className="!text-[15px] font-bold text-[#2c1452]">
                                             {item.type || item.field_of_study || '—'}
                                         </Paragraph>
@@ -452,6 +456,31 @@ const ProfilePage = () => {
                 <Paragraph className="!text-sm text-[#767683] mt-3">
                     You can update your ID document from Edit Profile. After resubmission, your status will
                     change to pending review.
+                </Paragraph>
+            </Modal>
+
+            <Modal
+                open={adminNoteOpen}
+                onClose={() => setAdminNoteOpen(false)}
+                title={
+                    <span className="flex items-center gap-2">
+                        <span className="w-7 h-7 rounded-lg bg-[#FFF4E5] flex items-center justify-center shrink-0">
+                            <AlertTriangle size={16} className="text-[#B86E00]" />
+                        </span>
+                        Note from Admin
+                    </span>
+                }
+                maxWidth="max-w-md"
+                footer={
+                    <div className="flex w-full sm:justify-end">
+                        <Button type="button" className='!h-10' onClick={() => setAdminNoteOpen(false)}>
+                            Got it
+                        </Button>
+                    </div>
+                }
+            >
+                <Paragraph className="!text-sm text-[#454652] leading-relaxed whitespace-pre-line">
+                    {profile?.admin_note}
                 </Paragraph>
             </Modal>
         </div>

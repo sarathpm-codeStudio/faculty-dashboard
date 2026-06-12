@@ -11,6 +11,7 @@ export type FacultyProfile = {
     bio?: string
     avatar_url?: string
     account_verified?: string
+    admin_note?: string | null
     created_at?: string
     faculty_code?: string
 }
