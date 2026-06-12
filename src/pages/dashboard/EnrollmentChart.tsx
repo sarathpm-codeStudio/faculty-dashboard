@@ -60,9 +60,9 @@ const dataMap: Record<Period, DataPoint[]> = {
 }
 
 const PERIODS: { key: Period; label: string }[] = [
-  { key: 'week', label: 'Week' },
-  { key: 'month', label: 'Month' },
-  { key: 'year', label: 'Year' },
+  { key: 'week', label: 'Last 7 Days' },
+  { key: 'month', label: 'Last 4 Weeks' },
+  { key: 'year', label: 'Last 12 Months' },
 ]
 
 const EnrollmentChart = () => {
@@ -78,7 +78,7 @@ const EnrollmentChart = () => {
       <select
         value={period}
         onChange={e => setPeriod(e.target.value as Period)}
-        className="h-9 w-[110px] appearance-none rounded-[8px] border border-[#ececec] bg-white pl-4 pr-8 text-sm font-semibold text-[#191c1e] focus:outline-none cursor-pointer"
+        className="h-9 w-[150px] appearance-none rounded-[8px] border border-[#ececec] bg-white pl-4 pr-8 text-sm font-semibold text-[#191c1e] focus:outline-none cursor-pointer"
       >
         {PERIODS.map(({ key, label }) => (
           <option key={key} value={key}>{label}</option>

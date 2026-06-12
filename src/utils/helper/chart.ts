@@ -58,23 +58,70 @@ export function calendarMonthWeekNumber(dayOfMonth: number): number {
     return 4;
 }
 
+/** Whole days between two dates, counted at local-midnight granularity. */
+export function diffInLocalDays(from: Date, to: Date): number {
+    const ms = startOfLocalDay(to).getTime() - startOfLocalDay(from).getTime();
+    return Math.round(ms / 86_400_000);
+}
+
+/** Compact "5 Jun" style label used for rolling weekly buckets. */
+export function weekStartLabel(d: Date): string {
+    return `${d.getDate()} ${d.toLocaleDateString('en-US', { month: 'short' })}`;
+}
+
+function shortMonthUpper(d: Date): string {
+    return d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+}
+
+// All periods are now ROLLING windows ending today (not calendar-aligned):
+//   week  → Last 7 Days   (7 daily buckets)
+//   month → Last 4 Weeks  (4 weekly buckets, 28 days)
+//   year  → Last 12 Months (12 monthly buckets)
 export function getChartPeriodBounds(period: ChartPeriod, ref = new Date()): ChartPeriodBounds {
     const today = startOfLocalDay(ref);
     let fromDate: Date;
 
     if (period === 'week') {
-        fromDate = startOfLocalWeekMonday(today);
+        fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6);
     } else if (period === 'month') {
-        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        fromDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 27);
     } else {
-        fromDate = new Date(today.getFullYear(), 0, 1);
+        fromDate = new Date(today.getFullYear(), today.getMonth() - 11, 1);
     }
 
     return { today, fromDate, rangeEnd: endOfLocalDay(today) };
 }
 
+/** Start/end of the window immediately preceding the current one (same length). */
+export function getPreviousPeriodBounds(
+    period: ChartPeriod,
+    bounds: ChartPeriodBounds
+): { previousStart: Date; previousEnd: Date } {
+    const { fromDate } = bounds;
+    const dayBeforeFrom = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() - 1);
+    const previousEnd = endOfLocalDay(dayBeforeFrom);
+
+    let previousStart: Date;
+    if (period === 'week') {
+        previousStart = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() - 7);
+    } else if (period === 'month') {
+        previousStart = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() - 28);
+    } else {
+        previousStart = new Date(fromDate.getFullYear() - 1, fromDate.getMonth(), 1);
+    }
+
+    return { previousStart, previousEnd };
+}
+
+/** Human label for the comparison window, e.g. "last 7 days". */
+export function getPeriodTrendLabel(period: ChartPeriod): string {
+    if (period === 'week') return 'last 7 days';
+    if (period === 'month') return 'last 4 weeks';
+    return 'last 12 months';
+}
+
 export function buildChartPeriodSlots(period: ChartPeriod, bounds: ChartPeriodBounds): ChartPeriodSlot[] {
-    const { today, fromDate } = bounds;
+    const { fromDate } = bounds;
 
     if (period === 'week') {
         return Array.from({ length: 7 }, (_, i) => {
@@ -88,16 +135,19 @@ export function buildChartPeriodSlots(period: ChartPeriod, bounds: ChartPeriodBo
     }
 
     if (period === 'month') {
-        return Array.from({ length: 4 }, (_, i) => ({
-            label: `Wk ${i + 1}`,
-            group: `week_${i + 1}`,
-        }));
+        return Array.from({ length: 4 }, (_, i) => {
+            const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + i * 7);
+            return {
+                label: weekStartLabel(start),
+                group: `week_${i + 1}`,
+            };
+        });
     }
 
     return Array.from({ length: 12 }, (_, i) => {
-        const d = new Date(today.getFullYear(), i, 1);
+        const d = new Date(fromDate.getFullYear(), fromDate.getMonth() + i, 1);
         return {
-            label: d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+            label: shortMonthUpper(d),
             group: toLocalMonthKey(d),
         };
     });
@@ -111,21 +161,20 @@ export function groupTimestampForChartPeriod(
     const { today, fromDate } = bounds;
     const local = startOfLocalDay(new Date(dateStr));
 
+    if (local < fromDate || local > today) return null;
+
     if (period === 'week') {
-        const weekEnd = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + 6);
-        if (local < fromDate || local > weekEnd) return null;
         return { label: weekdayLabel(local), group: toLocalDateKey(local) };
     }
 
     if (period === 'month') {
-        if (!isSameLocalMonth(local, today)) return null;
-        const weekNum = calendarMonthWeekNumber(local.getDate());
-        return { label: `Wk ${weekNum}`, group: `week_${weekNum}` };
+        const idx = Math.min(3, Math.floor(diffInLocalDays(fromDate, local) / 7));
+        const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + idx * 7);
+        return { label: weekStartLabel(start), group: `week_${idx + 1}` };
     }
 
-    if (local.getFullYear() !== today.getFullYear()) return null;
     return {
-        label: local.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
+        label: shortMonthUpper(local),
         group: toLocalMonthKey(local),
     };
 }

@@ -2,7 +2,7 @@
 import apiClient from '@/lib/apiClient'
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/store/authStore'
-import { buildChartPeriodSlots, ChartPeriod, endOfLocalDay, getChartPeriodBounds, groupTimestampForChartPeriod } from '@/utils/helper/chart'
+import { buildChartPeriodSlots, ChartPeriod, getChartPeriodBounds, getPeriodTrendLabel, getPreviousPeriodBounds, groupTimestampForChartPeriod } from '@/utils/helper/chart'
 
 const extractApiErrorMessage = (error: any, fallback = 'Something went wrong'): string => {
     const data = error?.response?.data
@@ -14,10 +14,6 @@ const extractApiErrorMessage = (error: any, fallback = 'Something went wrong'): 
 }
 
 const facultyId = useAuthStore.getState().user?.id;
-const ENROLLMENT_YEAR_LABELS = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-] as const;
 
 
 export const dashboardService = {
@@ -139,23 +135,11 @@ export const dashboardService = {
                 }
             }
 
-            if (period === "week") {
-                return slots.map((s) => ({
-                    primary: s.label,
-                    secondary: s.dayOfMonth!,
-                    value: counts.get(s.group) ?? 0,
-                }));
-            }
-
-            if (period === "month") {
-                return slots.map((s) => ({
-                    primary: s.label.replace("Wk", "Week"),
-                    value: counts.get(s.group) ?? 0,
-                }));
-            }
-
-            return slots.map((s, i) => ({
-                primary: ENROLLMENT_YEAR_LABELS[i]!,
+            // Rolling windows: slot labels already carry the correct text for
+            // every period (day name + date / week-start date / month name).
+            return slots.map((s) => ({
+                primary: s.label,
+                ...(s.dayOfMonth ? { secondary: s.dayOfMonth } : {}),
                 value: counts.get(s.group) ?? 0,
             }));
         } catch (error: any) {
@@ -185,34 +169,9 @@ export const dashboardService = {
 
             const bounds = getChartPeriodBounds(period);
             const slots = buildChartPeriodSlots(period, bounds);
-            const today = bounds.today;
 
-            let previousStart: Date;
-            let previousEnd: Date;
-
-            if (period === "week") {
-                const prevWeekMonday = new Date(
-                    bounds.fromDate.getFullYear(),
-                    bounds.fromDate.getMonth(),
-                    bounds.fromDate.getDate() - 7
-                );
-                previousStart = prevWeekMonday;
-                previousEnd = endOfLocalDay(
-                    new Date(
-                        bounds.fromDate.getFullYear(),
-                        bounds.fromDate.getMonth(),
-                        bounds.fromDate.getDate() - 1
-                    )
-                );
-            } else if (period === "month") {
-                previousStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                previousEnd = endOfLocalDay(
-                    new Date(today.getFullYear(), today.getMonth(), 0)
-                );
-            } else {
-                previousStart = new Date(today.getFullYear() - 1, 0, 1);
-                previousEnd = endOfLocalDay(new Date(today.getFullYear() - 1, 11, 31));
-            }
+            // Compare against the immediately preceding rolling window of equal length.
+            const { previousStart, previousEnd } = getPreviousPeriodBounds(period, bounds);
 
             let currentEnrollments: { enrolled_at?: string; amount_paid?: number }[] = [];
             let previousEnrollments: { amount_paid?: number }[] = [];
@@ -245,7 +204,7 @@ export const dashboardService = {
             if (previousTotal > 0) {
                 const change = ((currentTotal - previousTotal) / previousTotal) * 100;
                 const direction = change >= 0 ? "increase" : "decrease";
-                const periodLabel = period === "week" ? "last week" : period === "month" ? "last month" : "last year";
+                const periodLabel = getPeriodTrendLabel(period);
                 trendText = `${Math.abs(change).toFixed(1)}% ${direction} from ${periodLabel}`;
             }
 

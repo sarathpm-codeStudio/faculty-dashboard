@@ -9,7 +9,7 @@ import {
   type UpdateCoursePayload,
 } from '@/types/course.types'
 import { useAuthStore } from '@/store/authStore'
-import { buildChartPeriodSlots, ChartPeriod, endOfLocalDay, getChartPeriodBounds, groupTimestampForChartPeriod } from '@/utils/helper/chart';
+import { buildChartPeriodSlots, ChartPeriod, getChartPeriodBounds, getPeriodTrendLabel, getPreviousPeriodBounds, groupTimestampForChartPeriod } from '@/utils/helper/chart';
 
 
 const facultyId = useAuthStore.getState().user?.id;
@@ -1334,33 +1334,9 @@ export const courseService = {
 
       const bounds = getChartPeriodBounds(period);
       const slots = buildChartPeriodSlots(period, bounds);
-      const today = bounds.today;
 
-      let previousStart: Date;
-      let previousEnd: Date;
-
-      if (period === "week") {
-        previousStart = new Date(
-          bounds.fromDate.getFullYear(),
-          bounds.fromDate.getMonth(),
-          bounds.fromDate.getDate() - 7
-        );
-        previousEnd = endOfLocalDay(
-          new Date(
-            bounds.fromDate.getFullYear(),
-            bounds.fromDate.getMonth(),
-            bounds.fromDate.getDate() - 1
-          )
-        );
-      } else if (period === "month") {
-        previousStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        previousEnd = endOfLocalDay(
-          new Date(today.getFullYear(), today.getMonth(), 0)
-        );
-      } else {
-        previousStart = new Date(today.getFullYear() - 1, 0, 1);
-        previousEnd = endOfLocalDay(new Date(today.getFullYear() - 1, 11, 31));
-      }
+      // Compare against the immediately preceding rolling window of equal length.
+      const { previousStart, previousEnd } = getPreviousPeriodBounds(period, bounds);
 
       const { data: current, error: currentError } = await supabase
         .from("enrollments")
@@ -1389,7 +1365,7 @@ export const courseService = {
       if (previousTotal > 0) {
         const change = ((currentTotal - previousTotal) / previousTotal) * 100;
         const direction = change >= 0 ? "increase" : "decrease";
-        const periodLabel = period === "week" ? "last week" : period === "month" ? "last month" : "last year";
+        const periodLabel = getPeriodTrendLabel(period);
         trendText = `${Math.abs(change).toFixed(1)}% ${direction} from ${periodLabel}`;
       }
 

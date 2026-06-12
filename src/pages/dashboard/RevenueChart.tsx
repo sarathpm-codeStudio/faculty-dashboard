@@ -18,9 +18,9 @@ type RevenueChartProps = {
 }
 
 const PERIODS: { key: RevenuePeriod; label: string }[] = [
-  { key: 'week', label: 'Week' },
-  { key: 'month', label: 'Month' },
-  { key: 'year', label: 'Year' },
+  { key: 'week', label: 'Last 7 Days' },
+  { key: 'month', label: 'Last 4 Weeks' },
+  { key: 'year', label: 'Last 12 Months' },
 ]
 
 const RevenueChart = ({
@@ -47,7 +47,7 @@ const RevenueChart = ({
           <select
             value={period}
             onChange={e => onPeriodChange(e.target.value as RevenuePeriod)}
-            className="h-7 w-[90px] appearance-none rounded-[6px] border border-white/20 bg-transparent pl-3 pr-7 text-sm font-semibold text-white focus:outline-none cursor-pointer"
+            className="h-7 w-[140px] appearance-none rounded-[6px] border border-white/20 bg-transparent pl-3 pr-7 text-sm font-semibold text-white focus:outline-none cursor-pointer"
           >
             {PERIODS.map(({ key, label }) => (
               <option key={key} value={key} className="bg-[#2c1452] text-white">
