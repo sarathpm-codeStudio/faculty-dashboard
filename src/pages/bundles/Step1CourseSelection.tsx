@@ -87,14 +87,14 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
         </div>
 
         {/* Course grid */}
-        <div className="grid grid-cols-2 gap-4 flex-1 min-h-0 overflow-y-auto pr-2 auto-rows-min scrollbar-hide">
+        <div className="grid grid-cols-3 gap-4 flex-1 min-h-0 overflow-y-auto pr-2 auto-rows-min scrollbar-hide">
 
 
           {
 
             coursesLoading || bundleLoading ? (
-              <div className="grid col-span-2 grid-cols-2 gap-4">
-                {Array.from({ length: 4 }).map((_, i) => (
+              <div className="grid col-span-3 grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
                     <Skeleton className="h-36 w-full rounded-none" />
                     <div className="p-4 space-y-2">

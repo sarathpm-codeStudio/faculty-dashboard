@@ -64,29 +64,29 @@ const BundleCard = ({
     >
       <div className="relative">
         {image_url ? (
-          <img src={image_url} alt={title} className="w-full h-44 object-fill" />
+          <img src={image_url} alt={title} className="w-full aspect-video object-cover" />
         ) : (
-          <div className="w-full h-44 bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
+          <div className="w-full aspect-video bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
         )}
       </div>
 
       <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-center gap-1 text-[#00A6BF] text-xs font-semibold mb-2">
+        <div className="flex items-center gap-1 text-[#00A6BF] text-xs font-semibold mb-1.5">
           <PiStackFill size={13} />
           <Paragraph className='text-[#00A6BF] font-semibold'>{total_courses_count || 0} Courses Included</Paragraph>
         </div>
 
-        <Subheading className="text-[#2c1452] font-bold mb-3">{title}</Subheading>
+        <Subheading className="text-[#2c1452] font-bold mb-2">{title}</Subheading>
 
-        <div className="flex  items-center justify-center gap-3 mb-4 bg-[#F2F4F6] rounded-lg px-3 py-2">
+        <div className="flex  items-center justify-center gap-3 mb-2 bg-[#F2F4F6] rounded-lg px-3 py-1">
           <div className="flex-1">
-            <p className="text-[10px] text-[#767683] font-semibold uppercase tracking-wide">Students</p>
-            <Paragraph className="text-sm font-bold text-[#2c1452]">{formatNumber(totalStudents)}</Paragraph>
+            <p className="text-[9px] text-[#767683] font-semibold uppercase tracking-wide">Students</p>
+            <Paragraph className="!text-xs font-bold text-[#2c1452]">{formatNumber(totalStudents)}</Paragraph>
           </div>
           {/* <div className="w-px h-8 bg-gray-300" /> */}
           <div className="flex-1">
-            <p className="text-[10px] text-[#767683] font-semibold uppercase tracking-wide">Revenue</p>
-            <Paragraph className="text-sm font-bold text-[#2c1452]">₹{formatNumber(totalRevenue)}</Paragraph>
+            <p className="text-[9px] text-[#767683] font-semibold uppercase tracking-wide">Revenue</p>
+            <Paragraph className="!text-xs font-bold text-[#2c1452]">₹{formatNumber(totalRevenue)}</Paragraph>
           </div>
         </div>
 
