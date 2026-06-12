@@ -5,7 +5,10 @@ import apiClient from '@/lib/apiClient'
 import { supabase } from "@/services/supabase"
 import { useAuthStore } from "@/store/authStore"
 
-const facultyId = useAuthStore.getState().user?.id;
+// Read the faculty id on every call so it reflects the current user.
+// Reading once at module load captures a stale/undefined value that
+// survives logout/login without a page reload.
+const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
 
 
@@ -25,7 +28,7 @@ export const announcementService = {
                 const { data: course, error } = await supabase.from("courses")
                     .select("*")
                     .eq("id", data.audience)
-                    .eq("faculty_id", facultyId)
+                    .eq("faculty_id", getCurrentFacultyId())
                     .single();
                 if (error) {
                     throw new Error(error.message)
@@ -37,7 +40,7 @@ export const announcementService = {
 
             const { data: announcement, error } = await supabase.from("announcements")
                 .insert({
-                    faculty_id: facultyId,
+                    faculty_id: getCurrentFacultyId(),
                     title: data.title,
                     content: data.content,
                     course_id: data.audience === "all" ? null : data.audience,
@@ -83,7 +86,7 @@ export const announcementService = {
         let query = supabase
             .from("announcements")
             .select("*, courses(id, title)", { count: "exact" })
-            .eq("faculty_id", facultyId)
+            .eq("faculty_id", getCurrentFacultyId())
             .eq("is_deleted", false);
 
         if (filter !== "all") {
@@ -184,7 +187,7 @@ export const announcementService = {
             const { error } = await supabase.from("announcements")
                 .delete()
                 .eq("id", announcementId)
-                .eq("faculty_id", facultyId);
+                .eq("faculty_id", getCurrentFacultyId());
 
             if (error) {
                 throw new Error(error.message)

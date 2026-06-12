@@ -3,7 +3,10 @@ import apiClient from '@/lib/apiClient'
 import { supabase } from "@/services/supabase"
 import { useAuthStore } from "@/store/authStore"
 
-const facultyId = useAuthStore.getState().user?.id;
+// Read the faculty id on every call so it reflects the current user.
+// Reading once at module load captures a stale/undefined value that
+// survives logout/login without a page reload.
+const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
 
 const extractApiErrorMessage = (error: any, fallback = 'Something went wrong'): string => {
@@ -33,7 +36,7 @@ export const couponServices = {
             const { count: activeCoupons, error: activeCouponsError } = await supabase
                 .from("coupons")
                 .select("*", { count: "exact", head: true })
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_deleted", false)
                 .eq("is_active", true)
                 .eq("is_draft", false)
@@ -45,7 +48,7 @@ export const couponServices = {
             const { data: redemptions, error: redemptionsError } = await supabase
                 .from("coupon_redemptions")
                 .select("student_id, save_amount")
-                .eq("faculty_id", facultyId);
+                .eq("faculty_id", getCurrentFacultyId());
 
             if (redemptionsError) throw new Error(redemptionsError.message);
 
@@ -92,7 +95,7 @@ export const couponServices = {
                 .from("courses")
                 .select("id")
                 .in("id", couponData.courses)
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_deleted", false)
                 .eq("enableCoupons", true);
 
@@ -139,7 +142,7 @@ export const couponServices = {
                 expire_date: couponData.expiryDate,
                 max_usage: couponData.maxUsage,
                 usage_per_person: couponData.usagePerPerson,
-                faculty_id: facultyId,
+                faculty_id: getCurrentFacultyId(),
                 is_active: true,
                 is_all_courses: isAllCourses,
                 is_draft: false,
@@ -201,7 +204,7 @@ export const couponServices = {
             const { data: courses, error } = await db
                 .from("courses")
                 .select("id, title")
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_draft", false)
                 .eq("enableCoupons", true)
                 .order("created_at", { ascending: false });
@@ -232,7 +235,7 @@ export const couponServices = {
             const { error: deactivateError } = await db
                 .from("coupons")
                 .update({ is_active: false })
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_active", true)
                 .eq("is_deleted", false)
                 .lt("expire_date", now);
@@ -256,7 +259,7 @@ export const couponServices = {
                         )
                     )
                 `, { count: "exact" })
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_deleted", false)
                 .order("created_at", { ascending: false })
                 .range(from, to);
@@ -314,7 +317,7 @@ export const couponServices = {
 
         try {
 
-            console.log("facultyId", facultyId);
+            console.log("getCurrentFacultyId()", getCurrentFacultyId());
             console.log("couponId", couponId);
             console.log("status", status);
             const db = supabase;
@@ -324,7 +327,7 @@ export const couponServices = {
                     is_active: status,
                 })
                 .eq("id", couponId)
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .select()
                 .single();
             if (error) throw new Error(error.message);
@@ -354,7 +357,7 @@ export const couponServices = {
                     is_deleted: true,
                 })
                 .eq("id", couponId)
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .select()
                 .single();
             if (error) throw new Error(error.message);
@@ -410,7 +413,7 @@ export const couponServices = {
                     .from("courses")
                     .select("id")
                     .in("id", couponData.courses)
-                    .eq("faculty_id", facultyId)
+                    .eq("faculty_id", getCurrentFacultyId())
                     .eq("is_deleted", false)
                     .eq("enableCoupons", true);
 
@@ -437,7 +440,7 @@ export const couponServices = {
                     is_all_courses: isAllCourses,
                 })
                 .eq("id", couponId)
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .select()
                 .single();
             if (error) throw new Error(error.message);

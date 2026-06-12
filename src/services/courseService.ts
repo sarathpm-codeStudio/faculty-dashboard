@@ -12,13 +12,16 @@ import { useAuthStore } from '@/store/authStore'
 import { buildChartPeriodSlots, ChartPeriod, getChartPeriodBounds, getPeriodTrendLabel, getPreviousPeriodBounds, groupTimestampForChartPeriod } from '@/utils/helper/chart';
 
 
-const facultyId = useAuthStore.getState().user?.id;
+// Read the faculty id from the store on every call so it always reflects the
+// currently logged-in user. Reading it once at module load captures a stale
+// (often `undefined`) value that survives logout/login without a page reload.
+const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
 export const courseService = {
 
   getAll: async ({ filter, search }: { filter: any, search?: string }): Promise<any> => {
 
-    console.log(facultyId, "fill", filter)
+    console.log(getCurrentFacultyId(), "fill", filter)
 
     // try {
     //   const { data } = await apiClient.get('/courses', { params: { filter, search } })
@@ -43,7 +46,7 @@ export const courseService = {
                     cover_image,
                   enrollments(count)
                 `)
-        .eq("faculty_id", facultyId)
+        .eq("faculty_id", getCurrentFacultyId())
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
 
@@ -185,7 +188,7 @@ export const courseService = {
           category: data.category,
           level: data.level,
           languages: data.languages,
-          faculty_id: facultyId,
+          faculty_id: getCurrentFacultyId(),
           cover_image: data.cover_image,
           video_asset_id: videoUploadProgress?.asset_id,
           video_uploading_status: videoUploadProgress?.uploading_status,
@@ -218,7 +221,7 @@ export const courseService = {
     try {
 
       console.log("course id", courseId);
-      console.log("faculty id", facultyId);
+      console.log("faculty id", getCurrentFacultyId());
       console.log("data", data);
 
       // check this course have intro video
@@ -246,7 +249,7 @@ export const courseService = {
           video_transcoding_progress: videoUploadProgress?.transcoding_progress,
         })
         .eq("id", courseId)
-        .eq("faculty_id", facultyId)
+        .eq("faculty_id", getCurrentFacultyId())
         .select()
         .single();
 
@@ -339,7 +342,7 @@ export const courseService = {
         .from("courses")
         .select("id, faculty_id, title, video_uploading_status")
         .eq("id", courseId)
-        .eq("faculty_id", facultyId)
+        .eq("faculty_id", getCurrentFacultyId())
         .single()
 
       if (courseError) throw new Error(courseError.message)
@@ -468,7 +471,7 @@ export const courseService = {
         .from("courses")
         .select("id")
         .eq("id", courseId)
-        .eq("faculty_id", facultyId)
+        .eq("faculty_id", getCurrentFacultyId())
         .single();
 
       if (courseError) throw new Error(courseError.message);
@@ -568,7 +571,7 @@ export const courseService = {
         .from('courses')
         .select("*")
         .eq('id', courseId)
-        .eq('faculty_id', facultyId)
+        .eq('faculty_id', getCurrentFacultyId())
         .single();
 
       if (!course) throw new Error("Not your course");
@@ -609,7 +612,7 @@ export const courseService = {
         .from("courses")
         .select("id")
         .eq("id", courseId)
-        .eq("faculty_id", facultyId)
+        .eq("faculty_id", getCurrentFacultyId())
         .single();
 
       if (courseError) throw new Error(courseError.message);
@@ -993,7 +996,7 @@ export const courseService = {
         .from("courses")
         .select("id, faculty_id, title, video_uploading_status")
         .eq("id", courseId)
-        .eq("faculty_id", facultyId)
+        .eq("faculty_id", getCurrentFacultyId())
         .single()
 
       if (courseError) throw new Error(courseError.message)

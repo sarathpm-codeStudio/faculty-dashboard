@@ -5,7 +5,10 @@ import { supabase } from './supabase'
 import { useAuthStore } from '@/store/authStore'
 
 
-const facultyId = useAuthStore.getState().user?.id;
+// Read the faculty id on every call so it reflects the current user.
+// Reading once at module load captures a stale/undefined value that
+// survives logout/login without a page reload.
+const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
 
 export const bundleService = {
@@ -30,7 +33,7 @@ export const bundleService = {
 
             const { data: bundle, error } = await supabase.from("course_bundle").insert({
 
-                faculty_id: facultyId,
+                faculty_id: getCurrentFacultyId(),
                 title: data.title,
                 description: data.description,
                 price: Math.round(Number(data.price)),
@@ -102,7 +105,7 @@ export const bundleService = {
             bundle_enrollments(count)
 
       `)
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_draft", filter?.filter);
 
             if (error) {
@@ -179,7 +182,7 @@ export const bundleService = {
         course_bundle_courses_count:course_bundle_courses(count)
     `)
                 .eq("id", bundleId)
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .single();
             if (error) {
                 throw new Error(error.message);
@@ -222,7 +225,7 @@ export const bundleService = {
                         is_draft: data.isDraft,
                     })
                     .eq("id", bundleId)
-                    .eq("faculty_id", facultyId)
+                    .eq("faculty_id", getCurrentFacultyId())
                     .select()
                     .single(),
             ]);
@@ -272,7 +275,7 @@ export const bundleService = {
                 .from("course_bundle")
                 .delete()
                 .eq("id", bundleId)
-                .eq("faculty_id", facultyId);
+                .eq("faculty_id", getCurrentFacultyId());
 
             if (error) {
                 throw new Error(error.message);

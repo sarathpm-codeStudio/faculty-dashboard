@@ -5,7 +5,10 @@ import { supabase } from './supabase'
 import { useAuthStore } from '@/store/authStore'
 
 
-const facultyId = useAuthStore.getState().user?.id;
+// Read the faculty id on every call so it reflects the current user.
+// Reading once at module load captures a stale/undefined value that
+// survives logout/login without a page reload.
+const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
 export const videoService = {
 
@@ -23,13 +26,13 @@ export const videoService = {
         // }
 
         try {
-            console.log(">>>>>>>>>>>>>>>>>>", uniqueId, facultyId, assetId, type, status)
+            console.log(">>>>>>>>>>>>>>>>>>", uniqueId, getCurrentFacultyId(), assetId, type, status)
 
             // upsert = insert if not exists, update if exists ✅
             const { error } = await supabase
                 .from("video_upload_progress")
                 .upsert({
-                    faculty_id: facultyId,
+                    faculty_id: getCurrentFacultyId(),
                     unique_id: uniqueId,
                     type: type,
                     asset_id: assetId,

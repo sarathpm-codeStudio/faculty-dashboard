@@ -5,7 +5,10 @@ import { useAuthStore } from "@/store/authStore"
 import { MaterialStatus } from '@/types'
 
 
-const facultyId = useAuthStore.getState().user?.id
+// Read the faculty id on every call so it reflects the current user.
+// Reading once at module load captures a stale/undefined value that
+// survives logout/login without a page reload.
+const getCurrentFacultyId = () => useAuthStore.getState().user?.id
 
 export const testService = {
     createTest: async (data: any) => {
@@ -28,7 +31,7 @@ export const testService = {
             const { data: course, error } = await supabase.from("courses")
                 .select("*")
                 .eq("id", data?.course)
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .single();
             if (error) throw error;
             if (!course) throw new Error("Course not found");
@@ -37,7 +40,7 @@ export const testService = {
 
             const { data: test, error: testError } = await supabase.from("tests")
                 .insert({
-                    faculty_id: facultyId,
+                    faculty_id: getCurrentFacultyId(),
                     unique_id: data.unique_id || null,
                     title: data.title,
                     course_id: data?.course,
@@ -120,7 +123,7 @@ export const testService = {
         const to = from + limit - 1;
 
         console.log("filter", filter);
-        console.log("faculty_id", facultyId);
+        console.log("faculty_id", getCurrentFacultyId());
 
         let filterValue: any = "all";
 
@@ -133,7 +136,7 @@ export const testService = {
         let query = supabase
             .from("tests")
             .select("*, courses(*), test_attempts(count)", { count: "exact" })
-            .eq("faculty_id", facultyId)
+            .eq("faculty_id", getCurrentFacultyId())
             .eq("is_deleted", false);
 
 
@@ -178,7 +181,7 @@ export const testService = {
             const { count: activeTests, error: activeError } = await supabase
                 .from('tests')
                 .select('*', { count: 'exact', head: true })
-                .eq('faculty_id', facultyId)
+                .eq('faculty_id', getCurrentFacultyId())
                 .eq('is_draft', false)
                 .eq('is_deleted', false);
 
@@ -188,7 +191,7 @@ export const testService = {
             const { count: draftTests, error: draftError } = await supabase
                 .from('tests')
                 .select('*', { count: 'exact', head: true })
-                .eq('faculty_id', facultyId)
+                .eq('faculty_id', getCurrentFacultyId())
                 .eq('is_draft', true)
                 .eq('is_deleted', false);
 
@@ -199,7 +202,7 @@ export const testService = {
             const { count: totalCompletedAttempts, error: attemptError } = await supabase
                 .from('test_attempts')
                 .select('tests!inner(faculty_id)', { count: 'exact', head: true })
-                .eq('tests.faculty_id', facultyId)
+                .eq('tests.faculty_id', getCurrentFacultyId())
                 .not('submitted_at', 'is', null);
 
             if (attemptError) throw new Error(attemptError.message);
@@ -516,7 +519,7 @@ export const testService = {
                 const { data: course, error } = await supabase.from("courses")
                     .select("*")
                     .eq("id", data.course)
-                    .eq("faculty_id", facultyId)
+                    .eq("faculty_id", getCurrentFacultyId())
                     .single();
                 if (error) throw error;
                 if (!course) throw new Error("Course not found");

@@ -13,7 +13,10 @@ const extractApiErrorMessage = (error: any, fallback = 'Something went wrong'): 
     return fallback
 }
 
-const facultyId = useAuthStore.getState().user?.id;
+// Read the faculty id on every call so it reflects the current user.
+// Reading once at module load captures a stale/undefined value that
+// survives logout/login without a page reload.
+const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
 
 export const dashboardService = {
@@ -35,7 +38,7 @@ export const dashboardService = {
             const { data: courses, error: coursesError } = await db
                 .from("courses")
                 .select("id")
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_deleted", false)
                 .eq("is_draft", false);
 
@@ -70,7 +73,7 @@ export const dashboardService = {
             const { count: activeCoupons, error: couponsError } = await db
                 .from("coupons")
                 .select("*", { count: "exact", head: true })
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_deleted", false)
                 .eq("is_active", true)
                 .eq("is_draft", false)
@@ -106,7 +109,7 @@ export const dashboardService = {
             const { data: courses, error: coursesError } = await db
                 .from("courses")
                 .select("id")
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_draft", false)
                 .eq("is_deleted", false);
 
@@ -161,7 +164,7 @@ export const dashboardService = {
             const { data: courses, error: coursesError } = await db
                 .from("courses")
                 .select("id")
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_deleted", false);
 
             if (coursesError) throw new Error(coursesError.message);
@@ -249,7 +252,7 @@ export const dashboardService = {
             const { data: courses, error: coursesError } = await db
                 .from("courses")
                 .select("id, title")
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_deleted", false)
                 .eq("is_draft", false);
 

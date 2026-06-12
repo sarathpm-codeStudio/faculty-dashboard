@@ -4,7 +4,10 @@ import apiClient from '@/lib/apiClient'
 import { supabase } from "@/services/supabase"
 import { useAuthStore } from "@/store/authStore"
 
-const facultyId = useAuthStore.getState().user?.id;
+// Read the faculty id on every call so it reflects the current user.
+// Reading once at module load captures a stale/undefined value that
+// survives logout/login without a page reload.
+const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
 
 
@@ -58,7 +61,7 @@ export const studentServices = {
             const { data: facultyCourses, error: courseError } = await supabase
                 .from("courses")
                 .select("id")
-                .eq("faculty_id", facultyId);
+                .eq("faculty_id", getCurrentFacultyId());
 
             if (courseError) throw new Error(courseError.message);
 
@@ -281,14 +284,14 @@ export const studentServices = {
                     { count: "exact" }
                 )
                 .eq("student_id", studentId)
-                .eq("course.faculty_id", facultyId);
+                .eq("course.faculty_id", getCurrentFacultyId());
 
             if (search) {
                 const { data: matchingCourses, error: courseSearchError } =
                     await supabase
                         .from("courses")
                         .select("id")
-                        .eq("faculty_id", facultyId)
+                        .eq("faculty_id", getCurrentFacultyId())
                         .ilike("title", `%${search}%`);
 
                 if (courseSearchError) throw new Error(courseSearchError.message);
@@ -335,7 +338,7 @@ export const studentServices = {
                 .from("tests")
                 .select("id, course_id")
                 .in("course_id", courseIds)
-                .eq("faculty_id", facultyId)
+                .eq("faculty_id", getCurrentFacultyId())
                 .eq("is_deleted", false);
 
             if (testsError) throw new Error(testsError.message);
@@ -507,7 +510,7 @@ export const studentServices = {
             const { data: directEnrollments, error: directError } = await supabase
                 .from('enrollments')
                 .select('id, course_id, amount_paid, is_bundle_enrollment, enrolled_at')
-                .eq('faculty_id', facultyId)
+                .eq('faculty_id', getCurrentFacultyId())
                 .eq('student_id', studentId);
 
             if (directError) throw new Error(directError.message);
@@ -516,7 +519,7 @@ export const studentServices = {
             const { data: bundleEnrollments, error: bundleError } = await supabase
                 .from('bundle_enrollments')
                 .select('id, bundle_id, amount_paid, enrolled_at')
-                .eq('faculty_id', facultyId)
+                .eq('faculty_id', getCurrentFacultyId())
                 .eq('student_id', studentId);
 
             if (bundleError) throw new Error(bundleError.message);
@@ -548,7 +551,7 @@ export const studentServices = {
                     )
                 `)
                 .eq('student_id', studentId)
-                .eq('tests.faculty_id', facultyId)
+                .eq('tests.faculty_id', getCurrentFacultyId())
                 .not('submitted_at', 'is', null);
 
             if (attemptsError) throw new Error(attemptsError.message);
