@@ -62,16 +62,16 @@ const CourseCard = ({
 
   return (
     <motion.div
-      className={`rounded-xl bg-white shadow-sm border overflow-hidden flex  h-[300px] flex-col cursor-pointer transition-colors border-gray-100`}
+      className={`rounded-xl bg-white shadow-sm border overflow-hidden flex flex-col cursor-pointer transition-colors border-gray-100`}
       whileHover={{ y: -5, boxShadow: '0 16px 32px rgba(0, 11, 96, 0.12)' }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
       onClick={() => onClick?.(id)}
     >
       <div className="relative">
         {cover_image ? (
-          <img src={cover_image} alt={title} className="w-full h-36 object-fill" />
+          <img src={cover_image} alt={title} className="w-full aspect-video object-cover" />
         ) : (
-          <div className="w-full h-36 bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
+          <div className="w-full aspect-video bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
         )}
         {selectable && selected && (
           <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-[#2c1452] flex items-center justify-center shadow">
