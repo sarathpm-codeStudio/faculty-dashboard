@@ -50,11 +50,11 @@ export const dashboardService = {
             const activeCourses = courses.length;
 
             // 3. Total students (unique students enrolled in faculty courses)
-            let enrollments: { student_id: string; amount_paid?: number }[] = [];
+            let enrollments: { student_id: string; amount_paid?: number; enrolled_at?: string }[] = [];
             if (courseIds.length > 0) {
                 const { data, error: enrollmentsError } = await db
                     .from("enrollments")
-                    .select("student_id, amount_paid")
+                    .select("student_id, amount_paid, enrolled_at")
                     .in("course_id", courseIds);
 
                 if (enrollmentsError) throw new Error(enrollmentsError.message);
@@ -68,6 +68,16 @@ export const dashboardService = {
                 (sum, e) => sum + Number(e.amount_paid),
                 0
             );
+
+            // 4b. Current month revenue
+            const nowDate = new Date();
+            const currentMonthStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
+            const currentMonthRevenue = enrollments.reduce((sum, e) => {
+                if (!e.enrolled_at) return sum;
+                const enrolledAt = new Date(e.enrolled_at);
+                if (enrolledAt < currentMonthStart) return sum;
+                return sum + Number(e.amount_paid);
+            }, 0);
 
             // 5. Active coupons count
             const { count: activeCoupons, error: couponsError } = await db
@@ -86,6 +96,7 @@ export const dashboardService = {
                 active_courses: activeCourses,
                 active_coupons: activeCoupons ?? 0,
                 total_revenue: totalRevenue,
+                current_month_revenue: currentMonthRevenue,
             };
 
         } catch (error: any) {

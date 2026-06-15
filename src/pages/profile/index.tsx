@@ -51,6 +51,21 @@ const certificateFileName = (url?: string | null) => {
     return url.split('/').pop() ?? 'Certificate'
 }
 
+const REJECTION_REASON_TEXT: Record<string, string> = {
+    'Incomplete profile':
+        'Your profile is missing required information. Please complete all required details in your profile so our team can review your account again.',
+    'Invalid documents':
+        'The documents you submitted could not be verified. Please upload new, clear copies of your government-issued ID and supporting documents so our team can review your account again.',
+    'Insufficient experience':
+        'Your account did not meet the minimum teaching experience requirements. Please update your qualifications and experience details so our team can review your account again.',
+}
+
+const parseRejectReasons = (raw?: string | null) =>
+    (raw ?? '')
+        .split(',')
+        .map((r) => r.trim())
+        .filter(Boolean)
+
 const DetailField = ({ label, value }: DetailFieldProps) => (
     <div>
         <Paragraph className="!text-[10px] font-bold text-[#767683] uppercase tracking-widest mb-1">
@@ -86,8 +101,7 @@ const ProfilePage = () => {
                 setAcademics(a)
                 if (p?.account_verified === 'REJECTED') {
                     setRejectedModalOpen(true)
-                }
-                if (p?.admin_note?.trim()) {
+                } else if (p?.admin_note?.trim()) {
                     setAdminNoteOpen(true)
                 }
             } catch (err: unknown) {
@@ -152,6 +166,11 @@ const ProfilePage = () => {
     const bio =
         profile?.bio ||
         'Dedicated academic professional with over a decade of experience in financial management and corporate accounting. Passionate about mentoring the next generation of business leaders through practical, case-study based learning methodologies.'
+    const rejectReasons = parseRejectReasons(profile?.acc_reject_reason)
+    const rejectIntro =
+        rejectReasons.length === 1 && REJECTION_REASON_TEXT[rejectReasons[0]]
+            ? REJECTION_REASON_TEXT[rejectReasons[0]]
+            : 'Your account verification was not approved. Please review the reasons below and update your details so our team can review your account again.'
     const certificatesWithDocs = academics.filter((a) => a.document_url)
     const certificates =
         certificatesWithDocs.length > 0
@@ -426,12 +445,13 @@ const ProfilePage = () => {
             <Modal
                 open={rejectedModalOpen}
                 onClose={() => setRejectedModalOpen(false)}
-                title="ID Verification Rejected"
+                title="Verification Rejected"
                 maxWidth="max-w-md"
                 footer={
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:justify-end">
                         <Button
                             type="button"
+                            className='!h-10'
                             variant="white"
                             onClick={() => setRejectedModalOpen(false)}
                         >
@@ -439,22 +459,51 @@ const ProfilePage = () => {
                         </Button>
                         <Button
                             type="button"
+                            className='!h-10'
+
                             onClick={() => {
                                 setRejectedModalOpen(false)
                                 navigate('/account/edit', { state: { step: 3 } })
                             }}
                         >
-                            Resubmit ID Document
+                            Update Details
                         </Button>
                     </div>
                 }
             >
                 <Paragraph className="!text-sm text-[#454652] leading-relaxed">
-                    Your identity verification was not approved. Please upload a new, clear photo of your
-                    government-issued ID so our team can review your account again.
+                    {rejectIntro}
                 </Paragraph>
+                {rejectReasons.length > 0 && (
+                    <div className="mt-3 px-3 py-3 bg-[#FFF1F0] border border-[#FFD6D2] rounded-xl">
+                        <Paragraph className="!text-[10px] font-bold text-[#D92D20] uppercase tracking-widest mb-2">
+                            {rejectReasons.length > 1 ? 'Reasons for Rejection' : 'Reason for Rejection'}
+                        </Paragraph>
+                        <ul className="flex flex-col gap-1.5">
+                            {rejectReasons.map((reason) => (
+                                <li key={reason} className="flex items-start gap-2">
+                                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[#D92D20] shrink-0" />
+                                    <Paragraph className="!text-sm text-[#454652] leading-relaxed">
+                                        {reason}
+                                    </Paragraph>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                {profile?.admin_note?.trim() && (
+                    <div className="mt-3 px-3 py-3 bg-[#FFF4E5] border border-[#FFE2B8] rounded-xl">
+                        <Paragraph className="!text-[10px] font-bold text-[#B86E00] uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                            <AlertTriangle size={12} className="text-[#B86E00]" />
+                            Note from Admin
+                        </Paragraph>
+                        <Paragraph className="!text-sm text-[#454652] leading-relaxed whitespace-pre-line">
+                            {profile.admin_note}
+                        </Paragraph>
+                    </div>
+                )}
                 <Paragraph className="!text-sm text-[#767683] mt-3">
-                    You can update your ID document from Edit Profile. After resubmission, your status will
+                    You can update your details from Edit Profile. After resubmission, your status will
                     change to pending review.
                 </Paragraph>
             </Modal>

@@ -106,7 +106,11 @@ const DashboardPage = () => {
               label="Total Revenue"
               value={formatNumber(dashboardCounters?.total_revenue ?? 0)}
               prefix="₹"
-            />
+            >
+              <p className="text-xs font-semibold text-[#15803d]">
+                ₹{formatNumber(dashboardCounters?.current_month_revenue ?? 0)} Pending Payouts
+              </p>
+            </StatCard>
           </>
         )}
       </div>
