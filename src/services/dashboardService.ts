@@ -18,6 +18,87 @@ const extractApiErrorMessage = (error: any, fallback = 'Something went wrong'): 
 // survives logout/login without a page reload.
 const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
+const DEFAULT_COMMISSION_PERCENT = 20;
+
+// Commission rate to apply when estimating an unpaid enrollment's faculty share.
+// Historical rows store their own commission_percent, but unpaid enrollments
+// have no transaction yet, so we use the current platform default.
+const getCommissionPercent = async (db: typeof supabase): Promise<number> => {
+    const { data, error } = await db
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "default_commission_percent")
+        .maybeSingle();
+
+    if (error) throw new Error(error.message);
+
+    const percent = Number(data?.value);
+    return Number.isFinite(percent) ? percent : DEFAULT_COMMISSION_PERCENT;
+};
+
+// Pending payout = faculty share (after GST + commission) of enrollments and
+// bundle enrollments that have not been settled in a payout yet.
+//   - single enrollment is settled once a COURSE_SALE row references it
+//   - bundle enrollment is settled once a BUNDLE_SALE row references it
+const getPendingPayout = async (
+    db: typeof supabase,
+    facultyId: string | undefined,
+    courseIds: string[],
+    enrollments: { id: string; amount_paid?: number; gst_amount?: number; is_bundle_enrollment?: boolean }[]
+): Promise<number> => {
+    if (!facultyId) return 0;
+
+    const commissionPercent = await getCommissionPercent(db);
+    const facultyShareRatio = 1 - commissionPercent / 100;
+
+    // Already-settled enrollment / bundle ids, from existing sale rows.
+    const { data: saleRows, error: saleError } = await db
+        .from("faculty_transactions")
+        .select("type, enrollment_id, bundle_enrollment_id")
+        .eq("faculty_id", facultyId)
+        .in("type", ["COURSE_SALE", "BUNDLE_SALE"]);
+
+    if (saleError) throw new Error(saleError.message);
+
+    const settledEnrollmentIds = new Set<string>();
+    const settledBundleIds = new Set<string>();
+    for (const row of saleRows ?? []) {
+        if (row.type === "COURSE_SALE" && row.enrollment_id) settledEnrollmentIds.add(row.enrollment_id);
+        if (row.type === "BUNDLE_SALE" && row.bundle_enrollment_id) settledBundleIds.add(row.bundle_enrollment_id);
+    }
+
+    // Single (non-bundle) enrollments awaiting payout.
+    // base = amount_paid - gst_amount, then apply the faculty share ratio.
+    const singlePending = enrollments.reduce((sum, e) => {
+        if (e.is_bundle_enrollment) return sum;
+        if (settledEnrollmentIds.has(e.id)) return sum;
+        const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0);
+        if (base <= 0) return sum;
+        return sum + base * facultyShareRatio;
+    }, 0);
+
+    // Bundle enrollments awaiting payout — the price lives on bundle_enrollments,
+    // the per-course enrollment rows carry amount_paid = 0.
+    let bundlePending = 0;
+    if (courseIds.length > 0) {
+        const { data: bundleRows, error: bundleError } = await db
+            .from("bundle_enrollments")
+            .select("id, amount_paid")
+            .eq("faculty_id", facultyId);
+
+        if (bundleError) throw new Error(bundleError.message);
+
+        bundlePending = (bundleRows ?? []).reduce((sum, b) => {
+            if (settledBundleIds.has(b.id)) return sum;
+            const base = Number(b.amount_paid ?? 0);
+            if (base <= 0) return sum;
+            return sum + base * facultyShareRatio;
+        }, 0);
+    }
+
+    return Math.round(singlePending + bundlePending);
+};
+
 
 export const dashboardService = {
 
@@ -32,13 +113,14 @@ export const dashboardService = {
         try {
             const db = supabase;
 
+            const facultyId = getCurrentFacultyId();
             const now = new Date().toISOString().replace("T", " ").replace("Z", "+00");
 
             // 1. Get all faculty courses (not deleted)
             const { data: courses, error: coursesError } = await db
                 .from("courses")
                 .select("id")
-                .eq("faculty_id", getCurrentFacultyId())
+                .eq("faculty_id", facultyId)
                 .eq("is_deleted", false)
                 .eq("is_draft", false);
 
@@ -50,11 +132,18 @@ export const dashboardService = {
             const activeCourses = courses.length;
 
             // 3. Total students (unique students enrolled in faculty courses)
-            let enrollments: { student_id: string; amount_paid?: number; enrolled_at?: string }[] = [];
+            //    Pull the columns needed for pending-payout calculation too.
+            let enrollments: {
+                id: string;
+                student_id: string;
+                amount_paid?: number;
+                gst_amount?: number;
+                is_bundle_enrollment?: boolean;
+            }[] = [];
             if (courseIds.length > 0) {
                 const { data, error: enrollmentsError } = await db
                     .from("enrollments")
-                    .select("student_id, amount_paid, enrolled_at")
+                    .select("id, student_id, amount_paid, gst_amount, is_bundle_enrollment")
                     .in("course_id", courseIds);
 
                 if (enrollmentsError) throw new Error(enrollmentsError.message);
@@ -63,27 +152,35 @@ export const dashboardService = {
 
             const totalStudents = new Set(enrollments.map((e) => e.student_id)).size;
 
-            // 4. Total revenue
-            const totalRevenue = enrollments.reduce(
-                (sum, e) => sum + Number(e.amount_paid),
+            // 4. Total revenue — money actually paid out to the faculty.
+            //    Every monthly payout writes one PAYOUT row in faculty_transactions
+            //    whose `amount` is the total transferred (faculty share after
+            //    commission). Summing all SUCCESS PAYOUT rows = realized earnings.
+            const { data: payoutRows, error: payoutError } = await db
+                .from("faculty_transactions")
+                .select("amount")
+                .eq("faculty_id", facultyId)
+                .eq("status", "SUCCESS")
+                .eq("type", "PAYOUT");
+
+            if (payoutError) throw new Error(payoutError.message);
+
+            const totalRevenue = (payoutRows ?? []).reduce(
+                (sum, t) => sum + Number(t.amount ?? 0),
                 0
             );
 
-            // 4b. Current month revenue
-            const nowDate = new Date();
-            const currentMonthStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), 1);
-            const currentMonthRevenue = enrollments.reduce((sum, e) => {
-                if (!e.enrolled_at) return sum;
-                const enrolledAt = new Date(e.enrolled_at);
-                if (enrolledAt < currentMonthStart) return sum;
-                return sum + Number(e.amount_paid);
-            }, 0);
+            // 4b. Pending payout — faculty share (after GST + commission) of
+            //     enrollments/bundles not yet settled in a payout.
+            //     "Not yet settled" = no COURSE_SALE row for the single enrollment
+            //     and no BUNDLE_SALE row for the bundle enrollment.
+            const pendingPayout = await getPendingPayout(db, facultyId, courseIds, enrollments);
 
             // 5. Active coupons count
             const { count: activeCoupons, error: couponsError } = await db
                 .from("coupons")
                 .select("*", { count: "exact", head: true })
-                .eq("faculty_id", getCurrentFacultyId())
+                .eq("faculty_id", facultyId)
                 .eq("is_deleted", false)
                 .eq("is_active", true)
                 .eq("is_draft", false)
@@ -96,7 +193,7 @@ export const dashboardService = {
                 active_courses: activeCourses,
                 active_coupons: activeCoupons ?? 0,
                 total_revenue: totalRevenue,
-                current_month_revenue: currentMonthRevenue,
+                pending_payout: pendingPayout,
             };
 
         } catch (error: any) {
@@ -187,12 +284,22 @@ export const dashboardService = {
             // Compare against the immediately preceding rolling window of equal length.
             const { previousStart, previousEnd } = getPreviousPeriodBounds(period, bounds);
 
-            let currentEnrollments: { enrolled_at?: string; amount_paid?: number }[] = [];
-            let previousEnrollments: { amount_paid?: number }[] = [];
+            // Faculty net revenue = (amount_paid - GST) after the platform commission.
+            // Mirrors the payout calc in enrollment-payout-workflow.md §3.
+            const commissionPercent = await getCommissionPercent(db);
+            const facultyShareRatio = 1 - commissionPercent / 100;
+            const facultyNet = (e: { amount_paid?: number; gst_amount?: number }) => {
+                const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0);
+                if (base <= 0) return 0;
+                return base * facultyShareRatio;
+            };
+
+            let currentEnrollments: { enrolled_at?: string; amount_paid?: number; gst_amount?: number }[] = [];
+            let previousEnrollments: { amount_paid?: number; gst_amount?: number }[] = [];
             if (courseIds.length > 0) {
                 const { data: current, error: currentError } = await db
                     .from("enrollments")
-                    .select("enrolled_at, amount_paid")
+                    .select("enrolled_at, amount_paid, gst_amount")
                     .in("course_id", courseIds)
                     .gte("enrolled_at", bounds.fromDate.toISOString())
                     .lte("enrolled_at", bounds.rangeEnd.toISOString());
@@ -202,7 +309,7 @@ export const dashboardService = {
 
                 const { data: previous, error: previousError } = await db
                     .from("enrollments")
-                    .select("amount_paid")
+                    .select("amount_paid, gst_amount")
                     .in("course_id", courseIds)
                     .gte("enrolled_at", previousStart.toISOString())
                     .lte("enrolled_at", previousEnd.toISOString());
@@ -211,8 +318,8 @@ export const dashboardService = {
                 previousEnrollments = previous ?? [];
             }
 
-            const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
-            const previousTotal = previousEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
+            const currentTotal = currentEnrollments.reduce((sum, e) => sum + facultyNet(e), 0);
+            const previousTotal = previousEnrollments.reduce((sum, e) => sum + facultyNet(e), 0);
 
             let trendText = "0% no change";
             if (previousTotal > 0) {
@@ -230,13 +337,13 @@ export const dashboardService = {
                 if (!grouped) continue;
                 revenueByGroup.set(
                     grouped.group,
-                    (revenueByGroup.get(grouped.group) ?? 0) + Number(e.amount_paid)
+                    (revenueByGroup.get(grouped.group) ?? 0) + facultyNet(e)
                 );
             }
 
             const chartData = slots.map((s) => ({
                 label: s.label,
-                value: revenueByGroup.get(s.group) ?? 0,
+                value: Math.round(revenueByGroup.get(s.group) ?? 0),
             }));
 
             return { data: chartData, trend: trendText };

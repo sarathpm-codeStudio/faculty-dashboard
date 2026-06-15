@@ -107,8 +107,8 @@ const DashboardPage = () => {
               value={formatNumber(dashboardCounters?.total_revenue ?? 0)}
               prefix="₹"
             >
-              <p className="text-xs font-semibold text-[#15803d]">
-                ₹{formatNumber(dashboardCounters?.current_month_revenue ?? 0)} Pending Payouts
+              <p className="text-[13px] font-semibold text-[#15803d]">
+                ₹{formatNumber(dashboardCounters?.pending_payout ?? 0)} Pending Payouts
               </p>
             </StatCard>
           </>

@@ -135,13 +135,10 @@ export function buildChartPeriodSlots(period: ChartPeriod, bounds: ChartPeriodBo
     }
 
     if (period === 'month') {
-        return Array.from({ length: 4 }, (_, i) => {
-            const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + i * 7);
-            return {
-                label: weekStartLabel(start),
-                group: `week_${i + 1}`,
-            };
-        });
+        return Array.from({ length: 4 }, (_, i) => ({
+            label: `Week ${i + 1}`,
+            group: `week_${i + 1}`,
+        }));
     }
 
     return Array.from({ length: 12 }, (_, i) => {
@@ -169,8 +166,7 @@ export function groupTimestampForChartPeriod(
 
     if (period === 'month') {
         const idx = Math.min(3, Math.floor(diffInLocalDays(fromDate, local) / 7));
-        const start = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate() + idx * 7);
-        return { label: weekStartLabel(start), group: `week_${idx + 1}` };
+        return { label: `Week ${idx + 1}`, group: `week_${idx + 1}` };
     }
 
     return {

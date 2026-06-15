@@ -18,9 +18,9 @@ type RevenueChartProps = {
 }
 
 const PERIODS: { key: RevenuePeriod; label: string }[] = [
-  { key: 'week', label: 'Last 7 Days' },
-  { key: 'month', label: 'Last 4 Weeks' },
-  { key: 'year', label: 'Last 12 Months' },
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
 ]
 
 const RevenueChart = ({

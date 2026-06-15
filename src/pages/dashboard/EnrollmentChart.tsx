@@ -21,54 +21,15 @@ type DataPoint = {
   value: number
 }
 
-const weekData: DataPoint[] = [
-  { primary: 'MON', secondary: '03', value: 40 },
-  { primary: 'TUE', secondary: '04', value: 94 },
-  { primary: 'WED', secondary: '05', value: 55 },
-  { primary: 'THU', secondary: '06', value: 110 },
-  { primary: 'FRI', secondary: '07', value: 70 },
-  { primary: 'SAT', secondary: '08', value: 85 },
-  { primary: 'SUN', secondary: '09', value: 60 },
-]
-
-const monthData: DataPoint[] = [
-  { primary: 'Week 1', value: 45 },
-  { primary: 'Week 2', value: 78 },
-  { primary: 'Week 3', value: 62 },
-  { primary: 'Week 4', value: 90 },
-]
-
-const yearData: DataPoint[] = [
-  { primary: 'Jan', value: 65 },
-  { primary: 'Feb', value: 48 },
-  { primary: 'Mar', value: 85 },
-  { primary: 'Apr', value: 72 },
-  { primary: 'May', value: 110 },
-  { primary: 'Jun', value: 95 },
-  { primary: 'Jul', value: 88 },
-  { primary: 'Aug', value: 75 },
-  { primary: 'Sep', value: 65 },
-  { primary: 'Oct', value: 90 },
-  { primary: 'Nov', value: 105 },
-  { primary: 'Dec', value: 78 },
-]
-
-const dataMap: Record<Period, DataPoint[]> = {
-  week: weekData,
-  month: monthData,
-  year: yearData,
-}
-
 const PERIODS: { key: Period; label: string }[] = [
-  { key: 'week', label: 'Last 7 Days' },
-  { key: 'month', label: 'Last 4 Weeks' },
-  { key: 'year', label: 'Last 12 Months' },
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' },
+  { key: 'year', label: 'Year' },
 ]
 
 const EnrollmentChart = () => {
   const [period, setPeriod] = useState<Period>('week')
   const [chartData, setChartData] = useState<DataPoint[]>([])
-  const currentData = dataMap[period]
 
   // query
   const { data: enrollmentTrend, isLoading: enrollmentTrendLoading } = useGetEnrollmentTrend(period, true)
