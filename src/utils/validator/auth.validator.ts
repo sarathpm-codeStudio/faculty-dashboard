@@ -28,25 +28,32 @@ export const idVerificationSchema = Yup.object({
     document_url: Yup.string().required('Please upload your ID document'),
 })
 
+// Country code is selected separately; `phone` holds only the local digits.
+// They are combined into E.164 (e.g. +91 + 9876543210 -> +919876543210) before
+// being sent to Supabase, so the format passed to Supabase stays unchanged.
 export const validationSchema = Yup.object({
-    email: Yup.string()
-        .email('Enter a valid email address')
-        .required('Please enter your email'),
-    password: Yup.string()
-        .required('Please enter your password'),
+    countryCode: Yup.string()
+        .matches(/^\+[1-9]\d{0,3}$/, 'Select a valid country code')
+        .required('Select a country code'),
+    phone: Yup.string()
+        .matches(/^[0-9]{6,14}$/, 'Enter a valid phone number')
+        .required('Please enter your phone number'),
 })
 
+// Country code is selected separately; `phone` holds only the local digits.
+// They are combined into E.164 (e.g. +91 + 9876543210 -> +919876543210) before
+// being sent to Supabase, so the format passed to Supabase stays unchanged.
 export const signupValidationSchema = Yup.object({
-    // name: Yup.string()
-    //     .trim()
-    //     .required('Please enter your name'),
-    email: Yup.string()
-        .email('Enter a valid email address')
-        .required('Please enter your email'),
-    password: Yup.string()
-        .min(6, 'Password must be at least 6 characters')
-        .required('Please enter a password'),
-    confirmPassword: Yup.string()
-        .oneOf([Yup.ref('password')], 'Passwords do not match')
-        .required('Please confirm your password'),
+    countryCode: Yup.string()
+        .matches(/^\+[1-9]\d{0,3}$/, 'Select a valid country code')
+        .required('Select a country code'),
+    phone: Yup.string()
+        .matches(/^[0-9]{6,14}$/, 'Enter a valid phone number')
+        .required('Please enter your phone number'),
+})
+
+export const otpValidationSchema = Yup.object({
+    token: Yup.string()
+        .matches(/^\d{6}$/, 'Enter the 6-digit OTP')
+        .required('Please enter the OTP'),
 })

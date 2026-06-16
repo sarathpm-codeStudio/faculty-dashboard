@@ -1,44 +1,27 @@
-import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useFormik } from 'formik'
 import { toast } from 'sonner'
 import AuthLayout from '@/components/layout/AuthLayout'
-import { Button, Input, Paragraph } from '@/components/ui'
+import { Button, Paragraph } from '@/components/ui'
+import { PhoneInput } from '@/components/features'
 import { IoIosArrowRoundBack } from 'react-icons/io'
+import { HiArrowRight } from 'react-icons/hi'
 import { authService } from '@/services/authService'
 import { signupValidationSchema } from '@/utils/validator/auth.validator'
-import { useAuthStore } from '@/store/authStore'
 
 const SignupPage = () => {
     const navigate = useNavigate()
-    const [success, setSuccess] = useState(false)
-    const login = useAuthStore((state) => state.login)
-
 
     const formik = useFormik({
-        initialValues: { email: '', password: '', confirmPassword: '' },
+        initialValues: { countryCode: '+91', phone: '' },
         validationSchema: signupValidationSchema,
         onSubmit: async (values, { setSubmitting }) => {
+            // Combine into E.164 (e.g. +919876543210) — format sent to Supabase is unchanged
+            const fullPhone = `${values.countryCode}${values.phone}`
             try {
-                await authService.signUp(values.email, values.password)
-                const data = await authService.signIn(values.email, values.password)
-                const user = data.user
-                // get user profile
-                const profile = await authService.getUserProfile(user?.id ?? '')
-                console.log("profile", profile)
-                login(
-                    {
-                        id: user?.id ?? '',
-                        name: `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || "",
-                        email: user?.email ? values.email : " ",
-                        avatar_url: profile?.avatar_url || "",
-                    },
-                    data.session?.access_token ?? ''
-                )
-
-
-                // toast.success('Account created! Check your email to confirm.')
-                navigate('/onboarding')
+                await authService.sendSignupOtp(fullPhone)
+                toast.success('OTP sent to your phone')
+                navigate('/auth/otp', { state: { phone: fullPhone, mode: 'signup' } })
             } catch (err: unknown) {
                 const message = err instanceof Error ? err.message : 'Sign up failed. Please try again.'
                 toast.error(message)
@@ -48,62 +31,28 @@ const SignupPage = () => {
         },
     })
 
-    // if (success) {
-    //     return (
-    //         <AuthLayout title="Check your email" subtitle="We sent a confirmation link to your inbox">
-    //             <div className="flex flex-col items-center gap-6 py-4">
-    //                 <p className="text-sm text-gray-600 text-center">
-    //                     Please click the link in your email to verify your account, then sign in.
-    //                 </p>
-    //                 <Button fullWidth onClick={() => navigate('/auth')}>
-    //                     Go to Sign in
-    //                 </Button>
-    //             </div>
-    //         </AuthLayout>
-    //     )
-    // }
-
     return (
-        <AuthLayout title="Faculty Sign up" subtitle="Create your faculty account">
+        <AuthLayout title="Faculty Sign Up" subtitle="Access your dashboard and classrooms">
             <form onSubmit={formik.handleSubmit} className="flex flex-col gap-4">
 
-
-
-                <Input
-                    label="Email"
-                    type="email"
-                    id="email"
-                    value={formik.values.email}
+                <PhoneInput
+                    label="Phone Number"
+                    name="phone"
+                    countryCode={formik.values.countryCode}
+                    onCountryCodeChange={(code: any) => formik.setFieldValue('countryCode', code)}
+                    value={formik.values.phone}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    placeholder="you@example.com"
-                    error={formik.touched.email && formik.errors.email ? formik.errors.email : undefined}
-                />
-
-                <Input
-                    label="Password"
-                    type="password"
-                    id="password"
-                    value={formik.values.password}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    placeholder="••••••••"
-                    error={formik.touched.password && formik.errors.password ? formik.errors.password : undefined}
-                />
-
-                <Input
-                    label="Confirm Password"
-                    type="password"
-                    id="confirmPassword"
-                    value={formik.values.confirmPassword}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    placeholder="••••••••"
-                    error={formik.touched.confirmPassword && formik.errors.confirmPassword ? formik.errors.confirmPassword : undefined}
+                    placeholder="Enter your  number"
+                    error={formik.touched.phone && formik.errors.phone ? formik.errors.phone : undefined}
                 />
 
                 <Button type="submit" fullWidth className="mt-4" disabled={formik.isSubmitting}>
-                    {formik.isSubmitting ? 'Creating account…' : 'Sign up'}
+                    {formik.isSubmitting ? 'Sending OTP…' : (
+                        <>
+                            Continue <HiArrowRight size={18} />
+                        </>
+                    )}
                 </Button>
 
             </form>
@@ -111,7 +60,7 @@ const SignupPage = () => {
             <div className="w-full mt-8 flex items-center justify-center gap-2 text-[14px] font-bold">
                 <IoIosArrowRoundBack size={24} className="text-gray-500" />
                 <Link to="/auth">
-                    <span className="text-gray-500 cursor-pointer">Back to sign in</span>
+                    <span className="text-gray-500 cursor-pointer">Back to Sign in</span>
                 </Link>
             </div>
 

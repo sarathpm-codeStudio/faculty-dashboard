@@ -3,41 +3,45 @@ import { supabase } from "./supabase"
 
 export const authService = {
 
-    // Sign in with email + password
-    signIn: async (email: string, password: string) => {
-
+    // Send OTP to phone for sign-in (do NOT auto-create user)
+    sendLoginOtp: async (phone: string) => {
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
+            const { data, error } = await supabase.auth.signInWithOtp({
+                phone,
+                options: { shouldCreateUser: false },
             })
-            if (error) {
-                console.log("error", error)
-                throw error
-            }
-            console.log("data", data)
+            if (error) throw error
             return data
         } catch (error: any) {
-            console.log("error", error)
             throw error
         }
     },
 
-    // Sign up with email + password
-    signUp: async (email: string, password: string) => {
+    // Send OTP to phone for sign-up (auto-create user if not exists)
+    sendSignupOtp: async (phone: string) => {
         try {
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
+            const { data, error } = await supabase.auth.signInWithOtp({
+                phone,
+                options: { shouldCreateUser: true },
             })
-            if (error) {
-                console.log("error", error)
-                throw error
-            }
-            console.log("data", data)
+            if (error) throw error
             return data
         } catch (error: any) {
-            console.log("error>>>>", error)
+            throw error
+        }
+    },
+
+    // Verify the SMS OTP
+    verifyOtp: async (phone: string, token: string) => {
+        try {
+            const { data, error } = await supabase.auth.verifyOtp({
+                phone,
+                token,
+                type: 'sms',
+            })
+            if (error) throw error
+            return data
+        } catch (error: any) {
             throw error
         }
     },
