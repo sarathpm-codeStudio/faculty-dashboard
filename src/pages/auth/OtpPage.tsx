@@ -85,11 +85,7 @@ const OtpPage = () => {
         >
             <div className='flex justify-center mb-[40px]'>
                 <div className="w-[250px] text-center px-4 py-2 bg-[#F2F4F6] border border-gray-100 rounded-lg text-sm text-gray-600 font-medium">
-<<<<<<< HEAD
-                    OTP sent to <span className=' text-[#2c1452] font-bold'>+91 987●●●●937</span>
-=======
                     OTP sent to <span className=' text-[#000B60] font-bold'>{maskPhone(phone)}</span>
->>>>>>> otp_check
                 </div>
             </div>
 
@@ -106,11 +102,7 @@ const OtpPage = () => {
                         00:00
                     </div>
 
-<<<<<<< HEAD
-                    <span className="text-[#2c1452] font-bold cursor-pointer">
-=======
                     <span onClick={handleResend} className="text-[#000B60] font-bold cursor-pointer">
->>>>>>> otp_check
                         Resend
                     </span>
                 </div>
