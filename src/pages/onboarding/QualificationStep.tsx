@@ -194,6 +194,7 @@ const QualificationStep = ({
                             <Select
                                 label="Qualification Type"
                                 id="type"
+                                name="type"
                                 value={formik.values.type}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
