@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Heading, Paragraph } from '@/components/ui'
-import { GraduationCapIcon } from "@phosphor-icons/react"
+import brandIcon from '@/assets/icons/brand_icon.svg'
 
 interface AuthLayoutProps {
   title: string
@@ -23,8 +23,8 @@ const AuthLayout = ({ title, subtitle, children }: AuthLayoutProps) => {
 
         <div className="bg-white min-h-[500px]  rounded-2xl shadow-sm border border-gray-100 p-8">
           <div className="text-center mb-8">
-            <div className="w-15 h-12 bg-[#F2F4F6] mt-[20px] mb-[30px] rounded-xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
-              <GraduationCapIcon size={24} weight="fill" className="text-[#2839E2]" />
+            <div className="mt-[20px] mb-[30px] flex items-center justify-center mx-auto mb-4">
+              <img src={brandIcon} alt="logo" className="w-28 h-auto object-contain" />
             </div>
             <Heading className='text-gray-900' as="h1" size="lg">{title}  </Heading>
             <Paragraph size="sm" className="mt-1 ">{subtitle}</Paragraph>

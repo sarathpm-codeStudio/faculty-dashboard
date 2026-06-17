@@ -90,7 +90,8 @@ export const announcementService = {
             .eq("is_deleted", false);
 
         if (filter !== "all") {
-            query = query.eq("is_draft", filter);
+            // `is_draft` is a boolean column — map the string filter to a boolean.
+            query = query.eq("is_draft", filter === "draft");
         }
 
         if (search) {
