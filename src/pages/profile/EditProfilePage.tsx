@@ -8,6 +8,7 @@ import type { IdentityData, Qualification, IdVerificationData } from '@/pages/on
 import { profileService, type AcademicProfile } from '@/services/profileService'
 import { onBoardingService } from '@/services/onBoardingService'
 import { formatDate, graduationDateToInput } from '@/utils/helper/formatDate'
+import { nextSubmissionStatus } from '@/utils/helper/profileStatus'
 import { useAuthStore } from '@/store/authStore'
 import { Skeleton } from '@/components/ui'
 
@@ -170,6 +171,7 @@ const EditProfilePage = () => {
                 date_of_birth: formatDate(identity.date_of_birth),
                 bio: identity.bio,
                 avatar_url: identity.avatar_url,
+                account_verified: nextSubmissionStatus(accountVerified),
             })
 
             const keptExistingIds = qualifications.filter((q) => q.isExisting).map((q) => q.id)

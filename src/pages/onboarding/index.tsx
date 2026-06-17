@@ -48,9 +48,14 @@ const OnboardingPage = () => {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [direction, setDirection] = useState<'forward' | 'back'>('forward')
+
+  // Phone number the user signed in with — auto-filled and locked in the form.
+  const loginPhone = useAuthStore((state) => state.user?.phone) ?? ''
+  const normalizedPhone = loginPhone && !loginPhone.startsWith('+') ? `+${loginPhone}` : loginPhone
+
   const [identity, setIdentity] = useState<IdentityData>({
     first_name: '', last_name: '', email: '',
-    phone: '', date_of_birth: '', bio: '', avatar_url: '',
+    phone: normalizedPhone, date_of_birth: '', bio: '', avatar_url: '',
   })
   const [qualifications, setQualifications] = useState<Qualification[]>([])
   const [idVerification, setIdVerification] = useState<IdVerificationData>({
@@ -81,6 +86,7 @@ const OnboardingPage = () => {
       const result = await onBoardingService.createProfile({
         ...identity,
         role: "FACULTY",
+        account_verified: "PENDING",
         is_policies_accepted: policies.accepted,
         date_of_birth: formatDate(identity.date_of_birth),
       }, id)

@@ -22,7 +22,7 @@ export const authService = {
         try {
             const { data, error } = await supabase.auth.signInWithOtp({
                 phone,
-                options: { shouldCreateUser: true },
+                options: { shouldCreateUser: true, data: { role: 'FACULTY' } },
             })
             if (error) throw error
             return data

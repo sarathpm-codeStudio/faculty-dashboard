@@ -13,7 +13,9 @@ export const onBoardingService = {
 
     createProfile: async (data: any, id: any) => {
         try {
-            const { data: result, error } = await supabase.from('profiles').insert([{ ...data, id }])
+            const { data: result, error } = await supabase
+                .from('profiles')
+                .upsert([{ ...data, id }], { onConflict: 'id' })
             if (error) throw error
             return true
         } catch (error: any) {

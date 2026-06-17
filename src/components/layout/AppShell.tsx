@@ -40,7 +40,7 @@ const AppShell = () => {
                 })
                 setNoProfile(false)
                 setProfileStatus(profile?.account_verified ?? '')
-                setIsPending(profile?.account_verified === 'PENDING' || profile?.account_verified === 'REJECTED')
+                setIsPending(profile?.account_verified !== 'APPROVED')
                 setIsSuspended(profile?.is_suspended === true)
             } catch (error: any) {
                 toast.error(error.message)

@@ -73,6 +73,15 @@ const OtpPage = () => {
 
             const profile = await authService.getUserProfile(user?.id ?? '')
 
+            // Only FACULTY accounts may sign in here. Block any other role.
+            if (mode === 'login' && profile?.role !== 'FACULTY') {
+                await authService.signOut()
+                const msg = "You don't have access. This portal is for faculty accounts only."
+                setError(msg)
+                toast.error(msg)
+                return
+            }
+
             login(
                 {
                     id: user?.id ?? '',

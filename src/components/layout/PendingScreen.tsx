@@ -11,7 +11,7 @@ const PendingScreen = () => {
     return (
         <div className="space-y-4">
             <Heading className="text-[#2c1452]">Hi, {user?.name}</Heading>
-            {noProfile ? (
+            {noProfile || profileStatus === 'NOT_COMPLETED' ? (
                 <Paragraph className="text-[#454652]">
                     Welcome! To get started,{' '}
                     <span className="font-bold">please complete your profile</span>{' '}
@@ -20,8 +20,7 @@ const PendingScreen = () => {
                         Complete Your Profile
                     </Link>
                 </Paragraph>
-            ) : (
-                profileStatus === 'PENDING' ? (
+            ) : profileStatus === 'PENDING' || profileStatus === 'RESUBMITTED' ? (
                 <Paragraph className="text-[#454652]">
                     Thank you for submitting your details.{' '}
                     <span className="font-bold">Your account is under review</span>{' '}
@@ -31,12 +30,11 @@ const PendingScreen = () => {
                 </Paragraph>
             ) : profileStatus === 'REJECTED' ? (
                 <Paragraph className="text-[#454652]">
-                    Your account verification was not approved. Please update your profile and resubmit for review. 
+                    Your account verification was not approved. Please update your profile and resubmit for review.
                     {' '}
                     <Link to="/account" className="font-bold text-[#2c1452] underline cursor-pointer">Update Profile</Link>
                 </Paragraph>
-            ) : <Paragraph className="text-[#454652]">  wwqrqw</Paragraph>
-        )}
+            ) : null}
 
             <div className="flex justify-center mt-6">
                 <svg width="380" height="280" viewBox="0 0 380 280" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -238,9 +238,9 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
                                 placeholder="+91 98765 •••••"
                                 leftIcon={<Phone size={14} />}
                                 error={err('phone')}
-                                disabled={isEdit}
-                                readOnly={isEdit}
-                                className={isEdit ? 'opacity-70 cursor-not-allowed' : ''}
+                                disabled
+                                readOnly
+                                className="opacity-70 cursor-not-allowed"
                             />
                             <DateInput
                                 label="Date of Birth"

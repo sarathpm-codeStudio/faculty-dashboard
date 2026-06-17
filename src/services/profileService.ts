@@ -105,12 +105,6 @@ export const profileService = {
             ])
             if (error) throw error
         }
-
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .update({ account_verified: 'PENDING' })
-            .eq('id', userId)
-        if (profileError) throw profileError
     },
 
     deleteAcademicProfiles: async (ids: string[]) => {
