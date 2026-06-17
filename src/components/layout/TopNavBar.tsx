@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
 import { useNavigate } from 'react-router-dom'
 import { Button, Button2, Input, Paragraph } from '@/components/ui'
+import { useUnreadNotificationCount } from '@/hooks/notification'
 
 interface Props {
     onNotifClick: () => void
@@ -15,6 +16,7 @@ interface Props {
 const TopNavBar = ({ onNotifClick }: Props) => {
     const { user, logout, isPending, isSuspended } = useAuthStore()
     const navigate = useNavigate()
+    const { data: unreadCount = 0 } = useUnreadNotificationCount()
 
     // A suspended account is locked out just like a pending/rejected one, so the
     // top bar hides search, create-course and notifications in both cases.
@@ -69,9 +71,11 @@ const TopNavBar = ({ onNotifClick }: Props) => {
                 {!locked && (
                     <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
                         <Bell size={20} className="text-gray-500" />
-                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-medium">
-                            3
-                        </span>
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1 right-1 min-w-4 h-4 px-1 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-medium">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
+                        )}
                     </button>
                 )}
 

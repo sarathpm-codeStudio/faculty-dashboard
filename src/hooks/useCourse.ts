@@ -204,6 +204,19 @@ export const usePublishCourse = () => {
   })
 }
 
+export const useResubmitCourse = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationKey: ['coursesResubmit'],
+    mutationFn: (courseId: string) => courseService.resubmitCourse(courseId),
+    onSuccess: (_data, courseId) => {
+      qc.invalidateQueries({ queryKey: ['my-courses'] })
+      qc.invalidateQueries({ queryKey: ['course-preview', courseId] })
+      qc.invalidateQueries({ queryKey: ['course-detail', courseId] })
+    },
+  })
+}
+
 
 export const useGetAllFoldersInCourse = (courseId: string, enabled = true) =>
   useQuery({

@@ -1,35 +1,38 @@
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { X, BookOpen, Users, Megaphone, CheckCheck, Bell } from 'lucide-react'
+import { X, BookOpen, Users, Megaphone, CheckCheck, Bell, Loader2, Volume2, VolumeX } from 'lucide-react'
 import { Paragraph } from '@/components/ui'
+import {
+    isNotificationSoundEnabled,
+    setNotificationSoundEnabled,
+    playNotificationSound,
+} from '@/utils/notificationSound'
+import {
+    useGetRecentNotifications,
+    useMarkAllNotificationsAsRead,
+    useMarkNotificationAsRead,
+} from '@/hooks/notification'
+import type { NotificationItem } from '@/services/notificationService'
 
-type NotifType = 'course' | 'student' | 'announcement' | 'system'
-
-type Notification = {
-    id: number
-    type: NotifType
-    title: string
-    description: string
-    time: string
-    read: boolean
-    group: 'Today' | 'Yesterday'
-}
-
-const MOCK_NOTIFS: Notification[] = [
-    { id: 1, type: 'student', title: 'New Assignment Submitted', description: 'Aisha Rahman submitted "Calculus – Week 4" assignment.', time: '2 min ago', read: false, group: 'Today' },
-    { id: 2, type: 'course', title: 'Course Published', description: 'Your course "Advanced Taxation" is now live.', time: '45 min ago', read: false, group: 'Today' },
-    { id: 3, type: 'announcement', title: 'Announcement Sent', description: 'Your announcement reached 284 students successfully.', time: '1 hr ago', read: false, group: 'Today' },
-    { id: 4, type: 'student', title: 'New Enrollment', description: '12 new students enrolled in Business Laws.', time: '3 hrs ago', read: true, group: 'Today' },
-    { id: 5, type: 'system', title: 'Payout Processed', description: '₹8,450.00 has been disbursed to your account.', time: '5 hrs ago', read: true, group: 'Today' },
-    { id: 6, type: 'course', title: 'Course Review Received', description: 'You got a 5-star review on "Differential Equations".', time: 'Yesterday', read: true, group: 'Yesterday' },
-    { id: 7, type: 'student', title: 'Test Completed', description: '38 students completed the Mid-Term MCQ test.', time: 'Yesterday', read: true, group: 'Yesterday' },
-    { id: 8, type: 'system', title: 'Profile Verified', description: 'Your faculty profile has been verified by admin.', time: 'Yesterday', read: true, group: 'Yesterday' },
-]
-
-const iconConfig: Record<NotifType, { bg: string; color: string; Icon: typeof Bell }> = {
+const iconConfig: Record<string, { bg: string; color: string; Icon: typeof Bell }> = {
     course: { bg: 'bg-blue-50', color: 'text-[#2c1452]', Icon: BookOpen },
     student: { bg: 'bg-purple-50', color: 'text-purple-600', Icon: Users },
     announcement: { bg: 'bg-orange-50', color: 'text-orange-500', Icon: Megaphone },
     system: { bg: 'bg-green-50', color: 'text-green-600', Icon: Bell },
+}
+
+const defaultIcon = { bg: 'bg-gray-50', color: 'text-[#767683]', Icon: Bell }
+
+// Relative "x min/hr ago" label from a timestamp.
+const formatTime = (iso: string | null) => {
+    if (!iso) return ''
+    const diff = Date.now() - new Date(iso).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 1) return 'Just now'
+    if (mins < 60) return `${mins} min ago`
+    const hrs = Math.floor(mins / 60)
+    if (hrs < 24) return `${hrs} hr ago`
+    return new Date(iso).toLocaleDateString()
 }
 
 interface Props {
@@ -38,8 +41,22 @@ interface Props {
 }
 
 const NotificationPanel = ({ open, onClose }: Props) => {
-    const unreadCount = MOCK_NOTIFS.filter(n => !n.read).length
+    const { data: notifications = [], isLoading } = useGetRecentNotifications(open)
+    const markAllAsRead = useMarkAllNotificationsAsRead()
+    const markAsRead = useMarkNotificationAsRead()
+
+    const [soundOn, setSoundOn] = useState(isNotificationSoundEnabled)
+
+    const toggleSound = () => {
+        const next = !soundOn
+        setSoundOn(next)
+        setNotificationSoundEnabled(next)
+        if (next) playNotificationSound() // preview the chime when turning on
+    }
+
+    const unreadCount = notifications.filter(n => !n.is_read).length
     const groups: ('Today' | 'Yesterday')[] = ['Today', 'Yesterday']
+    const hasNotifications = notifications.length > 0
 
     return (
         <AnimatePresence>
@@ -59,10 +76,10 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                     {/* Panel */}
                     <motion.div
                         key="panel"
-                        initial={{ x: '100%' }}
-                        animate={{ x: 0 }}
-                        exit={{ x: '100%' }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                        initial={{ x: '100%', opacity: 0.6 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: '100%', opacity: 0.6 }}
+                        transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
                         className="fixed top-0 right-0 h-full w-96 bg-white shadow-2xl z-50 flex flex-col"
                     >
                         {/* Header */}
@@ -76,7 +93,22 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                                 )}
                             </div>
                             <div className="flex items-center gap-1">
-                                <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+                                <button
+                                    onClick={toggleSound}
+                                    title={soundOn ? 'Turn notification sound off' : 'Turn notification sound on'}
+                                    className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                    {soundOn ? (
+                                        <Volume2 size={16} className="text-[#2c1452]" />
+                                    ) : (
+                                        <VolumeX size={16} className="text-[#767683]" />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => markAllAsRead.mutate()}
+                                    disabled={unreadCount === 0 || markAllAsRead.isPending}
+                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
                                     <CheckCheck size={14} className="text-[#2c1452]" />
                                     <Paragraph className="!text-xs font-bold text-[#2c1452]">Mark all read</Paragraph>
                                 </button>
@@ -91,53 +123,69 @@ const NotificationPanel = ({ open, onClose }: Props) => {
 
                         {/* Notification list */}
                         <div className="flex-1 overflow-y-auto scrollbar-hide">
-                            {groups.map(group => {
-                                const items = MOCK_NOTIFS.filter(n => n.group === group)
-                                return (
-                                    <div key={group}>
-                                        {/* Group label */}
-                                        <div className="px-5 py-3 bg-[#F2F4F6]">
-                                            <Paragraph className="!text-[11px] font-bold text-[#767683] uppercase tracking-widest">
-                                                {group}
-                                            </Paragraph>
-                                        </div>
-
-                                        {/* Items */}
-                                        <div className="divide-y divide-gray-50">
-                                            {items.map((notif, i) => {
-                                                const { bg, color, Icon } = iconConfig[notif.type]
-                                                return (
-                                                    <motion.button
-                                                        key={notif.id}
-                                                        initial={{ opacity: 0, x: 20 }}
-                                                        animate={{ opacity: 1, x: 0 }}
-                                                        transition={{ delay: i * 0.05 }}
-                                                        className={`w-full flex items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50 ${!notif.read ? 'bg-blue-50/30' : ''}`}
-                                                    >
-                                                        <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center shrink-0 mt-0.5`}>
-                                                            <Icon size={16} className={color} />
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <Paragraph className={`!text-sm ${!notif.read ? 'font-bold text-[#191c1e]' : 'font-medium text-[#191c1e]'}`}>
-                                                                {notif.title}
-                                                            </Paragraph>
-                                                            <Paragraph className="!text-xs text-[#767683] mt-0.5 leading-relaxed line-clamp-2">
-                                                                {notif.description}
-                                                            </Paragraph>
-                                                            <Paragraph className="!text-[10px] text-[#767683] mt-1.5 font-medium">
-                                                                {notif.time}
-                                                            </Paragraph>
-                                                        </div>
-                                                        {!notif.read && (
-                                                            <span className="w-2 h-2 rounded-full bg-[#2c1452] shrink-0 mt-1.5" />
-                                                        )}
-                                                    </motion.button>
-                                                )
-                                            })}
-                                        </div>
+                            {isLoading ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <Loader2 size={22} className="text-[#2c1452] animate-spin" />
+                                </div>
+                            ) : !hasNotifications ? (
+                                <div className="flex flex-col items-center justify-center h-full px-6 text-center">
+                                    <div className="w-12 h-12 rounded-2xl bg-[#F2F4F6] flex items-center justify-center mb-3">
+                                        <Bell size={20} className="text-[#767683]" />
                                     </div>
-                                )
-                            })}
+                                    <Paragraph className="!text-sm font-bold text-[#191c1e]">You're all caught up</Paragraph>
+                                    <Paragraph className="!text-xs text-[#767683] mt-1">No new notifications today or yesterday.</Paragraph>
+                                </div>
+                            ) : (
+                                groups.map(group => {
+                                    const items = notifications.filter(n => n.group === group)
+                                    if (items.length === 0) return null
+                                    return (
+                                        <div key={group}>
+                                            {/* Group label */}
+                                            <div className="px-5 py-3 bg-[#F2F4F6]">
+                                                <Paragraph className="!text-[11px] font-bold text-[#767683] uppercase tracking-widest">
+                                                    {group}
+                                                </Paragraph>
+                                            </div>
+
+                                            {/* Items */}
+                                            <div className="divide-y divide-gray-50">
+                                                {items.map((notif: NotificationItem, i: number) => {
+                                                    const { bg, color, Icon } = iconConfig[notif.type] ?? defaultIcon
+                                                    return (
+                                                        <motion.button
+                                                            key={notif.id}
+                                                            onClick={() => !notif.is_read && markAsRead.mutate(notif.id)}
+                                                            initial={{ opacity: 0, y: 8 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ duration: 0.25, ease: 'easeOut', delay: 0.12 + i * 0.03 }}
+                                                            className={`w-full flex items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50 ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
+                                                        >
+                                                            <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center shrink-0 mt-0.5`}>
+                                                                <Icon size={16} className={color} />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <Paragraph className={`!text-sm ${!notif.is_read ? 'font-bold text-[#191c1e]' : 'font-medium text-[#191c1e]'}`}>
+                                                                    {notif.title}
+                                                                </Paragraph>
+                                                                <Paragraph className="!text-xs text-[#767683] mt-0.5 leading-relaxed line-clamp-2">
+                                                                    {notif.body}
+                                                                </Paragraph>
+                                                                <Paragraph className="!text-[10px] text-[#767683] mt-1.5 font-medium">
+                                                                    {formatTime(notif.created_at)}
+                                                                </Paragraph>
+                                                            </div>
+                                                            {!notif.is_read && (
+                                                                <span className="w-2 h-2 rounded-full bg-[#2c1452] shrink-0 mt-1.5" />
+                                                            )}
+                                                        </motion.button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            )}
                         </div>
 
                         {/* Footer */}

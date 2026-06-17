@@ -9,7 +9,7 @@ import { BsPencilSquare } from "react-icons/bs";
 import { HiDocumentDuplicate } from "react-icons/hi";
 import { FaRegImage } from "react-icons/fa6";
 import { MdRocketLaunch } from "react-icons/md";
-import { useGetCoursePreview, usePublishCourse } from '@/hooks/useCourse'
+import { useGetCoursePreview, usePublishCourse, useResubmitCourse } from '@/hooks/useCourse'
 import { useNavigate } from 'react-router-dom'
 
 interface Props {
@@ -68,15 +68,21 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
   const navigate = useNavigate()
 
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [resubmitConfirmOpen, setResubmitConfirmOpen] = useState(false)
   const [resultOpen, setResultOpen] = useState(false)
   const [resultMessage, setResultMessage] = useState('')
   const [resultTitle, setResultTitle] = useState('Publish Course')
 
   // mutation
   const { mutateAsync: publishCourse, isPending: isPublishing } = usePublishCourse()
+  const { mutateAsync: resubmitCourse, isPending: isResubmitting } = useResubmitCourse()
 
   // query
   const { data: coursePreview, isLoading } = useGetCoursePreview(courseId)
+
+  // A rejected (or already resubmitted) course can only be resubmitted for review.
+  const isRejectedOrResubmit =
+    coursePreview?.status === 'REJECTED' || coursePreview?.status === 'RESUBMIT'
 
   console.log("cour", coursePreview)
 
@@ -123,6 +129,17 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
         setResultTitle('Publish Failed')
       }
       setResultMessage(message)
+      setResultOpen(true)
+    } catch {
+      // Error toast handled globally by the query client.
+    }
+  }
+
+  const onResubmit = async () => {
+    try {
+      const res = await resubmitCourse(courseId)
+      setResultTitle('Course Resubmitted')
+      setResultMessage(res?.message || 'Course resubmitted for review.')
       setResultOpen(true)
     } catch {
       // Error toast handled globally by the query client.
@@ -234,16 +251,30 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
 
       {/* ── Footer actions ── */}
       <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-100">
-        <Button variant="white" onClick={onDraft}>Save as draft</Button>
-        <Button variant="primary" onClick={() => setConfirmOpen(true)} disabled={isPublishing}>
-          {isPublishing ? (
-            <>
-              <Spinner size={20} color="#ffffff" label="" /> Publishing...
-            </>
-          ) : (
-            <>Publish Course <MdRocketLaunch size={25} /></>
-          )}
-        </Button>
+        {isRejectedOrResubmit ? (
+          <Button variant="primary" onClick={() => setResubmitConfirmOpen(true)} disabled={isResubmitting}>
+            {isResubmitting ? (
+              <>
+                <Spinner size={20} color="#ffffff" label="" /> Resubmitting...
+              </>
+            ) : (
+              <>Resubmit for Review <MdRocketLaunch size={25} /></>
+            )}
+          </Button>
+        ) : (
+          <>
+            <Button variant="white" onClick={onDraft}>Save as draft</Button>
+            <Button variant="primary" onClick={() => setConfirmOpen(true)} disabled={isPublishing}>
+              {isPublishing ? (
+                <>
+                  <Spinner size={20} color="#ffffff" label="" /> Publishing...
+                </>
+              ) : (
+                <>Publish Course <MdRocketLaunch size={25} /></>
+              )}
+            </Button>
+          </>
+        )}
       </div>
 
       <ConfirmDeleteModal
@@ -259,6 +290,21 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
         confirmText="Publish"
         cancelText="Cancel"
         loading={isPublishing}
+      />
+
+      <ConfirmDeleteModal
+        open={resubmitConfirmOpen}
+        onClose={() => setResubmitConfirmOpen(false)}
+        onConfirm={() => {
+          setResubmitConfirmOpen(false)
+          onResubmit()
+        }}
+        variant="primary"
+        title="Resubmit Course"
+        message={`Are you sure you want to resubmit "${coursePreview?.title || courseName}" for review? An admin will review it again.`}
+        confirmText="Resubmit"
+        cancelText="Cancel"
+        loading={isResubmitting}
       />
 
       <ConfirmDeleteModal

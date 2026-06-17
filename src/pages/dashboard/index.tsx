@@ -14,6 +14,7 @@ import {
   ActivityItem,
   CoursePerformanceRow,
   ProgressBar,
+  BankDetailsWidget,
 } from '@/components/features'
 import EnrollmentChart from './EnrollmentChart'
 import RevenueChart, { type RevenuePeriod } from './RevenueChart'
@@ -74,6 +75,9 @@ const DashboardPage = () => {
           </div>
         </div> */}
       </div>
+
+      {/* ── Bank Details Reminder ── */}
+      <BankDetailsWidget />
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-4 gap-4">

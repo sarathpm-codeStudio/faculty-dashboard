@@ -40,6 +40,8 @@ export const courseService = {
                     title,
                     category,
                     price,
+                    status,
+                    rejection_reason,
                     final_price,
                     validity,
                     languages,
@@ -50,9 +52,17 @@ export const courseService = {
         .eq("is_deleted", false)
         .order("created_at", { ascending: false });
 
-      if (filter !== "all") {
+      if (filter === "rejected") {
+        // Rejected tab shows both rejected and resubmitted (re-review) courses
+        query = query.in("status", ["REJECTED", "RESUBMIT"]);
+      } else if (filter !== "all") {
         const isDraft = filter
         query = query.eq("is_draft", isDraft);
+        // Rejected / resubmitted courses are not drafts, so keep them out of the active list
+        // (keep rows whose status is null or anything other than REJECTED/RESUBMIT)
+        if (isDraft === false) {
+          query = query.or("status.is.null,status.not.in.(REJECTED,RESUBMIT)");
+        }
       }
 
       if (search?.trim()) {
@@ -64,10 +74,19 @@ export const courseService = {
       if (error) throw new Error(error.message);
 
       // ✅ Flatten enrollment count into each course
-      return courses?.map(course => ({
+      let result = courses?.map(course => ({
         ...course,
         total_enrolled: course.enrollments[0]?.count ?? 0
       }));
+
+      // In the rejected tab, surface resubmitted courses first
+      if (filter === "rejected" && result) {
+        result = [...result].sort((a, b) =>
+          (a.status === "RESUBMIT" ? 0 : 1) - (b.status === "RESUBMIT" ? 0 : 1)
+        );
+      }
+
+      return result;
 
     } catch (error: any) {
       throw new Error(error.message);
@@ -1097,6 +1116,32 @@ export const courseService = {
         message: 'Course published successfully! 🎉',
       }
 
+    } catch (error: any) {
+      throw new Error(error.message)
+    }
+  },
+
+  // Re-submit a rejected course for admin review.
+  resubmitCourse: async (courseId: string): Promise<any> => {
+    try {
+      const { data: updated, error } = await supabase
+        .from("courses")
+        .update({
+          status: "RESUBMIT",
+          rejection_reason: null,
+        })
+        .eq("id", courseId)
+        .eq("faculty_id", getCurrentFacultyId())
+        .select()
+        .single()
+
+      if (error) throw new Error(error.message)
+
+      return {
+        course: updated,
+        status: "RESUBMIT",
+        message: "Course resubmitted for review. We'll notify you once it's reviewed.",
+      }
     } catch (error: any) {
       throw new Error(error.message)
     }

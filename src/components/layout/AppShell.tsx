@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
 import { toast } from 'sonner'
 import GlobalUploadIndicator from '@/components/ui/GlobalUploadIndicator'
+import { useNotificationRealtime } from '@/hooks/notification'
 // import { useVideoUploadProgress } from '@/hooks/video'
 
 
@@ -49,6 +50,10 @@ const AppShell = () => {
     }, [user?.id])
 
     const showPending = isPending && !pathname.startsWith('/account')
+
+    // Listen for incoming notifications: updates the bell count, plays a sound
+    // and shows a toast as soon as the user lands in the app.
+    useNotificationRealtime(user?.id)
     // useVideoUploadProgress(user?.id)
 
 

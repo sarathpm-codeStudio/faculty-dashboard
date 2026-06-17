@@ -23,7 +23,7 @@ type Course = Omit<CourseCardProps, 'onViewAnalytics' | 'onEdit' | 'onDelete'> &
 
 
 
-type Tab = 'active' | 'drafts'
+type Tab = 'active' | 'drafts' | 'rejected'
 
 const gridVariants: Variants = {
   hidden: {},
@@ -56,7 +56,9 @@ const CoursesPage = () => {
 
 
   useEffect(() => {
-    setSelectTab(activeTab === "active" ? false : true)
+    setSelectTab(
+      activeTab === "active" ? false : activeTab === "rejected" ? "rejected" : true
+    )
   }, [activeTab])
 
   const handleViewAnalytics = (id: number | string) => {
@@ -133,7 +135,7 @@ const CoursesPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, delay: 0.15, ease: 'easeOut' }}
       >
-        {(['active', 'drafts'] as Tab[]).map(tab => (
+        {(['active', 'drafts', 'rejected'] as Tab[]).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

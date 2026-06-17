@@ -18,6 +18,7 @@ export type CourseCardProps = {
   originalPrice: string
   category?: string
   description?: string
+  status?: string
   selectable?: boolean
   selected?: boolean
   onViewAnalytics?: (id: number | string) => void
@@ -39,6 +40,7 @@ const CourseCard = ({
   final_price,
   category,
   description,
+  status,
   selectable = false,
   selected = false,
   onViewAnalytics,
@@ -72,6 +74,11 @@ const CourseCard = ({
           <img src={cover_image} alt={title} className="w-full aspect-video object-cover" />
         ) : (
           <div className="w-full aspect-video bg-gradient-to-br from-[#BCC2FF] to-[#2c1452]" />
+        )}
+        {status === 'RESUBMIT' && (
+          <div className="absolute top-2 left-2 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500 text-white shadow">
+            Resubmitted
+          </div>
         )}
         {selectable && selected && (
           <div className="absolute top-2 right-2 w-7 h-7 rounded-full bg-[#2c1452] flex items-center justify-center shadow">
