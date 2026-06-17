@@ -19,7 +19,7 @@ interface Props {
     animClass?: string
     mode?: OnboardingStepMode
     saving?: boolean
-    /** When true (edit + rejected), Continue goes to ID step instead of saving. */
+    /** When true (edit + any status except APPROVED), Continue goes to the ID step instead of saving. */
     showIdResubmitStep?: boolean
 }
 

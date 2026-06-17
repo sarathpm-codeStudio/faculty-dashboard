@@ -69,7 +69,9 @@ const EditProfilePage = () => {
     })
 
     const userId = authUser?.id
-    const isRejected = accountVerified === 'REJECTED'
+    // ID verification is editable for every status except APPROVED
+    // (APPROVED faculty may only edit profile details + academic qualifications).
+    const canEditId = accountVerified !== 'APPROVED'
 
     useEffect(() => {
         const load = async () => {
@@ -94,7 +96,7 @@ const EditProfilePage = () => {
                 setAccountVerified(verified)
 
                 const requestedStep = (location.state as { step?: number } | null)?.step
-                if (requestedStep === 3 && verified === 'REJECTED') {
+                if (requestedStep === 3 && verified !== 'APPROVED') {
                     setStep(3)
                 }
 
@@ -156,12 +158,14 @@ const EditProfilePage = () => {
         }
 
         const idData = latestId ?? idVerification
-        if (isRejected) {
+        if (canEditId) {
             if (!idData.document_type || !idData.document_url) {
-                toast.error('Please upload your ID document to resubmit verification')
+                toast.error('Please upload your ID document to submit verification')
                 return
             }
         }
+
+        const newStatus = nextSubmissionStatus(accountVerified)
 
         setSaving(true)
         try {
@@ -171,7 +175,7 @@ const EditProfilePage = () => {
                 date_of_birth: formatDate(identity.date_of_birth),
                 bio: identity.bio,
                 avatar_url: identity.avatar_url,
-                account_verified: nextSubmissionStatus(accountVerified),
+                account_verified: newStatus,
             })
 
             const keptExistingIds = qualifications.filter((q) => q.isExisting).map((q) => q.id)
@@ -183,7 +187,7 @@ const EditProfilePage = () => {
                 await onBoardingService.createAcademicProfiles(newQualifications, userId)
             }
 
-            if (isRejected) {
+            if (canEditId) {
                 await profileService.updateIdVerification(userId, {
                     document_type: idData.document_type,
                     document_url: idData.document_url,
@@ -201,8 +205,8 @@ const EditProfilePage = () => {
             }
 
             toast.success(
-                isRejected
-                    ? 'Profile updated and ID resubmitted for review'
+                newStatus === 'RESUBMITTED'
+                    ? 'Profile updated and resubmitted for review'
                     : 'Profile updated successfully',
             )
             navigate('/account')
@@ -215,7 +219,7 @@ const EditProfilePage = () => {
     }
 
     const handleQualificationsContinue = async () => {
-        if (isRejected) {
+        if (canEditId) {
             goToIdStep()
             return
         }
@@ -256,11 +260,11 @@ const EditProfilePage = () => {
                     onNext={handleQualificationsContinue}
                     onBack={() => goBack(1)}
                     animClass={animClass}
-                    saving={saving && !isRejected}
-                    showIdResubmitStep={isRejected}
+                    saving={saving && !canEditId}
+                    showIdResubmitStep={canEditId}
                 />
             )}
-            {step === 3 && isRejected && (
+            {step === 3 && canEditId && (
                 <IdVerificationStep
                     key="edit-id"
                     mode="edit"

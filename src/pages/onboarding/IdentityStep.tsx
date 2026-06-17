@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Mail, Phone, Camera, ImagePlus, Trash2, Loader2 } from 'lucide-react'
 import { useFormik } from 'formik'
 import { toast } from 'sonner'
@@ -7,6 +7,8 @@ import { Input, Textarea, Button, DateInput, ImageCropperModal } from '@/compone
 import { IdentityData, type OnboardingStepMode } from './index'
 import { identitySchema } from '@/utils/validator/auth.validator'
 import { storageService } from '@/services/storageService'
+import { authService } from '@/services/authService'
+import { useAuthStore } from '@/store/authStore'
 import { IoMdArrowForward } from "react-icons/io"
 
 const dataUrlToFile = (dataUrl: string, filename: string): File => {
@@ -36,11 +38,34 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
     const [avatarPreview, setAvatarPreview] = useState<string | null>(data.avatar_url || null)
     const [avatarUploading, setAvatarUploading] = useState(false)
 
+    // Mobile number the faculty signed in with — always autofilled, shown in full, never editable.
+    const storePhone = useAuthStore((s) => s.user?.phone) ?? ''
+    const [authPhone, setAuthPhone] = useState(storePhone)
+    const normalizePhone = (p: string) => (p && !p.startsWith('+') ? `+${p}` : p)
+    const registeredPhone = normalizePhone(data.phone || authPhone)
+
+    // The persisted auth store may not hold the phone (older sessions), so read it
+    // straight from the Supabase auth user, which always carries the login number.
+    useEffect(() => {
+        if (data.phone || storePhone) return
+        let active = true
+        authService
+            .getUser()
+            .then((user) => {
+                if (active && user?.phone) setAuthPhone(user.phone)
+            })
+            .catch(() => {})
+        return () => {
+            active = false
+        }
+    }, [data.phone, storePhone])
+
     const formik = useFormik<IdentityData>({
-        initialValues: data,
+        initialValues: { ...data, phone: registeredPhone },
+        enableReinitialize: true,
         validationSchema: identitySchema,
         onSubmit: (values) => {
-            onChange(values)
+            onChange({ ...values, phone: registeredPhone })
             onNext()
         },
     })
@@ -232,10 +257,10 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
                                 label="Phone Number"
                                 type="tel"
                                 id="phone"
-                                value={formik.values.phone}
+                                value={formik.values.phone || registeredPhone}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
-                                placeholder="+91 98765 •••••"
+                                placeholder="Your registered mobile number"
                                 leftIcon={<Phone size={14} />}
                                 error={err('phone')}
                                 disabled
