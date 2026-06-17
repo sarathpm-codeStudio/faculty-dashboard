@@ -181,6 +181,17 @@ const ProfilePage = () => {
             }))
             : [{ name: 'No certificates found', meta: 'Upload certificates during onboarding', document_url: '' }]
 
+    // Verification badge appearance for each account_verified status.
+    const status = profile?.account_verified
+    const statusBadge =
+        status === 'REJECTED'
+            ? { label: 'Verification Rejected', className: 'bg-[#FFE5E5] text-[#BA1A1A]', showCheck: false }
+            : status === 'PENDING'
+                ? { label: 'Verification Pending', className: 'bg-[#FFF4E5] text-[#B86E00]', showCheck: false }
+                : status === 'RESUBMITTED'
+                    ? { label: 'Under Review', className: 'bg-[#E8EBFF] text-[#4B4FC4]', showCheck: false }
+                    : { label: 'Verified', className: 'bg-[#A8EDFF] text-[#00A6BF]', showCheck: true }
+
     return (
         <div className="flex flex-col gap-5 pb-6">
             {/* Page header */}
@@ -238,19 +249,10 @@ const ProfilePage = () => {
                                     <Paragraph className="!text-xl font-bold text-[#191c1e]">{fullName}</Paragraph>
 
                                     <span
-                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase ${profile?.account_verified === 'REJECTED'
-                                            ? 'bg-[#FFE5E5] text-[#BA1A1A]'
-                                            : profile?.account_verified === 'PENDING'
-                                                ? 'bg-[#FFF4E5] text-[#B86E00]'
-                                                : 'bg-[#A8EDFF] text-[#00A6BF]'
-                                            }`}
+                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase ${statusBadge.className}`}
                                     >
-                                        {profile?.account_verified === 'PENDING'
-                                            ? 'Verification Pending'
-                                            : profile?.account_verified === 'REJECTED'
-                                                ? 'Verification Rejected'
-                                                : 'Verified'}
-                                        {profile?.account_verified !== 'REJECTED' && (
+                                        {statusBadge.label}
+                                        {statusBadge.showCheck && (
                                             <HiOutlineBadgeCheck size={16} className="text-[#00875A] shrink-0 ml-1" />
                                         )}
                                     </span>
