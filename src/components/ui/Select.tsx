@@ -39,6 +39,9 @@ const Select = ({
   const containerRef = useRef<HTMLDivElement>(null)
 
   const selectId = id ?? label?.toLowerCase().replace(/\s+/g, '-')
+  // Fall back to `id` so formik.handleChange (which keys off target.name) still
+  // updates the field when only `id` is provided.
+  const fieldName = name ?? id
   const selectedOption = options.find((opt) => String(opt.value) === String(value))
   const hasValue = Boolean(selectedOption)
 
@@ -67,9 +70,9 @@ const Select = ({
   }
 
   const handleSelect = (optValue: string | number) => {
-    onChange?.({ target: { name, value: String(optValue) } })
+    onChange?.({ target: { name: fieldName, value: String(optValue) } })
     setOpen(false)
-    onBlur?.({ target: { name } })
+    onBlur?.({ target: { name: fieldName } })
   }
 
   return (
@@ -88,7 +91,7 @@ const Select = ({
           aria-expanded={open}
           onClick={handleToggle}
           onBlur={() => {
-            if (!open) onBlur?.({ target: { name } })
+            if (!open) onBlur?.({ target: { name: fieldName } })
           }}
           className={`w-full flex items-center justify-between gap-3 px-4 py-4 rounded-lg border text-base font-medium outline-none transition-all bg-[#F2F4F6] text-left
             ${error ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100' : open ? 'border-[#2c1452] ring-2 ring-[#BCC2FF]/40' : 'border-gray-100'}

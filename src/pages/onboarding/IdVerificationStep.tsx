@@ -112,6 +112,7 @@ const IdVerificationStep = ({
                         <Select
                             label="Document Type"
                             id="document_type"
+                            name="document_type"
                             value={formik.values.document_type}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
