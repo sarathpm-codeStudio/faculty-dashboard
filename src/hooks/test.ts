@@ -131,6 +131,18 @@ export const usePublishTest = () => {
     })
 }
 
+export const useSaveDraft = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: (test_id: string) => testService.saveDraft(test_id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['tests'] })
+            queryClient.invalidateQueries({ queryKey: ['content'] })
+            queryClient.invalidateQueries({ queryKey: ['tests-page-analytics'] })
+        },
+    })
+}
+
 
 
 

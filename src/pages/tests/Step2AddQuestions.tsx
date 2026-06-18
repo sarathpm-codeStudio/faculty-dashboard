@@ -8,7 +8,7 @@ import * as Yup from 'yup'
 import { Textarea, Select, Paragraph, Checkbox } from '@/components/ui'
 import Button from '@/components/ui/Button'
 import { IoRocketOutline } from 'react-icons/io5'
-import { useAddQuestion, useGetQuestionsByTestId, useUpdateQuestion, useDeleteQuestion, usePublishTest } from '@/hooks/test'
+import { useAddQuestion, useGetQuestionsByTestId, useUpdateQuestion, useDeleteQuestion, usePublishTest, useSaveDraft } from '@/hooks/test'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { useGetAllContentInModule, useGetAllFoldersInCourse } from '@/hooks/useCourse'
@@ -78,6 +78,7 @@ const Step2AddQuestions = ({
   const { mutateAsync: updateQuestion, isPending: isUpdatingQuestion } = useUpdateQuestion(testId, editQuestionId)
   const { mutateAsync: deleteQuestion } = useDeleteQuestion(testId)
   const { mutateAsync: publishTest, isPending: isPublishingTest } = usePublishTest()
+  const { mutateAsync: saveDraft, isPending: isSavingDraft } = useSaveDraft()
 
   const moduleOptions = useMemo(() => {
     const modules = folders ?? []
@@ -333,6 +334,11 @@ const Step2AddQuestions = ({
   }
 
   const handlePublishTest = async () => {
+    if (questions.length === 0) {
+      toast.warning("You can't publish this test — no questions available. Please add at least one question or save it as a draft.")
+      return
+    }
+
     toast.loading("Publishing test...")
     try {
       await publishTest(testId)
@@ -349,9 +355,18 @@ const Step2AddQuestions = ({
     }
   }
 
-  const handleSaveDraft = () => {
-    toast.success('Test saved as draft')
-    navigate('/tests')
+  const handleSaveDraft = async () => {
+    toast.loading('Saving draft...')
+    try {
+      await saveDraft(testId)
+      toast.success('Test saved as draft')
+      navigate('/tests')
+    } catch (error: any) {
+      toast.error(error.message)
+    }
+    finally {
+      toast.dismiss()
+    }
   }
 
 
@@ -612,8 +627,8 @@ const Step2AddQuestions = ({
             }
 
           </Button>
-          <Button variant="white" fullWidth onClick={handleSaveDraft}>
-            🖫 Save Draft
+          <Button variant="white" fullWidth disabled={isSavingDraft} onClick={handleSaveDraft}>
+            {isSavingDraft ? <Loader2 className="animate-spin" /> : '🖫 Save Draft'}
           </Button>
           <button
             onClick={onBack}

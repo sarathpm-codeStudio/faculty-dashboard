@@ -883,16 +883,39 @@ export const testService = {
                 .select()
                 .single();
 
-            // update test material status
-            const { data: materialResult, error: materialError } = await supabase.from("course_materials")
+            if (error) throw error;
+
+            // update test material status (skip when no matching material exists)
+            if (result?.unique_id) {
+                const { error: materialError } = await supabase.from("course_materials")
+                    .update({
+                        material_status: MaterialStatus.READY
+                    })
+                    .eq("unique_id", result.unique_id)
+                    .select()
+                    .maybeSingle();
+                if (materialError) throw materialError;
+            }
+
+            return result;
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error?.message || error)
+        }
+    },
+
+    saveDraft: async (test_id: string) => {
+        try {
+            const { data: result, error } = await supabase.from("tests")
                 .update({
-                    material_status: MaterialStatus.READY
+                    is_draft: true
                 })
-                .eq("unique_id", result.unique_id)
+                .eq("id", test_id)
                 .select()
                 .single();
-            if (materialError) throw materialError;
-
 
             if (error) throw error;
             return result;
@@ -901,7 +924,7 @@ export const testService = {
 
             console.log("error", error);
 
-            throw new Error(error)
+            throw new Error(error?.message || error)
         }
     },
 }
