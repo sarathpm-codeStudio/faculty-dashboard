@@ -7,6 +7,7 @@ import IdVerificationStep from '@/pages/onboarding/IdVerificationStep'
 import type { IdentityData, Qualification, IdVerificationData } from '@/pages/onboarding'
 import { profileService, type AcademicProfile } from '@/services/profileService'
 import { onBoardingService } from '@/services/onBoardingService'
+import { notificationService } from '@/services/notificationService'
 import { formatDate, graduationDateToInput } from '@/utils/helper/formatDate'
 import { nextSubmissionStatus } from '@/utils/helper/profileStatus'
 import { useAuthStore } from '@/store/authStore'
@@ -195,6 +196,19 @@ const EditProfilePage = () => {
             }
 
             const fullName = `${identity.first_name} ${identity.last_name}`.trim()
+
+            // Notify admins only when the profile is resubmitted for review.
+            if (newStatus === 'RESUBMITTED') {
+                try {
+                    await notificationService.notifyAdminsProfileResubmitted({
+                        id: userId,
+                        name: fullName,
+                    })
+                } catch (notifyError) {
+                    console.error('Failed to notify admins of profile resubmission:', notifyError)
+                }
+            }
+
             if (authUser) {
                 setAuthProfile({
                     ...authUser,

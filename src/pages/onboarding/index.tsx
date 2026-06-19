@@ -6,6 +6,7 @@ import IdVerificationStep from './IdVerificationStep'
 import PolicyStep, { PolicyAcceptance } from './PolicyStep'
 import VerificationStep from './VerificationStep'
 import { onBoardingService } from '@/services/onBoardingService'
+import { notificationService } from '@/services/notificationService'
 import { toast } from 'sonner'
 import { formatDate } from '@/utils/helper/formatDate'
 import { useAuthStore } from '@/store/authStore'
@@ -96,6 +97,17 @@ const OnboardingPage = () => {
         await onBoardingService.createAcademicProfiles(qualifications, id)
         // add id verification
         await onBoardingService.createIdVerification(idVerification, id)
+
+        // Notify admins of the new faculty, but don't block onboarding on it.
+        try {
+          await notificationService.notifyAdminsFacultyOnboarded({
+            id,
+            name: `${identity.first_name ?? ''} ${identity.last_name ?? ''}`.trim(),
+          })
+        } catch (notifyError) {
+          console.error("Failed to notify admins of faculty onboarding:", notifyError)
+        }
+
         toast.success("Profile created successfully")
         navigate("/dashboard")
       }

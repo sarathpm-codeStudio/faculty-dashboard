@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, BookOpen, Users, Megaphone, CheckCheck, Bell, Loader2, Volume2, VolumeX } from 'lucide-react'
 import { Paragraph } from '@/components/ui'
@@ -23,6 +24,35 @@ const iconConfig: Record<string, { bg: string; color: string; Icon: typeof Bell 
 
 const defaultIcon = { bg: 'bg-gray-50', color: 'text-[#767683]', Icon: Bell }
 
+// Map a notification to the page it should open, based on its type and data.
+// Returns null when there's no meaningful destination (no redirect on click).
+const resolveNotificationRoute = (notif: NotificationItem): string | null => {
+    const data = notif.data ?? {}
+    const type = (notif.type ?? '').toUpperCase()
+    const courseId = data.courseId ?? data.course_id
+    const facultyId = data.facultyId ?? data.faculty_id
+
+    switch (type) {
+        case 'COURSE':
+        case 'COURSE_UPDATE':
+            return courseId ? `/courses/${courseId}` : '/courses'
+        case 'FACULTY_ONBOARDED':
+        case 'ACCOUNT':
+            return facultyId ? `/faculty/${facultyId}` : '/faculty'
+        case 'EXAM_REMINDER':
+            return courseId ? `/courses/${courseId}/reviews` : '/tests'
+        case 'FRIEND_JOINED':
+        case 'FRIEND_ENROLLED':
+            return '/students'
+        case 'BADGE_UNLOCKED':
+        case 'COINS_EARNED':
+        case 'STREAK_REMINDER':
+            return '/dashboard'
+        default:
+            return courseId ? `/courses/${courseId}` : null
+    }
+}
+
 // Relative "x min/hr ago" label from a timestamp.
 const formatTime = (iso: string | null) => {
     if (!iso) return ''
@@ -41,11 +71,22 @@ interface Props {
 }
 
 const NotificationPanel = ({ open, onClose }: Props) => {
+    const navigate = useNavigate()
     const { data: notifications = [], isLoading } = useGetRecentNotifications(open)
     const markAllAsRead = useMarkAllNotificationsAsRead()
     const markAsRead = useMarkNotificationAsRead()
 
     const [soundOn, setSoundOn] = useState(isNotificationSoundEnabled)
+
+    // Mark the notification read, then redirect to its target page (if any).
+    const handleNotificationClick = (notif: NotificationItem) => {
+        if (!notif.is_read) markAsRead.mutate(notif.id)
+        const route = resolveNotificationRoute(notif)
+        if (route) {
+            onClose()
+            navigate(route)
+        }
+    }
 
     const toggleSound = () => {
         const next = !soundOn
@@ -155,7 +196,7 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                                                     return (
                                                         <motion.button
                                                             key={notif.id}
-                                                            onClick={() => !notif.is_read && markAsRead.mutate(notif.id)}
+                                                            onClick={() => handleNotificationClick(notif)}
                                                             initial={{ opacity: 0, y: 8 }}
                                                             animate={{ opacity: 1, y: 0 }}
                                                             transition={{ duration: 0.25, ease: 'easeOut', delay: 0.12 + i * 0.03 }}

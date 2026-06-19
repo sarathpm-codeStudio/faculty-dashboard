@@ -9,6 +9,7 @@ import {
   type UpdateCoursePayload,
 } from '@/types/course.types'
 import { useAuthStore } from '@/store/authStore'
+import { notificationService } from './notificationService'
 import { buildChartPeriodSlots, ChartPeriod, getChartPeriodBounds, getPeriodTrendLabel, getPreviousPeriodBounds, groupTimestampForChartPeriod } from '@/utils/helper/chart';
 
 
@@ -1110,6 +1111,13 @@ export const courseService = {
 
       if (updateError) throw new Error(updateError.message)
 
+      // Notify admins, but don't fail the publish if notifying fails.
+      try {
+        await notificationService.notifyAdminsCoursePublished(updated)
+      } catch (notifyError) {
+        console.error("Failed to notify admins of course publish:", notifyError)
+      }
+
       return {
         // course: updated,
         status: 'published',
@@ -1136,6 +1144,13 @@ export const courseService = {
         .single()
 
       if (error) throw new Error(error.message)
+
+      // Notify admins, but don't fail the resubmit if notifying fails.
+      try {
+        await notificationService.notifyAdminsCourseResubmitted(updated)
+      } catch (notifyError) {
+        console.error("Failed to notify admins of course resubmission:", notifyError)
+      }
 
       return {
         course: updated,
