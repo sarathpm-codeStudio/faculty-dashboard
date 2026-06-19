@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { Search, ArrowRight, Loader2 } from 'lucide-react'
 import { Subheading, Paragraph, Input, Skeleton } from '@/components/ui'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
@@ -70,6 +71,14 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
 
   const selectedCourses: any = courses?.filter((c: any) => selected.includes(c.id))
   const total = selectedCourses?.reduce((sum: any, c: any) => sum + c.final_price, 0)
+
+  const handleNext = () => {
+    if (selected.length < 2) {
+      toast.warning('Please select at least 2 courses to create a bundle')
+      return
+    }
+    onNext(selected, total)
+  }
 
   return (
 
@@ -168,7 +177,7 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
           fullWidth
           disabled={selected.length === 0}
           className=""
-          onClick={() => onNext(selected, total)}
+          onClick={handleNext}
         >
           Continue to Pricing
           <ArrowRight size={16} />

@@ -112,7 +112,7 @@ const CoursesPage = () => {
           <Button
             variant="white"
             className="!h-10 !text-sm !px-4 !font-semibold"
-            onClick={() => console.log('Create bundle')}
+            onClick={() => navigate('/bundles/create')}
           >
             <Package size={16} />
             Create Bundle
