@@ -188,7 +188,7 @@ const CourseCreatePage = () => {
           // intro_video_url: fields?.intro_video_url || "",
         })
         console.log("result", result)
-        setCourseId(result?.data?.id)
+        setCourseId(result?.id)
         setIsCreated(true)
 
         if (isDraft) {
@@ -213,7 +213,7 @@ const CourseCreatePage = () => {
 
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full max-lg:h-auto max-lg:min-h-full">
       {/* Back link */}
       <button
         onClick={back}

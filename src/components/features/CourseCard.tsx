@@ -115,14 +115,14 @@ const CourseCard = ({
         )} */}
 
         {!selectable && (
-          <div className='flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 mt-1.5'>
-            <div className='flex items-center gap-1.5'>
+          <div className='flex items-center gap-3 mb-2 mt-1.5'>
+            <div className='flex items-center gap-1.5 min-w-0'>
               <Clock size={13} className="shrink-0 text-gray-400" />
               <span className="text-[12px] text-gray-500 font-medium whitespace-nowrap">{
                 validity === '1' ? '1 Month' : validity === '3' ? '3 Months' : validity === '6' ? '6 Months' : validity === '12' ? '1 Year' : 'Lifetime'
               }</span>
             </div>
-            <div className='flex items-center gap-1.5'>
+            <div className='flex items-center gap-1.5 min-w-0'>
               <Users size={13} className="shrink-0 text-gray-400" />
               <span className="text-[12px] text-gray-500 font-medium whitespace-nowrap">{formatNumber(total_enrolled || 0)} Students</span>
             </div>

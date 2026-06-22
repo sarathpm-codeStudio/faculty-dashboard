@@ -707,9 +707,9 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   //   update({ [field]: !form[field] })
 
   return (
-    <div className="grid grid-cols-12 gap-6 flex-1 min-h-0">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 max-lg:flex-none">
       {/* ── Left: Drill-down tree (8 cols) ── */}
-      <div className="col-span-8 flex flex-col gap-4 min-h-0">
+      <div className="lg:col-span-8 flex flex-col gap-4 min-h-0">
 
         {/* Header row */}
         <div className="flex items-center justify-between">
@@ -790,7 +790,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
         {/* Scrollable module section */}
         <div
-          className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pr-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3 pr-1 max-lg:flex-none max-lg:overflow-visible [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
 
           {/* Loading state */}
@@ -968,7 +968,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       </div>
 
       {/* ── Right sidebar (4 cols) ── */}
-      <div className="col-span-4 flex flex-col gap-5">
+      <div className="lg:col-span-4 flex flex-col gap-5">
         {/* Add Content */}
         <div className="bg-[#F2F4F6] rounded-xl p-4 flex flex-col gap-3">
           <div>

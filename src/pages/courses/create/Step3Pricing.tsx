@@ -105,10 +105,10 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
   if (courseId && (isLoadingCourseDetails || !courseDetails)) {
     return (
       <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-8 space-y-4">
+        <div className="col-span-7 lg:col-span-8 space-y-4">
           <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
-        <div className="col-span-4 space-y-4">
+        <div className="col-span-5 lg:col-span-4 space-y-4">
           <Skeleton className="h-48 w-full rounded-2xl" />
         </div>
       </div>
@@ -121,7 +121,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
     <form onSubmit={handleSubmit} className="grid grid-cols-12 gap-6">
 
       {/* ── Left column (8 cols) ─────────────────────────── */}
-      <div className="col-span-8 flex flex-col gap-4">
+      <div className="col-span-7 lg:col-span-8 flex flex-col gap-4">
 
         {/* White form card */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
@@ -177,17 +177,17 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
         </div>
 
         {/* Promotional Tools — separate section */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-10 py-10 flex items-start justify-between gap-3">
-          <div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 lg:px-10 lg:py-10 flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="text-base"><RiCoupon2Fill size={25} className='text-[#2c1452] font-bold' /></span>
+              <span className="text-base shrink-0"><RiCoupon2Fill size={25} className='text-[#2c1452] font-bold' /></span>
               <Subheading className='text-[#2c1452] font-bold' >Promotional Tools</Subheading>
             </div>
             <Paragraph className='text-gray-400 mt-0.5 ml-8'>
               Allow students to apply additional discount codes at checkout
             </Paragraph>
           </div>
-          <div className="flex items-center gap-2 shrink-0 mt-0.5">
+          <div className="flex items-center gap-2 shrink-0 lg:mt-0.5">
             <button
               type="button"
               onClick={() => setFieldValue('enableCoupons', !enableCoupons)}
@@ -202,7 +202,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
       </div>
 
       {/* ── Right column (4 cols) ────────────────────────── */}
-      <div className="col-span-4 flex flex-col gap-4">
+      <div className="col-span-5 lg:col-span-4 flex flex-col gap-4">
 
         {/* Students Price card */}
         <div
@@ -242,18 +242,18 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
         {/* Discount Calculator */}
         <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col gap-4">
           <Subheading className='text-[#2c1452] font-bold'>Discount Calculator</Subheading>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="flex flex-col gap-1 bg-[#F2F4F6] rounded-xl p-2">
-              <Paragraph className='text-xs font-semibold text-gray-600'>Sum of Courses</Paragraph>
-              <p className="text-sm font-bold text-gray-700">₹{price.toFixed(2)}</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
+              <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Sum of Courses</Paragraph>
+              <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{price.toFixed(2)}</p>
             </div>
-            <div className="flex flex-col gap-1 bg-[#F2F4F6] rounded-xl p-3">
-              <Paragraph className='text-xs font-semibold text-gray-600'>Student Price</Paragraph>
-              <p className="text-sm font-bold text-gray-700">₹{studentPrice.toFixed(2)}</p>
+            <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
+              <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Student Price</Paragraph>
+              <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{studentPrice.toFixed(2)}</p>
             </div>
-            <div className="flex flex-col gap-1 bg-[#E6FBF7] rounded-xl p-3">
-              <Paragraph className='text-xs font-semibold text-[#00A98F]'>Student Saved</Paragraph>
-              <p className="text-sm font-bold text-[#00A98F]">₹{saved.toFixed(2)}</p>
+            <div className="bg-[#E6FBF7] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
+              <Paragraph className='text-xs font-semibold text-[#00A98F] whitespace-nowrap'>Student Saved</Paragraph>
+              <p className="text-sm font-bold text-[#00A98F] whitespace-nowrap">₹{saved.toFixed(2)}</p>
             </div>
           </div>
         </div>
