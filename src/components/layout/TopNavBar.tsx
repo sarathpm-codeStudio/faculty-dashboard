@@ -41,26 +41,27 @@ const TopNavBar = ({ onNotifClick }: Props) => {
     }
 
     return (
-        <header className="h-16 flex items-center justify-between px-6 flex-shrink-0 pt-7 bg-gray-50 z-20 sticky top-0">
+        <header className="h-20 flex items-center justify-between px-6 flex-shrink-0 bg-gray-50 z-20 sticky top-0">
 
             {/* Search */}
             {!locked && (
-                <div className="w-[700px]">
+                <div className="w-full max-w-[300px] lg:max-w-[700px] mr-4">
                     <Input
                         placeholder="Search by course and students..."
                         leftIcon={<Search size={16} />}
+                        className="!py-2.5 lg:!py-4 !text-sm lg:!text-base"
                     />
                 </div>
             )}
             {locked && <div />}
 
             {/* Right side */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 shrink-0">
 
                 {!locked && (
                     <Button
                         variant="primary"
-                        className="!h-10 !text-sm !px-4 !font-semibold"
+                        className="!h-10 !text-sm !px-4 !font-semibold whitespace-nowrap"
                         onClick={() => navigate('/courses/create')}
                     >
                         Create course
@@ -89,7 +90,7 @@ const TopNavBar = ({ onNotifClick }: Props) => {
                         className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors"
                     >
 
-                        <Paragraph className="font-bold hidden md:block">{user?.name ?? 'Faculty'}</Paragraph>
+                        <Paragraph className="font-bold whitespace-nowrap hidden lg:block">{user?.name ?? 'Faculty'}</Paragraph>
                         <ChevronDown size={14} className={`text-gray-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                         <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
                             {

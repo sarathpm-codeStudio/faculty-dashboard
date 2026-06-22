@@ -52,7 +52,7 @@ const CouponsPage = () => {
   const [activeFilter, setActiveFilter] = useState<FilterTab | null>("active")
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(5)
+  const [pageSize, setPageSize] = useState(10)
   const [rangeLabel, setRangeLabel] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null)
 
@@ -202,10 +202,10 @@ const CouponsPage = () => {
   const filtered = coupons ?? []
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden max-lg:h-auto max-lg:min-h-full max-lg:overflow-visible">
 
       {/* Header */}
-      <motion.div className="flex items-start justify-between mb-5 px-2 pt-2" {...fadeUp(0.04)}>
+      <motion.div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5 px-2 pt-2" {...fadeUp(0.04)}>
         <div>
           <Heading className="text-[#2c1452]">Coupon Management</Heading>
           <Paragraph className="text-[#767683] mt-1">
@@ -218,7 +218,7 @@ const CouponsPage = () => {
       </motion.div>
 
       {/* Stat cards */}
-      <motion.div className="grid grid-cols-3 gap-4 mb-5 px-2" {...fadeUp(0.08)}>
+      <motion.div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5 px-2" {...fadeUp(0.08)}>
         <StatCard
           icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-[#BCC2FF]"><Tag className="text-[#2c1452]" size={20} /></div>}
           label="Active Coupons"
@@ -268,7 +268,7 @@ const CouponsPage = () => {
       </motion.div>
 
       {/* Table */}
-      <motion.div className="flex-1 min-h-0 px-2" {...fadeUp(0.12)}>
+      <motion.div className="flex-1 min-h-0 px-2 max-lg:flex-none" {...fadeUp(0.12)}>
         <DataTable
           columns={COLUMNS}
           data={coupons?.coupons ?? []}

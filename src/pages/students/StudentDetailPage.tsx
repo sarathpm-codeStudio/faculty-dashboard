@@ -95,7 +95,7 @@ const StudentDetailPage = () => {
     const { data: studentAnalytics, isLoading: studentAnalyticsLoading } = useGetStudentAnalytics(id, !!id)
 
     return (
-        <div className="flex flex-col h-full overflow-hidden bg-gray-50">
+        <div className="flex flex-col h-full overflow-hidden bg-gray-50 max-lg:h-auto max-lg:min-h-full max-lg:overflow-visible">
 
             {/* Back */}
             <motion.button
@@ -132,9 +132,9 @@ const StudentDetailPage = () => {
                             ) : (
                                 <>
                                     <Heading className="text-[#2c1452] mb-3">{studentAnalytics?.student?.first_name} {studentAnalytics?.student?.last_name}</Heading>
-                                    <div className="grid grid-cols-3 gap-x-8 gap-y-2 mt-1">
-                                        <span className="flex items-center gap-1.5 text-xs text-black font-medium">
-                                            <Clock className='text-[#00A6BF]' size={15} /> Recent Active: {studentAnalytics?.recentActive?.display}
+                                    <div className="flex flex-wrap gap-x-8 gap-y-2 mt-1">
+                                        <span className="flex items-center gap-1.5 text-xs text-black font-medium whitespace-nowrap">
+                                            <Clock className='text-[#00A6BF] shrink-0' size={15} /> Recent Active: {studentAnalytics?.recentActive?.display}
                                         </span>
                                     </div>
                                 </>
@@ -193,14 +193,14 @@ const StudentDetailPage = () => {
             </motion.div>
 
             {/* Enrolled Courses */}
-            <motion.div className="flex flex-1 min-h-0 flex-col gap-3 px-2" {...fadeUp(0.15)}>
+            <motion.div className="flex flex-1 min-h-0 flex-col gap-3 px-2 max-lg:flex-none" {...fadeUp(0.15)}>
                 <div className="flex items-center justify-between shrink-0">
                     <Subheading className="text-[#2c1452] font-bold">Enrolled Courses</Subheading>
                     {rangeLabel && (
                         <span className="text-xs text-[#767683] font-medium shrink-0">{rangeLabel}</span>
                     )}
                 </div>
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 max-lg:flex-none">
                     <DataTable
                         columns={COURSE_COLUMNS}
                         data={studentCourses?.data ?? []}

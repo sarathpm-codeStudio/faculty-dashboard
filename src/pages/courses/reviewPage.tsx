@@ -102,7 +102,7 @@ const ReviewPage = () => {
 
     if (loading) {
         return (
-            <div className="p-8 bg-gray-50 min-h-screen">
+            <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
                 <Skeleton className="h-4 w-16 mb-5" />
                 <div className="space-y-2 mb-7">
                     <Skeleton className="h-8 w-64" />
@@ -128,7 +128,7 @@ const ReviewPage = () => {
     }
 
     return (
-        <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
 
             {/* Back */}
             <motion.button

@@ -80,7 +80,7 @@ const CourseDetailPage = () => {
 
     if (isLoading) {
         return (
-            <div className="p-8 bg-gray-50 min-h-screen">
+            <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
                 <Skeleton className="h-4 w-32 mb-4" />
                 <div className="flex items-start justify-between gap-6 mb-6">
                     <div className="space-y-2 flex-1">
@@ -114,7 +114,7 @@ const CourseDetailPage = () => {
     }
 
     return (
-        <div className="p-8 bg-gray-50 min-h-screen">
+        <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
 
             {/* Back */}
             <motion.button
@@ -130,7 +130,7 @@ const CourseDetailPage = () => {
 
             {/* ── Title row (full-width, above the grid) ── */}
             <motion.div
-                className="flex items-start justify-between gap-6 mb-6"
+                className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 lg:gap-6 mb-6"
                 {...fadeUp(0.05)}
             >
                 <div>
@@ -186,34 +186,37 @@ const CourseDetailPage = () => {
 
                     {/* Video + About — single card */}
                     <motion.div
-                        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden min-h-[500px]"
+                        className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
                         {...fadeUp(0.1)}
                     >
                         {/* Intro video — course cover shown as thumbnail until play */}
-                        {course?.video_asset_id ? (
-                            <VideoPlayer
-                                embed
-                                src={`https://app.tpstreams.com/embed/${import.meta.env.VITE_TPSTREAMS_ORG_ID}/${course.video_asset_id}/?access_token=${import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN}`}
-                                poster={course?.cover_image || coverImge}
-                            />
-                        ) : course?.cover_image ? (
-                            <div className="w-full aspect-video relative bg-[#F8F9FB]">
-                                <img
-                                    src={course.cover_image}
-                                    alt={course.title}
-                                    className="absolute inset-0 w-full h-full object-cover"
+                        <div className="max-w-xl mx-auto p-4">
+                            {course?.video_asset_id ? (
+                                <VideoPlayer
+                                    embed
+                                    className="rounded-xl overflow-hidden"
+                                    src={`https://app.tpstreams.com/embed/${import.meta.env.VITE_TPSTREAMS_ORG_ID}/${course.video_asset_id}/?access_token=${import.meta.env.VITE_TPSTREAMS_ACCESS_TOKEN}`}
+                                    poster={course?.cover_image || coverImge}
                                 />
-                            </div>
-                        ) : (
-                            <div className="w-full aspect-video relative bg-[#E8EBFF] flex items-center justify-center">
-                                <img
-                                    src={coverImge}
-                                    alt=""
-                                    className="absolute inset-0 w-full h-full object-cover opacity-60"
-                                />
-                                <Paragraph className="relative text-sm text-[#767683]">No intro video</Paragraph>
-                            </div>
-                        )}
+                            ) : course?.cover_image ? (
+                                <div className="w-full aspect-video relative bg-[#F8F9FB] rounded-xl overflow-hidden">
+                                    <img
+                                        src={course.cover_image}
+                                        alt={course.title}
+                                        className="absolute inset-0 w-full h-full object-cover"
+                                    />
+                                </div>
+                            ) : (
+                                <div className="w-full aspect-video relative bg-[#E8EBFF] flex items-center justify-center rounded-xl overflow-hidden">
+                                    <img
+                                        src={coverImge}
+                                        alt=""
+                                        className="absolute inset-0 w-full h-full object-cover opacity-60"
+                                    />
+                                    <Paragraph className="relative text-sm text-[#767683]">No intro video</Paragraph>
+                                </div>
+                            )}
+                        </div>
 
                         {/* About this Course — below video, same card */}
                         <div className="p-6">
@@ -233,8 +236,8 @@ const CourseDetailPage = () => {
                     </motion.div>
 
                     {/* Students Reviews */}
-                    <motion.div {...fadeUp(0.24)} className='w-[1000px]'>
-                        <div className="flex items-center justify-between mb-4 w-[1045px]">
+                    <motion.div {...fadeUp(0.24)} className='w-full'>
+                        <div className="flex items-center justify-between mb-4 w-full">
                             <Subheading className="font-bold text-[#2c1452]">Students Reviews</Subheading>
 
                             {

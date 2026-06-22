@@ -91,10 +91,10 @@ const CoursesPage = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       {/* Header */}
       <motion.div
-        className="flex items-start justify-between mb-6"
+        className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6"
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -108,10 +108,10 @@ const CoursesPage = () => {
           </Paragraph>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <Button
             variant="white"
-            className="!h-10 !text-sm !px-4 !font-semibold"
+            className="!h-10 !text-sm !px-4 !font-semibold whitespace-nowrap"
             onClick={() => navigate('/bundles/create')}
           >
             <Package size={16} />
@@ -119,7 +119,7 @@ const CoursesPage = () => {
           </Button>
           <Button
             variant="primary"
-            className="!h-10 !text-sm !px-4 !font-semibold"
+            className="!h-10 !text-sm !px-4 !font-semibold whitespace-nowrap"
             onClick={() => navigate('/courses/create')}
           >
             <IoAddCircleOutline size={20} />
@@ -184,7 +184,7 @@ const CoursesPage = () => {
             exit="exit"
           >
             {courses?.map((course: any) => (
-              <motion.div key={course.id} variants={cardVariants}>
+              <motion.div key={course.id} variants={cardVariants} className="h-full">
                 <CourseCard
                   {...course}
                   onViewAnalytics={handleViewAnalytics}
@@ -194,9 +194,11 @@ const CoursesPage = () => {
                 />
               </motion.div>
             ))}
-            <motion.div variants={cardVariants}>
-              <AddCourseCard onClick={() => navigate('/courses/create')} />
-            </motion.div>
+            {activeTab !== 'rejected' && (
+              <motion.div variants={cardVariants}>
+                <AddCourseCard onClick={() => navigate('/courses/create')} />
+              </motion.div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

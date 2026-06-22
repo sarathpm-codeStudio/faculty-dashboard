@@ -90,12 +90,12 @@ const BankDetailsAndTransaction = () => {
                     <Skeleton className="h-8 w-72" />
                     <Skeleton className="h-4 w-96" />
                 </div>
-                <div className="grid grid-cols-12 gap-5">
-                    <div className="col-span-8 space-y-5">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                    <div className="lg:col-span-8 space-y-5">
                         <Skeleton className="h-48 w-full rounded-2xl" />
                         <Skeleton className="h-80 w-full rounded-2xl" />
                     </div>
-                    <div className="col-span-4 space-y-4">
+                    <div className="lg:col-span-4 space-y-4">
                         <Skeleton className="h-56 w-full rounded-2xl" />
                         <SkeletonStatCard showFooter={false} />
                     </div>
@@ -118,10 +118,10 @@ const BankDetailsAndTransaction = () => {
                 </Paragraph>
             </motion.div>
 
-            <div className="grid grid-cols-12 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
                 {/* ── Left ── */}
-                <div className="col-span-8 flex flex-col gap-5">
+                <div className="lg:col-span-8 flex flex-col gap-5">
 
                     {/* Active Disbursement Method */}
                     <motion.div
@@ -161,7 +161,7 @@ const BankDetailsAndTransaction = () => {
                         </div>
 
                         {/* Bank info row */}
-                        <div className="grid grid-cols-4 gap-4 mt-6 pt-5 border-t border-gray-100">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-6 pt-5 border-t border-gray-100">
                             <div>
                                 <Paragraph className="!text-[10px] font-bold text-[#767683] uppercase tracking-widest mb-1">
                                     Bank Name
@@ -211,6 +211,16 @@ const BankDetailsAndTransaction = () => {
                         </div>
                     </motion.div>
 
+                    {/* Total Transferred — shown above the table on tablet */}
+                    <motion.div {...fadeUp(0.1)} className="lg:hidden">
+                        <StatCard
+                            icon={null}
+                            label="TOTAL TRANSFERRED AMOUNT"
+                            value={transactionHistory?.totalTransferred?.display ?? "0"}
+                            valueColor="#2c1452"
+                        />
+                    </motion.div>
+
                     {/* Last Transactions */}
                     <motion.div {...fadeUp(0.12)} className="flex flex-col gap-3">
                         <div className="flex items-center justify-between">
@@ -248,7 +258,7 @@ const BankDetailsAndTransaction = () => {
                 </div>
 
                 {/* ── Right sidebar ── */}
-                <div className="col-span-4 flex flex-col gap-4">
+                <div className="lg:col-span-4 flex flex-col gap-4">
 
                     {/* Need Assistance card */}
                     <motion.div
@@ -273,8 +283,8 @@ const BankDetailsAndTransaction = () => {
                         </div>
                     </motion.div>
 
-                    {/* Annual Income */}
-                    <motion.div {...fadeUp(0.14)}>
+                    {/* Annual Income — sidebar position on laptop only */}
+                    <motion.div {...fadeUp(0.14)} className="hidden lg:block">
                         <StatCard
                             icon={null}
                             label="TOTAL TRANSFERRED AMOUNT"

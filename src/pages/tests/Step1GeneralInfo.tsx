@@ -188,10 +188,10 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
   return (
 
 
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       {/* ── Left form ── */}
-      <div className="col-span-8 flex flex-col gap-5">
+      <div className="lg:col-span-8 flex flex-col gap-5">
 
         {/* General Information */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
@@ -318,9 +318,9 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
       </div>
 
       {/* ── Right sidebar ── */}
-      <div className="col-span-4">
+      <div className="lg:col-span-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
-          <Button variant="primary" disabled={isSubmiting} onClick={() => handleActionClick('next')} fullWidth >
+          <Button variant="primary" disabled={isSubmiting} onClick={() => handleActionClick('next')} fullWidth className="whitespace-nowrap" >
             {isSubmiting && activeBtn === 'next'
               ? <Loader2 size={16} className="animate-spin" />
               : <><span>Add Questions</span><ArrowRight size={18} /></>}

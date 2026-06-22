@@ -176,7 +176,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
   return (
     <div className="grid grid-cols-12 gap-6 h-full min-h-0">
       {/* ── Left ── */}
-      <div className="col-span-8 flex flex-col gap-4 overflow-y-auto scrollbar-hide min-h-0">
+      <div className="col-span-7 lg:col-span-8 flex flex-col gap-4 overflow-y-auto scrollbar-hide min-h-0">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
           <Input
             label="BUNDLE NAME"
@@ -200,7 +200,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
 
           />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 items-end">
             <Input
               label="SUM OF COURSE PRICE"
               labelClassName="uppercase tracking-wider text-xs text-gray-500"
@@ -248,31 +248,31 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
 
         {/* Discount Calculator */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <Subheading className="text-[#2c1452] font-bold">Discount Calculator</Subheading>
-            <span className="text-[10px] font-bold text-[#00A98F] bg-[#E6FBF7] px-2.5 py-1 rounded-full uppercase tracking-wide">
+            <span className="text-[10px] font-bold text-[#00A98F] bg-[#E6FBF7] px-2.5 py-1 rounded-full uppercase tracking-wide whitespace-nowrap shrink-0">
               Smart Pricing Active
             </span>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-[#F2F4F6] rounded-xl p-4">
-              <Paragraph className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Sum of Courses</Paragraph>
-              <p className="text-sm font-bold text-[#191c1e]">₹{sumOfCourses.toLocaleString()}.00</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className="bg-[#F2F4F6] rounded-xl p-3 lg:p-4 flex items-center justify-between gap-2 lg:block">
+              <Paragraph className="!text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0 lg:mb-1 leading-tight">Sum of Courses</Paragraph>
+              <p className="text-sm font-bold text-[#191c1e] whitespace-nowrap">₹{sumOfCourses.toLocaleString()}.00</p>
             </div>
-            <div className="bg-[#F2F4F6] rounded-xl p-4">
-              <Paragraph className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Bundle Price</Paragraph>
-              <p className="text-sm font-bold text-[#191c1e]">₹{bundleOffer.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <div className="bg-[#F2F4F6] rounded-xl p-3 lg:p-4 flex items-center justify-between gap-2 lg:block">
+              <Paragraph className="!text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0 lg:mb-1 leading-tight">Bundle Price</Paragraph>
+              <p className="text-sm font-bold text-[#191c1e] whitespace-nowrap">₹{bundleOffer.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
-            <div className="bg-[#E6FBF7] rounded-xl p-4">
-              <Paragraph className="text-[10px] font-semibold text-[#00A98F] uppercase tracking-wide mb-1">Student Savings</Paragraph>
-              <p className="text-sm font-bold text-[#00A98F]">₹{studentSavings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            <div className="bg-[#E6FBF7] rounded-xl p-3 lg:p-4 flex items-center justify-between gap-2 lg:block">
+              <Paragraph className="!text-[10px] font-semibold text-[#00A98F] uppercase tracking-wide mb-0 lg:mb-1 leading-tight">Student Savings</Paragraph>
+              <p className="text-sm font-bold text-[#00A98F] whitespace-nowrap">₹{studentSavings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── Right Sidebar ── */}
-      <div className="col-span-4 flex flex-col gap-4 overflow-y-auto scrollbar-hide min-h-0">
+      <div className="col-span-5 lg:col-span-4 flex flex-col gap-4 overflow-y-auto scrollbar-hide min-h-0">
         {/* Cover Image */}
         {/* <div
           onClick={() => fileInputRef.current?.click()}
@@ -306,11 +306,11 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
         />
 
         {/* Bundle Offer Price */}
-        <div className='bg-gray-100 p-10 rounded-xl' >
+        <div className='bg-gray-100 p-4 lg:p-10 rounded-xl' >
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 lg:p-5">
             <Paragraph className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Bundle Offer</Paragraph>
-            <p className="text-3xl font-bold text-[#2c1452]">
+            <p className="text-2xl lg:text-3xl font-bold text-[#2c1452] break-words">
               ₹{bundleOffer.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>

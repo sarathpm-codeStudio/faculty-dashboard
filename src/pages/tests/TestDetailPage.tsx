@@ -203,7 +203,7 @@ const TestDetailPage = () => {
       </motion.div>
 
       {/* Stat Cards */}
-      <motion.div className="grid grid-cols-3 gap-4" {...fadeUp(0.08)}>
+      <motion.div className="grid grid-cols-1 sm:grid-cols-3 gap-4" {...fadeUp(0.08)}>
         {statsLoading ? (
           <>
             <SkeletonStatCard />

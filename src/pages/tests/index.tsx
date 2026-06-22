@@ -86,7 +86,14 @@ const TestsPage = () => {
     {
       key: 'course',
       header: 'Course',
-      render: row => <span className="text-[#191c1e] text-sm">{row?.courses?.title}</span>,
+      render: row => (
+        <span
+          className="text-[#191c1e] text-sm block max-w-[160px] lg:max-w-[260px] truncate"
+          title={row?.courses?.title}
+        >
+          {row?.courses?.title}
+        </span>
+      ),
     },
     {
       key: 'type',
@@ -190,18 +197,19 @@ const TestsPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="w-64">
+        <div className="flex flex-nowrap items-start gap-3 shrink-0">
+          <div className="w-44 lg:w-64 shrink-0">
             <Input
               placeholder="Search"
               value={search}
               onChange={e => setSearch(e.target.value)}
               leftIcon={<Search size={15} />}
+              className="!h-11 !py-0 !text-sm"
             />
           </div>
           <Button
             variant="primary"
-            className="!h-10 !text-sm !px-4 !font-semibold"
+            className="!h-11 !text-sm !px-4 !font-semibold whitespace-nowrap"
             onClick={() => navigate('/tests/create')}
           >
             <IoAddCircleOutline size={20} />
@@ -211,7 +219,7 @@ const TestsPage = () => {
       </motion.div>
 
       {/* Stat Cards */}
-      <motion.div className="grid grid-cols-3 gap-4" {...fadeUp(0.08)}>
+      <motion.div className="grid grid-cols-1 sm:grid-cols-3 gap-4" {...fadeUp(0.08)}>
         {testsPageAnalyticsLoading ? (
           <>
             <SkeletonStatCard showIcon />

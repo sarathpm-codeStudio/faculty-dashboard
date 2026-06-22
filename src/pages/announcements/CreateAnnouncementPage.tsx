@@ -136,7 +136,7 @@ const CreateAnnouncementPage = () => {
 
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
 
       {/* Back */}
       <button

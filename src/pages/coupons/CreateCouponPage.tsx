@@ -242,7 +242,7 @@ const CreateCouponPage = () => {
   const isSubmitting = isCreatingCoupon || isUpdatingCoupon
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
 
       {/* Header */}
       <div className="mb-6">
@@ -255,10 +255,10 @@ const CreateCouponPage = () => {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Left: Form card */}
-        <div className="col-span-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-6">
+        <div className="lg:col-span-7 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-6">
 
           {/* Coupon Code */}
           <Input
@@ -428,7 +428,7 @@ const CreateCouponPage = () => {
         </div>
 
         {/* Right: Preview + Actions */}
-        <div className="col-span-5 flex flex-col gap-5">
+        <div className="lg:col-span-5 flex flex-col gap-5">
 
           {/* Coupon Preview card with top accent */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

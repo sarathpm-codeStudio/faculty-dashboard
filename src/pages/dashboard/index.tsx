@@ -80,7 +80,7 @@ const DashboardPage = () => {
       <BankDetailsWidget />
 
       {/* ── Stat Cards ── */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {dashboardCountersLoading ? (
           <>
             <SkeletonStatCard showIcon showFooter={false} />
@@ -120,8 +120,8 @@ const DashboardPage = () => {
       </div>
 
       {/* ── Charts Row ── */}
-      <div className="grid grid-cols-3 gap-4 mt-10">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-10">
+        <div className="lg:col-span-2">
           <EnrollmentChart />
         </div>
         <RevenueChart
@@ -134,9 +134,9 @@ const DashboardPage = () => {
       </div>
 
       {/* ── Bottom Row ── */}
-      <div className="grid grid-cols-3 gap-4 items-start pb-4 mt-10">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start pb-4 mt-10">
         {/* Top Courses */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <SectionCard
             title="Top Courses Performance"
             title_color='text-[#2c1452]'

@@ -102,11 +102,11 @@ const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClas
                 {/* Bottom — Uploaded Documents */}
                 <div>
                     <Paragraph className="text-gray-400 uppercase tracking-wider mb-3">Uploaded Documents</Paragraph>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                         {files.map((q) => (
                             <div
                                 key={q.id}
-                                className="flex items-center justify-between px-3 py-2.5 bg-white rounded-xl w-[300px] h-[100px]"
+                                className="flex items-center justify-between px-3 py-2.5 bg-white rounded-xl w-full sm:w-[300px] h-[100px]"
                             >
                                 <div className="flex items-center gap-2">
                                     <div className="w-10 h-10 bg-[#49D7F2] rounded flex items-center justify-center border border-red-100">

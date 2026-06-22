@@ -227,10 +227,10 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
 
   return (
     <form onSubmit={formik.handleSubmit} noValidate>
-      <div className="grid grid-cols-12 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:items-stretch">
 
         {/* ── Left: form card (8 cols) ── */}
-        <div className="col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-10 flex flex-col gap-5">
+        <div className="lg:col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 lg:p-10 flex flex-col gap-5">
 
           <Input
             label="Course Name"
@@ -346,7 +346,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
         </div>
 
         {/* ── Right: uploads + actions (4 cols) ── */}
-        <div className="col-span-4 flex flex-col gap-3">
+        <div className="lg:col-span-4 flex flex-col gap-3">
 
           {/* Cover Image */}
           <UploadBox
@@ -438,7 +438,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
           )}
 
           {/* ── Action buttons ── */}
-          <div className="flex flex-col gap-3 mt-auto pt-1">
+          <div className="flex flex-col gap-3 lg:mt-auto pt-1">
             {
               courseDetails?.is_draft && (
                 <Button

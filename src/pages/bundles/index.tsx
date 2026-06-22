@@ -80,7 +80,7 @@ const BundlesPage = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <motion.div
         className="flex items-center justify-between mb-6"
         initial={{ opacity: 0, y: -16 }}
@@ -93,7 +93,7 @@ const BundlesPage = () => {
 
         <Button
           variant="primary"
-          className="!h-10 !text-sm !px-4 !font-semibold"
+          className="!h-10 !text-sm !px-4 !font-semibold whitespace-nowrap shrink-0"
           onClick={() => navigate('/bundles/create')}
         >
           <IoAddCircleOutline size={20} />
@@ -161,7 +161,7 @@ const BundlesPage = () => {
                 </div>
               ) : (
                 bundles?.map((bundle: any) => (
-                  <motion.div key={bundle.id} variants={cardVariants}>
+                  <motion.div key={bundle.id} variants={cardVariants} className="h-full">
                     <BundleCard
                       {...bundle}
                       onViewAnalytics={id => console.log('Analytics', id)}

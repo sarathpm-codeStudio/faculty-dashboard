@@ -64,7 +64,7 @@ const CourseCard = ({
 
   return (
     <motion.div
-      className={`rounded-xl bg-white shadow-sm border overflow-hidden flex flex-col cursor-pointer transition-colors border-gray-100`}
+      className={`h-full rounded-xl bg-white shadow-sm border overflow-hidden flex flex-col cursor-pointer transition-colors border-gray-100`}
       whileHover={{ y: -5, boxShadow: '0 16px 32px rgba(0, 11, 96, 0.12)' }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
       onClick={() => onClick?.(id)}
@@ -87,7 +87,7 @@ const CourseCard = ({
         )}
       </div>
 
-      <div className="p-4 flex flex-col flex-1">
+      <div className="px-4 py-3 flex flex-col flex-1">
         {category && (
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{category}</span>
@@ -95,7 +95,7 @@ const CourseCard = ({
           </div>
         )}
 
-        <Subheading className='text-[#2c1452] font-bold'>{title.length > 20 ? title.slice(0, 20) + '...' : title}</Subheading>
+        <Subheading className='text-[#2c1452] font-bold truncate'>{title}</Subheading>
 
         {/* {description ? (
           <Paragraph className="text-gray-400 !text-xs mb-2">
@@ -114,31 +114,32 @@ const CourseCard = ({
           </div>
         )} */}
 
-        <div className='flex items-center justify-start gap-8 mb-1.5'>
-          <div className='flex items-center gap-1'>
-            <Clock size={12} />
-            <span className="text-[12px] text-gray-500 font-medium">{
-              validity === '1' ? '1 Month' : validity === '3' ? '3 Months' : validity === '6' ? '6 Months' : validity === '12' ? '1 Year' : 'Lifetime'
-            }</span>
+        {!selectable && (
+          <div className='flex flex-wrap items-center gap-x-3 gap-y-1 mb-2 mt-1.5'>
+            <div className='flex items-center gap-1.5'>
+              <Clock size={13} className="shrink-0 text-gray-400" />
+              <span className="text-[12px] text-gray-500 font-medium whitespace-nowrap">{
+                validity === '1' ? '1 Month' : validity === '3' ? '3 Months' : validity === '6' ? '6 Months' : validity === '12' ? '1 Year' : 'Lifetime'
+              }</span>
+            </div>
+            <div className='flex items-center gap-1.5'>
+              <Users size={13} className="shrink-0 text-gray-400" />
+              <span className="text-[12px] text-gray-500 font-medium whitespace-nowrap">{formatNumber(total_enrolled || 0)} Students</span>
+            </div>
           </div>
-          <div className='flex items-center gap-1'>
-            <Users size={12} />
-            <span className="text-[12px] text-gray-500 font-medium">{formatNumber(total_enrolled || 0)} Students</span>
-          </div>
-        </div>
+        )}
 
-        <div className='w-full h-[.5px] bg-gray-100' />
+        <div className='w-full h-px bg-gray-100' />
 
-        <div className="flex items-center justify-between mt-auto">
-          <div className="flex items-center gap-5">
-            <Paragraph className='text-[#2c1452] font-bold !text-[20px]'>
-              ₹
-              {final_price}</Paragraph>
-            {<span className="text-[15px] text-[#767683] line-through font-bold "> ₹{price}</span>}
+        <div className="flex items-center justify-between gap-2 mt-auto pt-2.5">
+          <div className="flex items-baseline gap-2 min-w-0">
+            <Paragraph className='text-[#2c1452] font-bold !text-[20px] whitespace-nowrap'>
+              ₹{final_price}</Paragraph>
+            <span className="text-[14px] text-[#767683] line-through font-bold whitespace-nowrap">₹{price}</span>
           </div>
 
           {!selectable && (
-            <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
+            <div className="relative shrink-0" ref={menuRef} onClick={e => e.stopPropagation()}>
               <button
                 onClick={() => setMenuOpen(v => !v)}
                 className="p-1 rounded hover:bg-gray-100 text-[#2c1452] font-bold"

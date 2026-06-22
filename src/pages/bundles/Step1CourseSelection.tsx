@@ -84,7 +84,7 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
 
     <div className="grid grid-cols-12 gap-6 h-full min-h-0">
       {/* ── Left ── */}
-      <div className="col-span-8 flex flex-col gap-4 min-h-0">
+      <div className="col-span-7 lg:col-span-8 flex flex-col gap-4 min-h-0">
         {/* Search */}
         <div className="shrink-0">
           <Input
@@ -96,13 +96,13 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
         </div>
 
         {/* Course grid */}
-        <div className="grid grid-cols-3 gap-4 flex-1 min-h-0 overflow-y-auto pr-2 auto-rows-min scrollbar-hide">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-4 flex-1 min-h-0 overflow-y-auto pr-2 auto-rows-min scrollbar-hide">
 
 
           {
 
             coursesLoading || bundleLoading ? (
-              <div className="grid col-span-3 grid-cols-3 gap-4">
+              <div className="grid col-span-full grid-cols-2 xl:grid-cols-3 gap-4">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <div key={i} className="rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
                     <Skeleton className="h-36 w-full rounded-none" />
@@ -116,7 +116,7 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
             ) :
 
               courses?.length === 0 ? (
-                <div className="flex col-span-2 items-center justify-center h-[500px]">
+                <div className="flex col-span-full items-center justify-center h-[500px]">
                   <Paragraph className="text-gray-400 !text-xs text-center py-4">
                     No courses found.
                   </Paragraph>
@@ -136,8 +136,8 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
       </div>
 
       {/* ── Right Sidebar ── */}
-      <div className="col-span-4 flex flex-col gap-4 min-h-0">
-        <div className="bg-gray-100 rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4 overflow-y-auto scrollbar-hide">
+      <div className="col-span-5 lg:col-span-4 flex flex-col gap-4 min-h-0">
+        <div className="bg-gray-100 rounded-2xl border border-gray-100 shadow-sm p-4 lg:p-5 flex flex-col gap-4 overflow-y-auto scrollbar-hide">
           <div className="flex flex-col gap-2 items-start">
             <Subheading className="text-[#2c1452] font-bold">Selection Summary</Subheading>
             <span className="text-[10px] font-bold text-white bg-[#2c1452] px-2.5 py-0.5 rounded-full">
@@ -150,14 +150,14 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
               Select courses from the left to add them to your bundle.
             </Paragraph>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 lg:gap-4">
               {selectedCourses?.map((c: any) => (
-                <div key={c.id} className="flex bg-white rounded-xl p-5 items-start gap-3">
-                  <img src={c.cover_image} alt="img" className="w-20 h-20 rounded-lg object-contain shrink-0" />
+                <div key={c.id} className="flex bg-white rounded-xl p-3 lg:p-4 items-center gap-3">
+                  <img src={c.cover_image} alt="img" className="w-20 h-[45px] lg:w-24 lg:h-14 rounded-lg object-cover shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-[#191c1e] truncate leading-tight">{c.title}</p>
-                    <p className="text-[11px] text-gray-400 font-medium mt-0.5">{c.category}</p>
-                    <p className="text-xs text-[#2c1452] font-bold mt-1">₹{c.final_price.toLocaleString()}.00</p>
+                    <p className="text-[11px] text-gray-400 font-medium mt-0.5 truncate">{c.category}</p>
+                    <p className="text-xs text-[#2c1452] font-bold mt-1 truncate">₹{c.final_price.toLocaleString()}.00</p>
                   </div>
                 </div>
               ))}
@@ -176,7 +176,7 @@ const Step1CourseSelection = ({ onNext, bundleId, bundle, bundleLoading }: Props
           variant="primary"
           fullWidth
           disabled={selected.length === 0}
-          className=""
+          className="whitespace-nowrap"
           onClick={handleNext}
         >
           Continue to Pricing

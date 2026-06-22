@@ -33,6 +33,7 @@ import FullTransactionHistory from '@/pages/profile/FullTransactionHistory'
 import { useEffect, useState } from 'react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import BrandSplash from '@/components/layout/BrandSplash'
+import MobileBlocker from '@/components/layout/MobileBlocker'
 import { useAuthStore } from '@/store/authStore'
 
 // Root entry: send logged-in users to the dashboard, everyone else to login.
@@ -77,6 +78,7 @@ const App = () => {
 
   return (
     <>
+      <MobileBlocker />
       <Toaster position="top-right" richColors />
       <BrowserRouter>
         <Routes>

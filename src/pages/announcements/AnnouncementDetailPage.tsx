@@ -27,14 +27,14 @@ const AnnouncementDetailPage = () => {
 
   if (isLoading) {
     return (
-      <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
         <Skeleton className="h-4 w-56 mb-5" />
         <div className="space-y-3 mb-6">
           <Skeleton className="h-8 w-96" />
           <Skeleton className="h-4 w-72" />
         </div>
-        <div className="grid grid-cols-3 gap-5">
-          <div className="col-span-2 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 space-y-4">
             <Skeleton className="h-64 w-full rounded-2xl" />
             <Skeleton className="h-32 w-full rounded-2xl" />
           </div>
@@ -65,7 +65,7 @@ const AnnouncementDetailPage = () => {
 
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 lg:p-8 bg-gray-50 min-h-screen">
 
       {/* Breadcrumb */}
       <motion.button
@@ -104,10 +104,10 @@ const AnnouncementDetailPage = () => {
       </motion.div>
 
       {/* Content grid */}
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Left: Announcement card */}
-        <motion.div className="col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5" {...fadeUp(0.1)}>
+        <motion.div className="lg:col-span-8 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5" {...fadeUp(0.1)}>
 
           {/* Tag + visibility */}
           <div className="flex items-center justify-between">
@@ -143,7 +143,7 @@ const AnnouncementDetailPage = () => {
           </div>
 
           {/* Meta info box */}
-          <div className="bg-[#F2F4F6] rounded-xl p-4 grid grid-cols-2 gap-x-8 gap-y-4">
+          <div className="bg-[#F2F4F6] rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#767683] mb-1">Course Name</p>
               <Paragraph className="font-bold text-[#2c1452]">{announcement?.data?.courses?.title || ""}</Paragraph>
@@ -176,7 +176,7 @@ const AnnouncementDetailPage = () => {
         </motion.div>
 
         {/* Right: Views stat */}
-        <motion.div className="col-span-4 flex flex-col gap-4" {...fadeUp(0.15)}>
+        <motion.div className="lg:col-span-4 flex flex-col gap-4" {...fadeUp(0.15)}>
           <div
             className="rounded-2xl p-5 flex flex-col gap-1"
             style={{ background: 'linear-gradient(to right, #2c1452, #2c1452)' }}

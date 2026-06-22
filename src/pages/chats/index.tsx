@@ -92,7 +92,7 @@ const ChatsPage = () => {
     <div className="flex h-full overflow-hidden">
 
       {/* ── Left Panel ── */}
-      <div className="w-[400px] shrink-0 flex flex-col bg-white">
+      <div className="w-[300px] lg:w-[360px] xl:w-[400px] shrink-0 flex flex-col bg-white">
 
         <motion.div
           className="px-5 pt-6 pb-4 shrink-0"

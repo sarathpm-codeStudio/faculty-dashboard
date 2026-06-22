@@ -57,7 +57,7 @@ const BundleCard = ({
 
   return (
     <motion.div
-      className="rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
+      className="h-full rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer"
       whileHover={{ y: -5, boxShadow: '0 16px 32px rgba(0, 11, 96, 0.12)' }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
       onClick={() => onClick?.(id)}
@@ -70,35 +70,32 @@ const BundleCard = ({
         )}
       </div>
 
-      <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-center gap-1 text-[#00A6BF] text-xs font-semibold mb-1.5">
-          <PiStackFill size={13} />
-          <Paragraph className='text-[#00A6BF] font-semibold'>{total_courses_count || 0} Courses Included</Paragraph>
+      <div className="px-3.5 py-2.5 flex flex-col flex-1">
+        <div className="flex items-center gap-1 text-[#00A6BF] text-xs font-semibold mb-1">
+          <PiStackFill size={13} className="shrink-0" />
+          <Paragraph className='text-[#00A6BF] font-semibold whitespace-nowrap'>{total_courses_count || 0} Courses Included</Paragraph>
         </div>
 
-        <Subheading className="text-[#2c1452] font-bold mb-2">{title}</Subheading>
+        <Subheading className="text-[#2c1452] font-bold mb-1.5 truncate">{title}</Subheading>
 
-        <div className="flex  items-center justify-center gap-3 mb-2 bg-[#F2F4F6] rounded-lg px-3 py-1">
-          <div className="flex-1">
+        <div className="flex items-center gap-3 mb-2 bg-[#F2F4F6] rounded-lg px-3 py-1">
+          <div className="flex-1 min-w-0">
             <p className="text-[9px] text-[#767683] font-semibold uppercase tracking-wide">Students</p>
-            <Paragraph className="!text-xs font-bold text-[#2c1452]">{formatNumber(totalStudents)}</Paragraph>
+            <Paragraph className="!text-xs font-bold text-[#2c1452] whitespace-nowrap">{formatNumber(totalStudents)}</Paragraph>
           </div>
-          {/* <div className="w-px h-8 bg-gray-300" /> */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="text-[9px] text-[#767683] font-semibold uppercase tracking-wide">Revenue</p>
-            <Paragraph className="!text-xs font-bold text-[#2c1452]">₹{formatNumber(totalRevenue)}</Paragraph>
+            <Paragraph className="!text-xs font-bold text-[#2c1452] whitespace-nowrap">₹{formatNumber(totalRevenue)}</Paragraph>
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-auto">
-          <div className="">
-
-            <Paragraph className="text-[11px] text-[#767683] line-through font-bold">₹{price}</Paragraph>
-
-            <Subheading className="text-[#2c1452] font-bold"> ₹{final_price}</Subheading>
+        <div className="flex items-end justify-between gap-2 mt-auto pt-0.5">
+          <div className="min-w-0 leading-tight">
+            <Paragraph className="text-[11px] text-[#767683] line-through font-bold whitespace-nowrap">₹{price}</Paragraph>
+            <Subheading className="text-[#2c1452] font-bold whitespace-nowrap">₹{final_price}</Subheading>
           </div>
 
-          <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
+          <div className="relative shrink-0" ref={menuRef} onClick={e => e.stopPropagation()}>
             <button
               onClick={() => setMenuOpen(v => !v)}
               className="p-1 rounded hover:bg-gray-100 text-[#2c1452]"

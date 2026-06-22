@@ -382,10 +382,10 @@ const Step2AddQuestions = ({
     ) : null
 
   return (
-    <div className="grid grid-cols-12 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
       {/* ── Left ── */}
-      <div className="col-span-8 flex flex-col gap-5">
+      <div className="lg:col-span-8 flex flex-col gap-5">
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
           <div className="flex items-center gap-3 border-l-4 border-[#2c1452] pl-3">
@@ -616,9 +616,9 @@ const Step2AddQuestions = ({
       </div>
 
       {/* ── Right sidebar ── */}
-      <div className="col-span-4 flex flex-col gap-3">
+      <div className="lg:col-span-4 flex flex-col gap-3">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-4">
-          <Button variant="primary" disabled={isPublishingTest} fullWidth onClick={handlePublishTest}>
+          <Button variant="primary" className="whitespace-nowrap" disabled={isPublishingTest} fullWidth onClick={handlePublishTest}>
             {isPublishingTest ? <Loader2 className="animate-spin" /> :
               <>
                 Publish
@@ -627,12 +627,12 @@ const Step2AddQuestions = ({
             }
 
           </Button>
-          <Button variant="white" fullWidth disabled={isSavingDraft} onClick={handleSaveDraft}>
+          <Button variant="white" className="whitespace-nowrap" fullWidth disabled={isSavingDraft} onClick={handleSaveDraft}>
             {isSavingDraft ? <Loader2 className="animate-spin" /> : '🖫 Save Draft'}
           </Button>
           <button
             onClick={onBack}
-            className="flex items-center justify-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#2c1452] transition-colors"
+            className="flex items-center justify-center gap-1.5 text-sm text-[#767683] font-bold hover:text-[#2c1452] transition-colors whitespace-nowrap"
           >
             <ArrowLeft size={15} />
             Back to General Info
