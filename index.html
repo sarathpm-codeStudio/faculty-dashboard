@@ -5,6 +5,25 @@
     <link rel="icon" type="image/svg+xml" href="/brand_icon.svg" />
     <link rel="apple-touch-icon" href="/brand_icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // iOS Safari "Request Desktop Website" only spoofs the User-Agent (to a Mac)
+      // — unlike Android it does NOT widen the layout viewport, so a page using
+      // width=device-width still renders at the phone width and our tablet/desktop
+      // layout never kicks in. Detect an Apple touch device masquerading as a Mac
+      // (= iPhone in desktop mode) on a phone-sized screen, and force a desktop
+      // width so the layout renders the same as on Android desktop view.
+      (function () {
+        try {
+          var ua = navigator.userAgent || ''
+          var isAppleTouchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1
+          var phoneScreen = Math.min(screen.width, screen.height) <= 500
+          if (isAppleTouchMac && phoneScreen) {
+            var vp = document.querySelector('meta[name=viewport]')
+            if (vp) vp.setAttribute('content', 'width=1280')
+          }
+        } catch (e) { /* no-op */ }
+      })()
+    </script>
     <title>Learninough</title>
     <meta name="description" content="Learninough — online learning platform for faculty and students." />
     <meta name="theme-color" content="#2c1452" />
