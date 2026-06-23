@@ -9,6 +9,7 @@ export type CourseCardProps = {
   id: any
   cover_image?: string
   title: string
+  is_free?: boolean
   duration: string
   validity: string
   students: string
@@ -31,6 +32,7 @@ const CourseCard = ({
   id,
   cover_image,
   title,
+  is_free,
   duration,
   students,
   price,
@@ -133,9 +135,17 @@ const CourseCard = ({
 
         <div className="flex items-center justify-between gap-2 mt-auto pt-2.5">
           <div className="flex items-baseline gap-2 min-w-0">
-            <Paragraph className='text-[#2c1452] font-bold !text-[20px] whitespace-nowrap'>
-              ₹{final_price}</Paragraph>
-            <span className="text-[14px] text-[#767683] line-through font-bold whitespace-nowrap">₹{price}</span>
+            {
+              is_free ?
+                <span className='text-[#2c1452] font-bold !text-[20px] whitespace-nowrap'>Free for all</span>
+                :
+                <>
+                  <Paragraph className='text-[#2c1452] font-bold !text-[20px] whitespace-nowrap'>
+                    ₹{final_price}</Paragraph>
+                  <span className="text-[14px] text-[#767683] line-through font-bold whitespace-nowrap">₹{price}</span>
+                </>
+            }
+
           </div>
 
           {!selectable && (

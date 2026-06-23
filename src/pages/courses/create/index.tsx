@@ -58,6 +58,7 @@ export type CourseFormData = {
   discount: string
   discountType: string
   enableCoupons: boolean
+  isFree: boolean
 }
 
 const STEPS = [
@@ -91,6 +92,7 @@ const emptyForm = (): CourseFormData => ({
   discount: '',
   discountType: '',
   enableCoupons: false,
+  isFree: false,
 })
 
 const CourseCreatePage = () => {

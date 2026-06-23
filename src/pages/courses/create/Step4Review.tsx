@@ -211,8 +211,16 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
         <div className="lg:col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100">
           <Paragraph className="font-bold uppercase tracking-widest text-black"> Pricing &amp; Access </Paragraph>
           <div className="flex items-baseline gap-1.5">
-            <Heading className="text-[#2c1452] font-bold"> ₹{coursePreview?.final_price} </Heading>
-            <Paragraph className="text-xs text-gray-400">/ per enrollment</Paragraph>
+            {
+              coursePreview?.is_free ?
+                <Heading className="text-[#2c1452] font-bold"> Free for all </Heading>
+                :
+                <>
+                  <Heading className="text-[#2c1452] font-bold"> ₹{coursePreview?.final_price} </Heading>
+                  <Paragraph className="text-xs text-gray-400">/ per enrollment</Paragraph>
+                </>
+            }
+
           </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 bg-[#F2F4F6] rounded-xl px-4 py-3">

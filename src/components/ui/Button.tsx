@@ -52,7 +52,12 @@ const Button = ({
       className={`${base} ${cls} ${fullWidth ? 'w-full' : ''} ${className}`}
       {...props}
     >
-      {loading ? 'Please wait…' : children}
+      {loading ? (
+        <>
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          Please wait…
+        </>
+      ) : children}
     </button>
   )
 }

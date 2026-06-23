@@ -21,18 +21,27 @@ export const courseBasicDetailsSchema = Yup.object({
 
 
 export const coursePricingSchema = Yup.object({
+    isFree: Yup.boolean().optional(),
     validity: Yup.string().required('Validity is required'),
-    price: Yup.string()
-        .required('Price is required')
-        .test('is-number', 'Price must be a valid number', (v) => v !== undefined && v !== '' && !isNaN(Number(v)))
-        .test('is-positive', 'Price must be greater than 0', (v) => Number(v) > 0),
-    discount: Yup.string()
-        .test('is-number', 'Discount must be a valid number', (v) => !v || !isNaN(Number(v)))
-        .test('non-negative', 'Discount cannot be negative', (v) => !v || Number(v) >= 0)
-        .when('discountType', {
-            is: 'percentage',
-            then: (schema) => schema.test('max-percent', 'Discount cannot exceed 100%', (v) => !v || Number(v) <= 100),
-        }),
+    price: Yup.string().when('isFree', {
+        is: true,
+        then: (schema) => schema.optional(),
+        otherwise: (schema) => schema
+            .required('Price is required')
+            .test('is-number', 'Price must be a valid number', (v) => v !== undefined && v !== '' && !isNaN(Number(v)))
+            .test('is-positive', 'Price must be greater than 0', (v) => Number(v) > 0),
+    }),
+    discount: Yup.string().when('isFree', {
+        is: true,
+        then: (schema) => schema.optional(),
+        otherwise: (schema) => schema
+            .test('is-number', 'Discount must be a valid number', (v) => !v || !isNaN(Number(v)))
+            .test('non-negative', 'Discount cannot be negative', (v) => !v || Number(v) >= 0)
+            .when('discountType', {
+                is: 'percentage',
+                then: (s) => s.test('max-percent', 'Discount cannot exceed 100%', (v) => !v || Number(v) <= 100),
+            }),
+    }),
     discountType: Yup.string().optional(),
     enableCoupons: Yup.boolean().optional(),
 })

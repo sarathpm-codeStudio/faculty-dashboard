@@ -72,7 +72,11 @@ const Select = ({
   const handleSelect = (optValue: string | number) => {
     onChange?.({ target: { name: fieldName, value: String(optValue) } })
     setOpen(false)
-    onBlur?.({ target: { name: fieldName } })
+    // Defer the blur so Formik validates against the just-selected value.
+    // Firing onBlur synchronously here would re-validate against the stale
+    // (pre-change) value and leave a "required" error showing even though a
+    // value was picked — it would only clear once another field was touched.
+    setTimeout(() => onBlur?.({ target: { name: fieldName } }), 0)
   }
 
   return (

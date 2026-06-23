@@ -164,8 +164,7 @@ const ProfilePage = () => {
     const dob = formatDisplayDob(profile?.date_of_birth)
     const avatar = profile?.avatar_url
     const bio =
-        profile?.bio ||
-        'Dedicated academic professional with over a decade of experience in financial management and corporate accounting. Passionate about mentoring the next generation of business leaders through practical, case-study based learning methodologies.'
+        profile?.bio || "Not Added Yet"
     const rejectReasons = parseRejectReasons(profile?.acc_reject_reason)
     const rejectIntro =
         rejectReasons.length === 1 && REJECTION_REASON_TEXT[rejectReasons[0]]
@@ -179,7 +178,7 @@ const ProfilePage = () => {
                 meta: `Degree Verification - ${a.type ?? 'Document'}`,
                 document_url: a.document_url!,
             }))
-            : [{ name: 'No certificates found', meta: 'Upload certificates during onboarding', document_url: '' }]
+            : []
 
     // Verification badge appearance for each account_verified status.
     const status = profile?.account_verified
@@ -190,7 +189,9 @@ const ProfilePage = () => {
                 ? { label: 'Verification Pending', className: 'bg-[#FFF4E5] text-[#B86E00]', showCheck: false }
                 : status === 'RESUBMITTED'
                     ? { label: 'Under Review', className: 'bg-[#E8EBFF] text-[#4B4FC4]', showCheck: false }
-                    : { label: 'Verified', className: 'bg-[#A8EDFF] text-[#00A6BF]', showCheck: true }
+                    : status === 'NOT_COMPLETED'
+                        ? { label: 'Account Not Completed', className: 'bg-[#FFE5E5] text-[#BA1A1A]', showCheck: false }
+                        : { label: 'Verified', className: 'bg-[#A8EDFF] text-[#00A6BF]', showCheck: true }
 
     return (
         <div className="flex flex-col gap-5 pb-6">
@@ -345,23 +346,28 @@ const ProfilePage = () => {
                             Certificates
                         </Paragraph>
                         <div className="flex flex-col gap-3">
-                            {certificates.map((cert, i) => (
-                                <div
-                                    key={`${cert.name}-${i}`}
-                                    className="flex items-center gap-3 rounded-xl border border-gray-100 bg-[#FAFBFF] px-3 py-3"
-                                >
-                                    <div className="w-10 h-10 rounded-lg bg-[#A8EDFF] flex items-center justify-center shrink-0">
-                                        <FileText size={18} className="text-[#00A6BF]" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <Paragraph className="!text-sm font-bold text-[#191c1e] truncate">
-                                            {cert.name.length > 18 ? `${cert.name.slice(0, 16)}..` : cert.name}
-                                        </Paragraph>
-                                        <Paragraph className="!text-xs text-[#767683] truncate">{cert.meta}</Paragraph>
-                                    </div>
-                                    <HiOutlineBadgeCheck size={22} className="text-[#00875A] shrink-0" />
-                                </div>
-                            ))}
+                            {
+                                certificates.length === 0 ? (
+                                    <Paragraph className="!text-sm text-[#767683]">No certificates added yet.</Paragraph>
+                                ) : (
+                                    certificates.map((cert, i) => (
+                                        <div
+                                            key={`${cert.name}-${i}`}
+                                            className="flex items-center gap-3 rounded-xl border border-gray-100 bg-[#FAFBFF] px-3 py-3"
+                                        >
+                                            <div className="w-10 h-10 rounded-lg bg-[#A8EDFF] flex items-center justify-center shrink-0">
+                                                <FileText size={18} className="text-[#00A6BF]" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <Paragraph className="!text-sm font-bold text-[#191c1e] truncate">
+                                                    {cert.name.length > 18 ? `${cert.name.slice(0, 16)}..` : cert.name}
+                                                </Paragraph>
+                                                <Paragraph className="!text-xs text-[#767683] truncate">{cert.meta}</Paragraph>
+                                            </div>
+                                            <HiOutlineBadgeCheck size={22} className="text-[#00875A] shrink-0" />
+                                        </div>
+                                    )))
+                            }
                         </div>
                     </motion.div>
                 </div>

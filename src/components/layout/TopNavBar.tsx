@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
 import { useNavigate } from 'react-router-dom'
 import { Button, Button2, Input, Paragraph } from '@/components/ui'
-import { useUnreadNotificationCount } from '@/hooks/notification'
+import { useUnreadNotificationCount, useUnreadAnnouncementCount } from '@/hooks/notification'
 import { useQueryClient } from '@tanstack/react-query'
 
 interface Props {
@@ -19,6 +19,11 @@ const TopNavBar = ({ onNotifClick }: Props) => {
     const navigate = useNavigate()
     const queryClient = useQueryClient()
     const { data: unreadCount = 0 } = useUnreadNotificationCount()
+    const { data: unreadAnnouncementCount = 0 } = useUnreadAnnouncementCount()
+
+    // The bell shows a red dot when there's anything unread — either a personal
+    // notification or an admin announcement.
+    const hasUnread = unreadCount > 0 || unreadAnnouncementCount > 0
 
     // A suspended account is locked out just like a pending/rejected one, so the
     // top bar hides search, create-course and notifications in both cases.
@@ -73,15 +78,13 @@ const TopNavBar = ({ onNotifClick }: Props) => {
                     </Button>
                 )}
 
-                {/* Notification bell */}
-                {!locked && (
-                    <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                        <Bell size={20} className="text-gray-500" />
-                        {unreadCount > 0 && (
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
-                        )}
-                    </button>
-                )}
+                {/* Notification bell — always visible regardless of account status */}
+                <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Bell size={20} className="text-gray-500" />
+                    {hasUnread && (
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+                    )}
+                </button>
 
                 {/* Divider */}
                 <div className="w-px h-8 bg-gray-300" />
