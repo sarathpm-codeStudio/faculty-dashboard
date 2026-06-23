@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/services/supabase'
 import { notificationService, type NotificationItem } from '@/services/notificationService'
@@ -9,6 +9,26 @@ export const useGetRecentNotifications = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ['notifications', 'recent'],
         queryFn: () => notificationService.getRecentNotifications(),
+        enabled,
+    })
+}
+
+export const useGetUnreadNotifications = (enabled: boolean = true) => {
+    return useQuery({
+        queryKey: ['notifications', 'unread'],
+        queryFn: () => notificationService.getUnreadNotifications(),
+        enabled,
+    })
+}
+
+// Paginated full history for the Read tab. Pages are loaded on demand via
+// fetchNextPage() so we don't pull every notification on first open.
+export const useInfiniteNotifications = (enabled: boolean = true) => {
+    return useInfiniteQuery({
+        queryKey: ['notifications', 'all', 'infinite'],
+        queryFn: ({ pageParam }) => notificationService.getNotificationsPage(pageParam),
+        initialPageParam: 0,
+        getNextPageParam: lastPage => lastPage.nextPage,
         enabled,
     })
 }
@@ -75,6 +95,34 @@ export const useMarkAllNotificationsAsRead = () => {
         mutationFn: () => notificationService.markAllAsRead(),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['notifications'] })
+        },
+    })
+}
+
+// --- Announcement feed (admin announcements, read-tracked) ---------------
+
+export const useGetAnnouncements = (enabled: boolean = true) => {
+    return useQuery({
+        queryKey: ['announcement-feed'],
+        queryFn: () => notificationService.getAnnouncements(),
+        enabled,
+    })
+}
+
+export const useUnreadAnnouncementCount = (enabled: boolean = true) => {
+    return useQuery({
+        queryKey: ['announcement-feed', 'unread-count'],
+        queryFn: () => notificationService.getUnreadAnnouncementCount(),
+        enabled,
+    })
+}
+
+export const useMarkAllAnnouncementsAsRead = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: () => notificationService.markAllAnnouncementsAsRead(),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['announcement-feed'] })
         },
     })
 }

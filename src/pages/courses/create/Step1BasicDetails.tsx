@@ -440,7 +440,21 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
           {/* ── Action buttons ── */}
           <div className="flex flex-col gap-3 lg:mt-auto pt-1">
             {
-              courseDetails?.is_draft && (
+              courseDetails ?
+                courseDetails?.is_draft && (
+                  <Button
+                    variant="white"
+                    onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
+                    fullWidth
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting && activeBtn === 'draft'
+                      ? <Loader2 size={16} className="animate-spin" />
+                      : 'Save as draft'}
+                  </Button>
+                )
+                :
                 <Button
                   variant="white"
                   onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
@@ -452,7 +466,6 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
                     ? <Loader2 size={16} className="animate-spin" />
                     : 'Save as draft'}
                 </Button>
-              )
             }
             <Button
               variant="primary"
@@ -460,10 +473,22 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               type="submit"
               disabled={isSubmitting}
               onClick={() => setActiveBtn('next')}
-            >
+            >(
+              <Button
+                variant="white"
+                onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
+                fullWidth
+                type="submit"
+                disabled={isSubmitting}
+              >
+                {isSubmitting && activeBtn === 'draft'
+                  ? <Loader2 size={16} className="animate-spin" />
+                  : 'Save as draft'}
+              </Button>
+              )
               {isSubmitting && activeBtn === 'next'
                 ? <Loader2 size={16} className="animate-spin" />
-                : <><span>Add Content</span><ArrowRight size={18} /></>}
+                : <><span> Save & Add Content</span><ArrowRight size={18} /></>}
             </Button>
           </div>
         </div>
