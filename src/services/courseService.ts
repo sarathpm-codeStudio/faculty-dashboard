@@ -41,6 +41,7 @@ export const courseService = {
                     title,
                     category,
                     price,
+                    is_free,
                     status,
                     rejection_reason,
                     final_price,
@@ -305,6 +306,7 @@ export const courseService = {
           discount_type: data.discount_type === "" ? null : data.discount_type,
           final_price: data.final_price,
           enableCoupons: data.enableCoupons,
+          is_free: data.is_free,
         })
         .eq("id", courseId)
         .select()

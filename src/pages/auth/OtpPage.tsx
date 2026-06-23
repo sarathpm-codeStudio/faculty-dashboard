@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
 import AuthLayout from '@/components/layout/AuthLayout'
@@ -40,6 +41,7 @@ const OtpPage = () => {
     const phone: string = location.state?.phone ?? ''
     const mode: 'login' | 'signup' = location.state?.mode ?? 'login'
     const login = useAuthStore((state) => state.login)
+    const queryClient = useQueryClient()
 
     const [otp, setOtp] = useState(Array(6).fill(''))
     const [error, setError] = useState('')
@@ -81,6 +83,11 @@ const OtpPage = () => {
                 toast.error(msg)
                 return
             }
+
+            // Clear any cache left over from a previous session before loading
+            // this user's data — guards against stale data when the prior logout
+            // didn't run (e.g. session expiry redirect).
+            queryClient.clear()
 
             login(
                 {

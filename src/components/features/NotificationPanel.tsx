@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, BookOpen, Users, Megaphone, CheckCheck, Bell, Loader2, Volume2, VolumeX } from 'lucide-react'
@@ -9,11 +9,23 @@ import {
     playNotificationSound,
 } from '@/utils/notificationSound'
 import {
-    useGetRecentNotifications,
+    useGetUnreadNotifications,
+    useInfiniteNotifications,
     useMarkAllNotificationsAsRead,
     useMarkNotificationAsRead,
+    useGetAnnouncements,
+    useUnreadAnnouncementCount,
+    useMarkAllAnnouncementsAsRead,
 } from '@/hooks/notification'
 import type { NotificationItem } from '@/services/notificationService'
+
+type TabKey = 'unread' | 'read' | 'announcement'
+
+const tabs: { key: TabKey; label: string }[] = [
+    { key: 'unread', label: 'Unread' },
+    { key: 'read', label: 'Read' },
+    { key: 'announcement', label: 'Announcement' },
+]
 
 const iconConfig: Record<string, { bg: string; color: string; Icon: typeof Bell }> = {
     course: { bg: 'bg-blue-50', color: 'text-[#2c1452]', Icon: BookOpen },
@@ -72,11 +84,50 @@ interface Props {
 
 const NotificationPanel = ({ open, onClose }: Props) => {
     const navigate = useNavigate()
-    const { data: notifications = [], isLoading } = useGetRecentNotifications(open)
+    const [soundOn, setSoundOn] = useState(isNotificationSoundEnabled)
+    const [activeTab, setActiveTab] = useState<TabKey>('unread')
+
+    // Unread list drives the Unread tab and the unread badge — fetched whenever
+    // the panel is open. The Read tab loads its history page-by-page and only
+    // starts once that tab is actually opened.
+    const { data: unreadItems = [], isLoading: unreadLoading } = useGetUnreadNotifications(open)
+    const readQuery = useInfiniteNotifications(open && activeTab === 'read')
+    const readItems = readQuery.data?.pages.flatMap(p => p.items) ?? []
+
+    // Announcement feed (real data, read-tracked). The unread count drives the
+    // badge on the Announcement tab; the list loads when that tab is opened.
+    const { data: announcementUnreadCount = 0 } = useUnreadAnnouncementCount(open)
+    const { data: announcementFeed = [], isLoading: announcementLoading } = useGetAnnouncements(
+        open && activeTab === 'announcement',
+    )
+
     const markAllAsRead = useMarkAllNotificationsAsRead()
     const markAsRead = useMarkNotificationAsRead()
+    const markAllAnnouncementsAsRead = useMarkAllAnnouncementsAsRead()
 
-    const [soundOn, setSoundOn] = useState(isNotificationSoundEnabled)
+    // Opening the Announcement tab marks every visible announcement as read in
+    // one shot (no per-item click). Guarded on the unread count so we only fire
+    // the mutation when there's actually something to clear.
+    const { mutate: markAllAnnouncements } = markAllAnnouncementsAsRead
+    useEffect(() => {
+        if (open && activeTab === 'announcement' && announcementUnreadCount > 0) {
+            markAllAnnouncements()
+        }
+    }, [open, activeTab, announcementUnreadCount, markAllAnnouncements])
+
+    // Shape the announcement feed into the same item type the list renders.
+    const announcementItems: NotificationItem[] = announcementFeed.map(a => ({
+        id: a.id,
+        user_id: '',
+        type: 'announcement',
+        title: a.title,
+        body: a.content,
+        data: null,
+        is_read: a.is_read,
+        sent_at: null,
+        created_at: a.created_at,
+        group: 'Today',
+    }))
 
     // Mark the notification read, then redirect to its target page (if any).
     const handleNotificationClick = (notif: NotificationItem) => {
@@ -95,9 +146,32 @@ const NotificationPanel = ({ open, onClose }: Props) => {
         if (next) playNotificationSound() // preview the chime when turning on
     }
 
-    const unreadCount = notifications.filter(n => !n.is_read).length
-    const groups: ('Today' | 'Yesterday')[] = ['Today', 'Yesterday']
-    const hasNotifications = notifications.length > 0
+    const unreadCount = unreadItems.length
+
+    // Items shown for the active tab:
+    //  - unread: only unread notifications
+    //  - read: full notification history (paginated via "Load more")
+    //  - announcement: placeholder announcements
+    const tabItems: NotificationItem[] =
+        activeTab === 'unread'
+            ? unreadItems
+            : activeTab === 'read'
+              ? readItems
+              : announcementItems
+
+    const isLoading =
+        activeTab === 'unread'
+            ? unreadLoading
+            : activeTab === 'read'
+              ? readQuery.isLoading
+              : announcementLoading
+    const hasNotifications = tabItems.length > 0
+
+    const emptyCopy: Record<TabKey, { title: string; subtitle: string }> = {
+        unread: { title: "You're all caught up", subtitle: 'No unread notifications right now.' },
+        read: { title: 'No notifications yet', subtitle: 'Your notifications will appear here.' },
+        announcement: { title: 'No announcements', subtitle: 'There are no announcements right now.' },
+    }
 
     return (
         <AnimatePresence>
@@ -162,6 +236,41 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                             </div>
                         </div>
 
+                        {/* Tabs */}
+                        <div className="flex items-center gap-1 px-3 pt-3 border-b border-gray-100">
+                            {tabs.map(tab => {
+                                const isActive = activeTab === tab.key
+                                const count =
+                                    tab.key === 'unread'
+                                        ? unreadCount
+                                        : tab.key === 'announcement'
+                                          ? announcementUnreadCount
+                                          : 0
+                                return (
+                                    <button
+                                        key={tab.key}
+                                        onClick={() => setActiveTab(tab.key)}
+                                        className={`relative flex items-center gap-1.5 px-3 pb-2.5 text-sm font-bold transition-colors ${
+                                            isActive ? 'text-[#2c1452]' : 'text-[#767683] hover:text-[#2c1452]'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                        {count > 0 && (
+                                            <span className="min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center">
+                                                {count}
+                                            </span>
+                                        )}
+                                        {isActive && (
+                                            <motion.span
+                                                layoutId="notif-tab-underline"
+                                                className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full bg-[#2c1452]"
+                                            />
+                                        )}
+                                    </button>
+                                )
+                            })}
+                        </div>
+
                         {/* Notification list */}
                         <div className="flex-1 overflow-y-auto scrollbar-hide">
                             {isLoading ? (
@@ -173,67 +282,62 @@ const NotificationPanel = ({ open, onClose }: Props) => {
                                     <div className="w-12 h-12 rounded-2xl bg-[#F2F4F6] flex items-center justify-center mb-3">
                                         <Bell size={20} className="text-[#767683]" />
                                     </div>
-                                    <Paragraph className="!text-sm font-bold text-[#191c1e]">You're all caught up</Paragraph>
-                                    <Paragraph className="!text-xs text-[#767683] mt-1">No new notifications today or yesterday.</Paragraph>
+                                    <Paragraph className="!text-sm font-bold text-[#191c1e]">{emptyCopy[activeTab].title}</Paragraph>
+                                    <Paragraph className="!text-xs text-[#767683] mt-1">{emptyCopy[activeTab].subtitle}</Paragraph>
                                 </div>
                             ) : (
-                                groups.map(group => {
-                                    const items = notifications.filter(n => n.group === group)
-                                    if (items.length === 0) return null
-                                    return (
-                                        <div key={group}>
-                                            {/* Group label */}
-                                            <div className="px-5 py-3 bg-[#F2F4F6]">
-                                                <Paragraph className="!text-[11px] font-bold text-[#767683] uppercase tracking-widest">
-                                                    {group}
+                                <div className="divide-y divide-gray-50">
+                                    {tabItems.map((notif: NotificationItem, i: number) => {
+                                        const { bg, color, Icon } = iconConfig[notif.type] ?? defaultIcon
+                                        const isAnnouncement = activeTab === 'announcement'
+                                        return (
+                                            <motion.button
+                                                key={notif.id}
+                                                onClick={() => !isAnnouncement && handleNotificationClick(notif)}
+                                                initial={{ opacity: 0, y: 8 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.25, ease: 'easeOut', delay: 0.08 + i * 0.03 }}
+                                                className={`w-full flex items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50 ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
+                                            >
+                                                <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center shrink-0 mt-0.5`}>
+                                                    <Icon size={16} className={color} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <Paragraph className={`!text-sm ${!notif.is_read ? 'font-bold text-[#191c1e]' : 'font-medium text-[#191c1e]'}`}>
+                                                        {notif.title}
+                                                    </Paragraph>
+                                                    <Paragraph className="!text-xs text-[#767683] mt-0.5 leading-relaxed line-clamp-2">
+                                                        {notif.body}
+                                                    </Paragraph>
+                                                    <Paragraph className="!text-[10px] text-[#767683] mt-1.5 font-medium">
+                                                        {formatTime(notif.created_at)}
+                                                    </Paragraph>
+                                                </div>
+                                                {!notif.is_read && (
+                                                    <span className="w-2 h-2 rounded-full bg-[#2c1452] shrink-0 mt-1.5" />
+                                                )}
+                                            </motion.button>
+                                        )
+                                    })}
+
+                                    {activeTab === 'read' && readQuery.hasNextPage && (
+                                        <div className="px-5 py-4">
+                                            <button
+                                                onClick={() => readQuery.fetchNextPage()}
+                                                disabled={readQuery.isFetchingNextPage}
+                                                className="w-full py-2.5 rounded-xl bg-[#F2F4F6] hover:bg-gray-200 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                            >
+                                                {readQuery.isFetchingNextPage && (
+                                                    <Loader2 size={14} className="text-[#2c1452] animate-spin" />
+                                                )}
+                                                <Paragraph className="!text-sm font-bold text-[#2c1452]">
+                                                    {readQuery.isFetchingNextPage ? 'Loading…' : 'Load more'}
                                                 </Paragraph>
-                                            </div>
-
-                                            {/* Items */}
-                                            <div className="divide-y divide-gray-50">
-                                                {items.map((notif: NotificationItem, i: number) => {
-                                                    const { bg, color, Icon } = iconConfig[notif.type] ?? defaultIcon
-                                                    return (
-                                                        <motion.button
-                                                            key={notif.id}
-                                                            onClick={() => handleNotificationClick(notif)}
-                                                            initial={{ opacity: 0, y: 8 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            transition={{ duration: 0.25, ease: 'easeOut', delay: 0.12 + i * 0.03 }}
-                                                            className={`w-full flex items-start gap-3 px-5 py-4 text-left transition-colors hover:bg-gray-50 ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
-                                                        >
-                                                            <div className={`w-9 h-9 rounded-xl ${bg} flex items-center justify-center shrink-0 mt-0.5`}>
-                                                                <Icon size={16} className={color} />
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <Paragraph className={`!text-sm ${!notif.is_read ? 'font-bold text-[#191c1e]' : 'font-medium text-[#191c1e]'}`}>
-                                                                    {notif.title}
-                                                                </Paragraph>
-                                                                <Paragraph className="!text-xs text-[#767683] mt-0.5 leading-relaxed line-clamp-2">
-                                                                    {notif.body}
-                                                                </Paragraph>
-                                                                <Paragraph className="!text-[10px] text-[#767683] mt-1.5 font-medium">
-                                                                    {formatTime(notif.created_at)}
-                                                                </Paragraph>
-                                                            </div>
-                                                            {!notif.is_read && (
-                                                                <span className="w-2 h-2 rounded-full bg-[#2c1452] shrink-0 mt-1.5" />
-                                                            )}
-                                                        </motion.button>
-                                                    )
-                                                })}
-                                            </div>
+                                            </button>
                                         </div>
-                                    )
-                                })
+                                    )}
+                                </div>
                             )}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-5 py-4 border-t border-gray-100">
-                            <button className="w-full py-2.5 rounded-xl bg-[#F2F4F6] hover:bg-gray-200 transition-colors">
-                                <Paragraph className="!text-sm font-bold text-[#2c1452]">View All Notifications</Paragraph>
-                            </button>
                         </div>
                     </motion.div>
                 </>

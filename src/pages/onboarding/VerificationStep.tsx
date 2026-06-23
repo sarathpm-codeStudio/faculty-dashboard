@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import OnboardingLayout from './OnboardingLayout'
 import { Button, Paragraph } from '@/components/ui'
@@ -14,6 +15,18 @@ interface Props {
 }
 
 const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClass = '' }: Props) => {
+    const [isSubmitting, setIsSubmitting] = useState(false)
+
+    const handleSubmit = async () => {
+        if (isSubmitting) return
+        setIsSubmitting(true)
+        try {
+            await onSubmit()
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
     const fullName = `${identity.first_name} ${identity.last_name}`.trim() || 'Salsabeel k'
     const department = qualifications[0]?.fieldOfStudy || 'CMA'
     const experience = qualifications[0]?.teachingExperience || '4 Years'
@@ -31,19 +44,19 @@ const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClas
         <OnboardingLayout
             step={5}
             total={5}
-            title="Review & Finalize"
+            title="Finalize"
             subtitle="Please ensure all academic credentials and personal details are accurate. Once submitted, your profile will be reviewed by the Admin."
             backLabel="Back to Policies"
             onBack={onBack}
             animClass={animClass}
         >
-            <div className="flex flex-col gap-4 w-full">
+            <div className="flex flex-col gap-4 w-full items-center">
 
                 {/* Top row — two boxes */}
-                <div className="flex gap-4 items-start">
+                {/* <div className="flex gap-4 items-start"> */}
 
                     {/* Left — Academic Identity */}
-                    <div className="flex-1 bg-white rounded-xl border-2 border-dotted border-gray-200 p-5">
+                    {/* <div className="flex-1 bg-white rounded-xl border-2 border-dotted border-gray-200 p-5">
                         <div className="flex gap-4">
 
                             <div className="flex flex-col gap-3 flex-1">
@@ -79,28 +92,28 @@ const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClas
                             </div>
 
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Right — Submit card */}
                     <div
-                        className="w-80 rounded-xl p-5 flex flex-col gap-4 flex-shrink-0"
+                        className="w-full max-w-md min-h-[340px] rounded-2xl p-10 flex flex-col justify-center gap-6 flex-shrink-0"
                         style={{ background: 'linear-gradient(135deg, #2c1452, #2c1452)' }}
                     >
-                        <h3 className="text-white font-semibold text-base leading-snug">
+                        <h3 className="text-white font-semibold text-2xl leading-snug">
                             Ready to Submit?
                         </h3>
-                        <Button variant="white" fullWidth onClick={onSubmit}>
+                        <Button variant="white" fullWidth loading={isSubmitting} onClick={handleSubmit}>
                             Submit for Verification <IoMdArrowForward />
                         </Button>
-                        <p className="text-indigo-300 text-xs leading-relaxed">
+                        <p className="text-indigo-300 text-sm leading-relaxed">
                             Final step of the onboarding process
                         </p>
                     </div>
 
-                </div>
+                {/* </div> */}
 
                 {/* Bottom — Uploaded Documents */}
-                <div>
+                {/* <div>
                     <Paragraph className="text-gray-400 uppercase tracking-wider mb-3">Uploaded Documents</Paragraph>
                     <div className="flex flex-wrap gap-3">
                         {files.map((q) => (
@@ -110,13 +123,11 @@ const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClas
                             >
                                 <div className="flex items-center gap-2">
                                     <div className="w-10 h-10 bg-[#49D7F2] rounded flex items-center justify-center border border-red-100">
-                                        {/* <span className="text-[#49D7F4] text-[9px] font-bold">PDF</span> */}
                                         <HiOutlineBadgeCheck size={25} className="text-[#00A6BF] flex-shrink-0" />
                                     </div>
                                     <div>
                                         <Paragraph className='text-bold'> {q.fileName} </Paragraph>
 
-                                        {/* <p className="text-xs font-medium text-gray-700 truncate max-w-[160px]">{q.fileName}</p> */}
                                         <p className="text-xs text-gray-400">{q.fileSize}</p>
                                     </div>
                                 </div>
@@ -124,7 +135,7 @@ const VerificationStep = ({ identity, qualifications, onBack, onSubmit, animClas
                             </div>
                         ))}
                     </div>
-                </div>
+                </div> */}
 
             </div>
         </OnboardingLayout>

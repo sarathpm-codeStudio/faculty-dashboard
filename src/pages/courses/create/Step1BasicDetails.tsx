@@ -44,6 +44,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   const [vidPreview, setVidPreview] = useState<string | null>(vidPreviewUrl ?? null)
   const [videoTranscodeStatus, setVideoTranscodeStatus] = useState<string | null>(null)
   const [langOpen, setLangOpen] = useState(false)
+  const langRef = useRef<HTMLDivElement>(null)
   const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>(null)
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false)
   const [resubmitModalOpen, setResubmitModalOpen] = useState(false)
@@ -133,6 +134,18 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
       }
     }
   }, [courseDetails])
+
+  // Close the language dropdown when clicking outside of it
+  useEffect(() => {
+    if (!langOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [langOpen])
 
   const coverPreview =
     imgPreview ?? formik.values.cover_image_url ?? courseDetails?.cover_image ?? null
@@ -288,7 +301,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
           </div>
 
           {/* Instruction Language */}
-          <div className="relative">
+          <div className="relative" ref={langRef}>
             <p className="text-sm font-bold text-gray-700 mb-1.5">Instruction Language</p>
             <div
               className={`flex flex-wrap items-center gap-2 min-h-[56px] px-3 py-2.5 bg-[#F2F4F6] border rounded-xl cursor-pointer transition-colors ${formik.touched.languages && formik.errors.languages
@@ -440,7 +453,21 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
           {/* ── Action buttons ── */}
           <div className="flex flex-col gap-3 lg:mt-auto pt-1">
             {
-              courseDetails?.is_draft && (
+              courseDetails ?
+                courseDetails?.is_draft && (
+                  <Button
+                    variant="white"
+                    onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
+                    fullWidth
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting && activeBtn === 'draft'
+                      ? <Loader2 size={16} className="animate-spin" />
+                      : 'Save as draft'}
+                  </Button>
+                )
+                :
                 <Button
                   variant="white"
                   onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
@@ -452,7 +479,6 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
                     ? <Loader2 size={16} className="animate-spin" />
                     : 'Save as draft'}
                 </Button>
-              )
             }
             <Button
               variant="primary"
@@ -463,7 +489,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
             >
               {isSubmitting && activeBtn === 'next'
                 ? <Loader2 size={16} className="animate-spin" />
-                : <><span>Add Content</span><ArrowRight size={18} /></>}
+                : <><span> Save & Add Content</span><ArrowRight size={18} /></>}
             </Button>
           </div>
         </div>

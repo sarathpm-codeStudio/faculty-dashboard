@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import {
     LayoutDashboard, BookOpen, Package, MessageCircle,
     Users, Megaphone,
@@ -37,6 +38,7 @@ const SideNavBar = () => {
     const accountRef = useRef<HTMLDivElement>(null)
     const asideRef = useRef<HTMLElement>(null)
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
     const { user, logout, isPending, isSuspended } = useAuthStore()
 
     // A suspended account is locked out of the dashboard exactly like a
@@ -83,6 +85,9 @@ const SideNavBar = () => {
     const handleLogout = async () => {
         await authService.signOut()
         logout()
+        // Wipe the React Query cache so the next user who logs in (without a
+        // page reload) never sees the previous user's cached data.
+        queryClient.clear()
         navigate('/auth/login')
     }
 
@@ -102,10 +107,6 @@ const SideNavBar = () => {
                 ref={asideRef}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                onClick={() => {
-                    // Tap-to-open only on tablet; laptop keeps hover-only behaviour.
-                    if (window.matchMedia('(max-width: 1023px)').matches) setClickOpen(true)
-                }}
                 style={{
                     width: expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH,
                     transition: WIDTH_TRANSITION,

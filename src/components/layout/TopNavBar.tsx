@@ -7,7 +7,8 @@ import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
 import { useNavigate } from 'react-router-dom'
 import { Button, Button2, Input, Paragraph } from '@/components/ui'
-import { useUnreadNotificationCount } from '@/hooks/notification'
+import { useUnreadNotificationCount, useUnreadAnnouncementCount } from '@/hooks/notification'
+import { useQueryClient } from '@tanstack/react-query'
 
 interface Props {
     onNotifClick: () => void
@@ -16,7 +17,13 @@ interface Props {
 const TopNavBar = ({ onNotifClick }: Props) => {
     const { user, logout, isPending, isSuspended } = useAuthStore()
     const navigate = useNavigate()
+    const queryClient = useQueryClient()
     const { data: unreadCount = 0 } = useUnreadNotificationCount()
+    const { data: unreadAnnouncementCount = 0 } = useUnreadAnnouncementCount()
+
+    // The bell shows a red dot when there's anything unread — either a personal
+    // notification or an admin announcement.
+    const hasUnread = unreadCount > 0 || unreadAnnouncementCount > 0
 
     // A suspended account is locked out just like a pending/rejected one, so the
     // top bar hides search, create-course and notifications in both cases.
@@ -37,6 +44,9 @@ const TopNavBar = ({ onNotifClick }: Props) => {
     const handleLogout = async () => {
         await authService.signOut()
         logout()
+        // Wipe the React Query cache so the next user who logs in (without a
+        // page reload) never sees the previous user's cached data.
+        queryClient.clear()
         navigate('/auth/login')
     }
 
@@ -68,17 +78,13 @@ const TopNavBar = ({ onNotifClick }: Props) => {
                     </Button>
                 )}
 
-                {/* Notification bell */}
-                {!locked && (
-                    <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                        <Bell size={20} className="text-gray-500" />
-                        {unreadCount > 0 && (
-                            <span className="absolute top-1 right-1 min-w-4 h-4 px-1 bg-red-500 rounded-full text-white text-[9px] flex items-center justify-center font-medium">
-                                {unreadCount > 99 ? '99+' : unreadCount}
-                            </span>
-                        )}
-                    </button>
-                )}
+                {/* Notification bell — always visible regardless of account status */}
+                <button onClick={onNotifClick} className="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Bell size={20} className="text-gray-500" />
+                    {hasUnread && (
+                        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+                    )}
+                </button>
 
                 {/* Divider */}
                 <div className="w-px h-8 bg-gray-300" />

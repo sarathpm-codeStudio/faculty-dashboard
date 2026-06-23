@@ -238,39 +238,71 @@ const Step1GeneralInfo = ({ form, update, onNext, onSaveDraft, isSubmiting, setI
               error={formik.touched.course && formik.errors.course ? formik.errors.course : undefined}
             />
 
-            <Select
-              label="Module"
-              options={moduleOptions}
-              placeholder="Select module"
-              value={formik.values.module}
-              loading={!!courseId && foldersLoading}
-              disabled={isEdit || !courseId || foldersLoading}
-              onChange={e => {
-                const selectedModule = moduleOptions.find(option => option.value === e.target.value)
-                setModuleId(e.target.value)
-                formik.setFieldValue('module', e.target.value)
-                formik.setFieldValue('moduleTitle', selectedModule?.label || '')
-                formik.setFieldValue('material', '')
-                formik.setFieldValue('materialTitle', '')
-                setMaterialOptions([])
-              }}
-            />
+            <div className="relative">
+              {!isEdit && formik.values.module && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModuleId('')
+                    formik.setFieldValue('module', '')
+                    formik.setFieldValue('moduleTitle', '')
+                    formik.setFieldValue('material', '')
+                    formik.setFieldValue('materialTitle', '')
+                    setMaterialOptions([])
+                  }}
+                  className="absolute right-0 top-0 text-xs font-semibold text-red-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              )}
+              <Select
+                label="Module"
+                options={moduleOptions}
+                placeholder="Select module"
+                value={formik.values.module}
+                loading={!!courseId && foldersLoading}
+                disabled={isEdit || !courseId || foldersLoading}
+                onChange={e => {
+                  const selectedModule = moduleOptions.find(option => option.value === e.target.value)
+                  setModuleId(e.target.value)
+                  formik.setFieldValue('module', e.target.value)
+                  formik.setFieldValue('moduleTitle', selectedModule?.label || '')
+                  formik.setFieldValue('material', '')
+                  formik.setFieldValue('materialTitle', '')
+                  setMaterialOptions([])
+                }}
+              />
+            </div>
           </div>
 
-          <Select
-            label="Material"
-            options={materialOptions}
-            placeholder={materialsLoading ? 'Loading materials...' : 'Select material'}
-            value={formik.values.material}
-            loading={!!moduleId && materialsLoading}
-            disabled={isEdit || !moduleId || materialsLoading}
-            onChange={e => {
-              const selectedMaterial = materialOptions.find(option => option.value === e.target.value)
-              formik.setFieldValue('material', e.target.value)
-              formik.setFieldValue('materialTitle', selectedMaterial?.label || '')
-            }}
-            error={formik.touched.material && formik.errors.material ? formik.errors.material : undefined}
-          />
+          <div className="relative">
+            {!isEdit && formik.values.material && (
+              <button
+                type="button"
+                onClick={() => {
+                  formik.setFieldValue('material', '')
+                  formik.setFieldValue('materialTitle', '')
+                }}
+                className="absolute right-0 top-0 text-xs font-semibold text-red-500 hover:text-red-600"
+              >
+                Remove
+              </button>
+            )}
+            <Select
+              label="Material"
+              options={materialOptions}
+              placeholder={materialsLoading ? 'Loading materials...' : 'Select material'}
+              value={formik.values.material}
+              loading={!!moduleId && materialsLoading}
+              disabled={isEdit || !moduleId || materialsLoading}
+              onChange={e => {
+                const selectedMaterial = materialOptions.find(option => option.value === e.target.value)
+                formik.setFieldValue('material', e.target.value)
+                formik.setFieldValue('materialTitle', selectedMaterial?.label || '')
+              }}
+              error={formik.touched.material && formik.errors.material ? formik.errors.material : undefined}
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Select
