@@ -3,9 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     ArrowLeft, Share2, Trash2, Pencil, Clock,
-    Layers, BookOpen, Wallet, Users, MousePointer2, Globe, TrendingUp,
+    Layers, BookOpen, Wallet, Users, MousePointer2, Globe, TrendingUp, AlertTriangle,
 } from 'lucide-react'
-import { Button, Heading, Paragraph, Skeleton, Subheading, StarRating, ConfirmDeleteModal } from '@/components/ui'
+import { Button, Heading, Paragraph, Skeleton, Subheading, StarRating, ConfirmDeleteModal, Modal } from '@/components/ui'
 import { ReviewCard, VideoPlayer } from '@/components/features'
 import man from '@/assets/images/man.jpg'
 import coverImge from "@/assets/images/cou1.png"
@@ -44,11 +44,18 @@ const CourseDetailPage = () => {
     const navigate = useNavigate()
     const { id }: any = useParams()
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [rejectionModalOpen, setRejectionModalOpen] = useState(false)
 
     // query
     const { data: course, isLoading, error } = useGetCourseById(id)
     const { data: reviews, isLoading: reviewsLoading, error: reviewsError } = useGetCourseReviews(id, { page: 1, limit: 2 })
     const { mutateAsync: deleteCourse, isPending: deleteCoursePending } = useDeleteCourse()
+
+    useEffect(() => {
+        if (course?.status === 'REJECTED') {
+            setRejectionModalOpen(true)
+        }
+    }, [course])
 
     const confirmDeleteCourse = async () => {
         const toastId = toast.loading('Deleting course...')
@@ -279,12 +286,17 @@ const CourseDetailPage = () => {
                         {...fadeUp(0.14)}
                     >
                         {/* Price row */}
-                        <div className="flex items-baseline gap-2 mb-2">
-                            <Heading className="font-bold text-[#2c1452]">₹{formatNumber(course?.final_price)}</Heading>
-                            {/* <span className="text-3xl font-extrabold text-[#191c1e]">₹3,500</span> */}
-                            <Paragraph className="text-[#767683] line-through font-bold">₹{formatNumber(course?.price)}</Paragraph>
-                            {/* <span className="text-sm text-[#767683] line-through">₹4,500</span> */}
-                        </div>
+                        {
+                            course?.is_free ?
+                                <span className="text-2xl font-extrabold text-[#191c1e]">Free</span>
+                                :
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <Heading className="font-bold text-[#2c1452]">₹{formatNumber(course?.final_price)}</Heading>
+                                    {/* <span className="text-3xl font-extrabold text-[#191c1e]">₹3,500</span> */}
+                                    <Paragraph className="text-[#767683] line-through font-bold">₹{formatNumber(course?.price)}</Paragraph>
+                                    {/* <span className="text-sm text-[#767683] line-through">₹4,500</span> */}
+                                </div>
+                        }
 
                         {/* Stars */}
                         <StarRating rating={course?.avg_rating} />
@@ -334,6 +346,43 @@ const CourseDetailPage = () => {
                 itemName={course?.title}
                 loading={deleteCoursePending}
             />
+
+            <Modal
+                open={rejectionModalOpen}
+                onClose={() => setRejectionModalOpen(false)}
+                title="Course Rejected"
+                footer={
+                    <Button variant="primary" fullWidth onClick={() => setRejectionModalOpen(false)}>
+                        Got it, let&apos;s fix it
+                    </Button>
+                }
+            >
+                {/* Header */}
+                <div className="flex items-start gap-4">
+                    <div className="shrink-0 w-12 h-12 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center">
+                        <AlertTriangle size={22} className="text-red-500" strokeWidth={2.2} />
+                    </div>
+                    <div className="pt-0.5">
+                        <p className="text-[15px] font-bold text-[#191c1e] leading-snug">This course was rejected</p>
+                        <p className="text-[13px] text-gray-500 mt-1 leading-relaxed">
+                            An admin reviewed your course and sent it back. Review the note below, update the details, and resubmit.
+                        </p>
+                    </div>
+                </div>
+
+                {/* Reason card */}
+                <div className="rounded-xl border border-gray-200 bg-gray-50/60 overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                            Reason for rejection
+                        </p>
+                    </div>
+                    <p className="px-4 py-3.5 text-[13.5px] leading-relaxed text-[#3a3a45] whitespace-pre-line">
+                        {course?.rejection_reason || 'No specific reason was provided by the admin.'}
+                    </p>
+                </div>
+            </Modal>
         </div>
     )
 }

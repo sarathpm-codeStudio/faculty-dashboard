@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, ChevronDown, ArrowRight, Image, Video, Upload, Loader2, AlertTriangle, Clock } from 'lucide-react'
+import { X, ChevronDown, ArrowRight, Image, Video, Upload, Loader2, Clock } from 'lucide-react'
 import { Button, Input, Textarea, Select, ImageCropperModal, Skeleton, Modal } from '@/components/ui'
 import type { CourseFormData } from './index'
 import { useFormik } from 'formik'
@@ -46,7 +46,6 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   const [langOpen, setLangOpen] = useState(false)
   const langRef = useRef<HTMLDivElement>(null)
   const [activeBtn, setActiveBtn] = useState<'draft' | 'next' | null>(null)
-  const [rejectionModalOpen, setRejectionModalOpen] = useState(false)
   const [resubmitModalOpen, setResubmitModalOpen] = useState(false)
 
   // ─── Video upload states ──────────────────────────────
@@ -125,9 +124,6 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
       }
       if (courseDetails?.cover_image) {
         setImgPreview(courseDetails?.cover_image)
-      }
-      if (courseDetails?.status === 'REJECTED') {
-        setRejectionModalOpen(true)
       }
       if (courseDetails?.status === 'RESUBMIT') {
         setResubmitModalOpen(true)
@@ -494,46 +490,6 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
           </div>
         </div>
       </div>
-
-      <Modal
-        open={rejectionModalOpen}
-        onClose={() => setRejectionModalOpen(false)}
-        title="Course Rejected"
-        footer={
-          <Button variant="primary" fullWidth onClick={() => setRejectionModalOpen(false)}>
-            Got it, let&apos;s fix it
-          </Button>
-        }
-      >
-        {/* Hero */}
-        <div className="flex flex-col items-center gap-3 text-center -mt-1">
-          <div className="relative">
-            <span className="absolute inset-0 rounded-full bg-red-400/20 animate-ping" />
-            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg shadow-red-500/30">
-              <AlertTriangle size={28} className="text-white" strokeWidth={2.4} />
-            </div>
-          </div>
-          <div>
-            <p className="text-base font-bold text-[#191c1e]">This course was rejected</p>
-            <p className="text-xs text-gray-500 mt-1 max-w-xs">
-              An admin reviewed your course and sent it back. Review the note below, update the details, and resubmit.
-            </p>
-          </div>
-        </div>
-
-        {/* Reason card */}
-        <div className="rounded-2xl border border-red-100 bg-gradient-to-b from-red-50/80 to-white overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border-b border-red-100">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            <p className="text-[11px] font-bold uppercase tracking-wide text-red-600">
-              Reason for rejection
-            </p>
-          </div>
-          <p className="px-4 py-3.5 text-sm leading-relaxed text-[#3a3a45] whitespace-pre-line">
-            {courseDetails?.rejection_reason || 'No specific reason was provided by the admin.'}
-          </p>
-        </div>
-      </Modal>
 
       <Modal
         open={resubmitModalOpen}
