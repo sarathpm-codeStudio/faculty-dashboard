@@ -24,6 +24,22 @@ export const onBoardingService = {
         }
     },
 
+    // remove any existing onboarding rows for this faculty so a re-submit
+    // after a partial failure stays idempotent (no duplicate rows)
+    clearFacultyOnboardingRows: async (faculty_id: any) => {
+        const { error: academicError } = await supabase
+            .from('academic_profiles')
+            .delete()
+            .eq('faculty_id', faculty_id)
+        if (academicError) throw academicError
+
+        const { error: idError } = await supabase
+            .from('document_verifications')
+            .delete()
+            .eq('user_id', faculty_id)
+        if (idError) throw idError
+    },
+
     // create academic profiles
 
     createAcademicProfiles: async (data: any[], faculty_id: any) => {

@@ -93,6 +93,9 @@ const OnboardingPage = () => {
       }, id)
 
       if (result) {
+        // clear any rows left behind by a previous partial submit so retries
+        // don't hit duplicate-key errors or create duplicate qualifications
+        await onBoardingService.clearFacultyOnboardingRows(id)
         // add qualifications
         await onBoardingService.createAcademicProfiles(qualifications, id)
         // add id verification
