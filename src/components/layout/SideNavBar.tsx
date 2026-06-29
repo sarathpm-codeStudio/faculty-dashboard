@@ -116,13 +116,17 @@ const SideNavBar = () => {
             >
                 {/* Logo */}
                 <div
-                    className={`flex items-center border-b border-gray-100  transition-[padding] duration-300 ease-out ${collapsed ? 'justify-center px-1' : 'px-1'}`}
+                    onClick={() => navigate('/dashboard')}
+                    role="button"
+                    title="Go to Dashboard"
+                    className={`flex items-center border-b border-gray-100 cursor-pointer transition-[padding] duration-300 ease-out ${collapsed ? 'justify-center px-1' : 'px-1'}`}
                 >
                     <img
                         src={logo}
                         alt="logo"
                         className={`shrink-0 object-contain ${collapsed ? 'w-20 h-auto opacity-100' : 'max-w-0 w-0 h-0 opacity-0'}`}
                         style={{ transition: LABEL_TRANSITION }}
+
                     />
                     <img
                         src={title_logo}
@@ -188,8 +192,8 @@ const SideNavBar = () => {
                         {accountOpen && (
                             <div
                                 className={`absolute bg-white rounded-xl border border-gray-100 shadow-lg overflow-hidden z-50 min-w-[220px] ${collapsed
-                                        ? 'left-full bottom-0 ml-2'
-                                        : 'bottom-full mb-2 left-0 right-0'
+                                    ? 'left-full bottom-0 ml-2'
+                                    : 'bottom-full mb-2 left-0 right-0'
                                     }`}
                             >
                                 <button
