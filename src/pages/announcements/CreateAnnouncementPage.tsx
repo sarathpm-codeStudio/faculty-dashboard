@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CalendarDays, ImageIcon, Loader2, Send } from 'lucide-react'
+import { ArrowLeft, CalendarDays, Loader2, Send } from 'lucide-react'
 import { RocketLaunch } from '@phosphor-icons/react'
 import { Button, Heading, Input, Paragraph, Select, Textarea } from '@/components/ui'
-import { UploadBox } from '@/components/features/UploadBox'
 import { useFormik } from 'formik'
 import { announcementSchema } from '@/utils/validator/announcement.validator'
-import { storageService } from '@/services'
 import { toast } from 'sonner'
 import { useGetAllCourses } from '@/hooks/index'
 import { useCreateAnnouncement, useGetAnnouncementById, useUpdateAnnouncement } from '@/hooks/announcement'
-import RichTextEditor from '@/components/ui/RichTextEditor'
+import { getTodayDate, parseTimePeriod } from '@/utils/timePeriod'
 
 
 
@@ -18,10 +16,10 @@ const CreateAnnouncementPage = () => {
   const navigate = useNavigate()
   const { id } = useParams()
 
+  // Block past dates in the pickers — only today or future days are selectable.
+  const today = getTodayDate()
 
-  const [coverImage, setCoverImage] = useState<File | null>(null)
-  const [coverUploading, setCoverUploading] = useState(false)
-  const [coverPreview, setCoverPreview] = useState<string | null>(null)
+
   const [isDraft, setIsDraft] = useState(false)
   const [audience, setAudience] = useState<{ value: string, label: string }[]>([{ value: 'all', label: 'All Registered Students' }])
 
@@ -50,13 +48,13 @@ const CreateAnnouncementPage = () => {
 
   useEffect(() => {
     if (announcement) {
+      const period = parseTimePeriod(announcement?.time_period)
       formik.setValues({
         title: announcement?.title,
         audience: announcement?.course_id || "all",
-        startDate: announcement?.time_period.split('/')[0],
-        endDate: announcement?.time_period.split('/')[1],
+        startDate: period?.start || '',
+        endDate: period?.end || '',
         content: announcement?.content,
-        image_url: announcement?.image_url,
       })
     }
   }, [announcement])
@@ -69,7 +67,6 @@ const CreateAnnouncementPage = () => {
       startDate: '',
       endDate: '',
       content: '',
-      image_url: null,
     },
     validationSchema: announcementSchema,
     onSubmit: async (values) => {
@@ -79,9 +76,8 @@ const CreateAnnouncementPage = () => {
         const payload = {
           title: values.title,
           audience: values.audience,
-          timePeriod: `${values.startDate}/${values.endDate}`,
+          timePeriod: JSON.stringify({ start_date: values.startDate, end_date: values.endDate }),
           content: values.content,
-          image_url: values.image_url,
           isDraft: isDraft,
         }
         console.log(" announcement payload", payload)
@@ -193,7 +189,8 @@ const CreateAnnouncementPage = () => {
             name='title'
             value={formik.values.title}
             onChange={formik.handleChange}
-            error={formik.errors.title}
+            onBlur={formik.handleBlur}
+            error={formik.touched.title ? formik.errors.title : undefined}
           />
 
           <Select
@@ -202,7 +199,8 @@ const CreateAnnouncementPage = () => {
             name='audience'
             value={formik.values.audience}
             onChange={(e: any) => formik.setFieldValue('audience', e.target.value)}
-            error={formik.errors.audience}
+            onBlur={formik.handleBlur}
+            error={formik.touched.audience ? formik.errors.audience : undefined}
             options={audience}
           />
 
@@ -216,7 +214,9 @@ const CreateAnnouncementPage = () => {
                   type="date"
                   name="startDate"
                   value={formik.values.startDate}
+                  min={today}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   className="bg-transparent outline-none text-sm text-[#191c1e] font-medium cursor-pointer"
                 />
                 <span className="text-[#767683]">–</span>
@@ -224,35 +224,29 @@ const CreateAnnouncementPage = () => {
                   type="date"
                   name="endDate"
                   value={formik.values.endDate}
+                  min={formik.values.startDate || today}
                   onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
                   className="bg-transparent outline-none text-sm text-[#191c1e] font-medium cursor-pointer"
                 />
               </div>
             </div>
-            {(formik.errors.startDate || formik.errors.endDate) && (
+            {((formik.touched.startDate && formik.errors.startDate) || (formik.touched.endDate && formik.errors.endDate)) && (
               <p className="text-xs text-red-500 font-medium">
-                {formik.errors.startDate || formik.errors.endDate}
+                {(formik.touched.startDate && formik.errors.startDate) || (formik.touched.endDate && formik.errors.endDate)}
               </p>
             )}
           </div>
 
-          {/* <Textarea
+          <Textarea
             label="Announcement Message"
             placeholder="Compose your detailed announcement here..."
             name="content"
             value={formik.values.content}
             onChange={formik.handleChange}
-            error={formik.errors.content}
+            onBlur={formik.handleBlur}
+            error={formik.touched.content ? formik.errors.content : undefined}
             rows={8}
-          /> */}
-
-          <RichTextEditor
-            label="Announcement Message"
-            placeholder="Compose your detailed announcement here..."
-            value={formik.values.content}
-            onChange={(html) => formik.setFieldValue('content', html)}
-            error={formik.errors.content}
-            minHeight={220}
           />
 
         </div>
@@ -288,46 +282,6 @@ const CreateAnnouncementPage = () => {
                 )
               }
             </Button>
-          </div>
-
-          {/* Banner Image */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <ImageIcon size={15} className="text-[#2c1452]" />
-              <p className="text-sm font-bold text-[#2c1452] uppercase tracking-wider">Banner Image</p>
-            </div>
-
-            <UploadBox
-              accept="image/*"
-              preview={announcement?.image_url || coverPreview}
-              previewType="image"
-              icon={<ImageIcon size={16} />}
-              title="Upload Banner"
-              hint="PNG, JPG or GIF recommended"
-              loading={coverUploading}
-              onFile={async (f) => {
-                setCoverPreview(URL.createObjectURL(f))
-                try {
-                  setCoverUploading(true)
-                  const url = await storageService.uploadCourseCover(f)
-                  formik.setFieldValue('image_url', url)
-                  toast.success('Cover image uploaded')
-                } catch (error) {
-                  console.log("file uploading error", error)
-                  toast.error('Failed to upload cover image')
-                  formik.setFieldValue('image_url', null)
-                  setCoverPreview(null)
-                } finally {
-                  setCoverUploading(false)
-                }
-
-              }}
-              onClear={() => {
-                setCoverImage(null)
-                setCoverPreview(null)
-                formik.setFieldValue('image_url', null)
-              }}
-            />
           </div>
 
         </div>

@@ -6,7 +6,8 @@ import { RocketLaunch } from '@phosphor-icons/react'
 import { Button, Heading, Paragraph, Subheading, Skeleton } from '@/components/ui'
 import { useParams } from 'react-router-dom'
 import { useGetAnnouncementById, useDeleteAnnouncement } from '@/hooks/announcement'
-import { calculateDays, formatDateTime } from '@/utils/helper/formatDate'
+import { calculateDays, formatDateTime, formatLongDate } from '@/utils/helper/formatDate'
+import { parseTimePeriod } from '@/utils/timePeriod'
 import { toast } from 'sonner'
 
 
@@ -154,7 +155,7 @@ const AnnouncementDetailPage = () => {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#767683] mb-1">Time Period</p>
-              <Paragraph className="font-bold text-[#2c1452]">{formatDateTime(announcement?.data?.time_period.split("/")[0])} to {formatDateTime(announcement?.data?.time_period.split("/")[1])}</Paragraph>
+              <Paragraph className="font-bold text-[#2c1452]">{formatLongDate(parseTimePeriod(announcement?.data?.time_period)?.start)} – {formatLongDate(parseTimePeriod(announcement?.data?.time_period)?.end)}</Paragraph>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[#767683] mb-1">Audience</p>

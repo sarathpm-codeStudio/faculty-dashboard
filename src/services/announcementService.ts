@@ -1,9 +1,9 @@
 
 
 
-import apiClient from '@/lib/apiClient'
 import { supabase } from "@/services/supabase"
 import { useAuthStore } from "@/store/authStore"
+import { parseTimePeriod } from "@/utils/timePeriod"
 
 // Read the faculty id on every call so it reflects the current user.
 // Reading once at module load captures a stale/undefined value that
@@ -41,6 +41,8 @@ export const announcementService = {
             const { data: announcement, error } = await supabase.from("announcements")
                 .insert({
                     faculty_id: getCurrentFacultyId(),
+                    admin_created: false,
+                    audience: data.audience === "all" ? "students" : "course",
                     title: data.title,
                     content: data.content,
                     course_id: data.audience === "all" ? null : data.audience,
@@ -72,16 +74,10 @@ export const announcementService = {
         //     throw error.message
         // }
 
-        const { page, limit, search, filter } = payload;
+        const { page, limit, search, filter, start_date, end_date } = payload;
 
         const from = (page - 1) * limit;
         const to = from + limit - 1;
-
-        console.log("filter", filter);
-        console.log("page", page);
-        console.log("limit", limit);
-        console.log("search", search);
-
 
         let query = supabase
             .from("announcements")
@@ -98,9 +94,30 @@ export const announcementService = {
             query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`);
         }
 
-        const { data, error, count } = await query
-            .range(from, to)
-            .order("created_at", { ascending: false });
+        query = query.order("created_at", { ascending: false });
+
+        // The date range is stored inside the `time_period` text column. PostgREST
+        // can't range-query a substring of it, so when a range is requested we
+        // fetch the (faculty-scoped) matches and filter by overlap in JS, then
+        // paginate the result. ISO yyyy-mm-dd strings compare correctly as text,
+        // so no Date parsing is needed.
+        if (start_date && end_date) {
+            const { data, error } = await query;
+            if (error) throw new Error(error.message);
+
+            const overlapping = (data ?? []).filter((a: any) => {
+                const period = parseTimePeriod(a.time_period);
+                if (!period) return false;
+                return period.start <= end_date && period.end >= start_date;
+            });
+
+            return {
+                data: overlapping.slice(from, to + 1),
+                total: overlapping.length,
+            };
+        }
+
+        const { data, error, count } = await query.range(from, to);
 
         if (error) throw new Error(error.message);
 
@@ -148,6 +165,7 @@ export const announcementService = {
             const { data: announcement, error } = await supabase.from("announcements")
                 .update({
 
+                    audience: data.audience === "all" ? "students" : "course",
                     title: data.title,
                     content: data.content,
                     course_id: data.audience === "all" ? null : data.audience,

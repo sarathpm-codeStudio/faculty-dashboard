@@ -22,7 +22,7 @@ const navLinks = [
     { to: '/chats', label: 'Chats', icon: MessageCircle },
     { to: '/tests', label: 'Tests', icon: ClipboardList },
     { to: '/students', label: 'Students', icon: Users },
-    // { to: '/announcements', label: 'Announcements', icon: Megaphone },
+    { to: '/announcements', label: 'Announcements', icon: Megaphone },
     { to: '/coupon-management', label: 'Coupon Management', icon: RiCoupon2Line },
 ]
 

@@ -1,5 +1,6 @@
 import { supabase } from '@/services/supabase'
 import { useAuthStore } from '@/store/authStore'
+import { getTodayDate, isActiveOn } from '@/utils/timePeriod'
 
 // Read the user id on every call so it reflects the current user.
 const getCurrentUserId = () => useAuthStore.getState().user?.id
@@ -166,16 +167,22 @@ export const notificationService = {
         // unread. `.or()` applies the audience targeting rules.
         const { data, error } = await supabase
             .from('announcements')
-            .select('id, title, content, image_url, audience, course_id, created_at, announcement_reads(read_at)')
+            .select('id, title, content, image_url, audience, course_id, created_at, time_period, announcement_reads(read_at)')
             .eq('is_draft', false)
             .eq('is_deleted', false)
+            .eq('admin_created', true)
             .or(buildAudienceFilter(courseIds))
             .eq('announcement_reads.user_id', userId)
             .order('created_at', { ascending: false })
 
         if (error) throw new Error(error.message)
 
-        const items: AnnouncementItem[] = (data ?? []).map((a: any) => ({
+        // Only surface announcements whose scheduled time_period covers today —
+        // future-dated ones stay hidden until they start, expired ones drop off.
+        const today = getTodayDate()
+        const visible = (data ?? []).filter((a: any) => isActiveOn(a.time_period, today))
+
+        const items: AnnouncementItem[] = visible.map((a: any) => ({
             id: a.id,
             title: a.title,
             content: a.content,
@@ -203,7 +210,7 @@ export const notificationService = {
 
         const { data, error } = await supabase
             .from('announcements')
-            .select('id, announcement_reads(user_id)')
+            .select('id, time_period, announcement_reads(user_id)')
             .eq('is_draft', false)
             .eq('is_deleted', false)
             .or(buildAudienceFilter(courseIds))
@@ -211,7 +218,10 @@ export const notificationService = {
 
         if (error) throw new Error(error.message)
 
-        return (data ?? []).filter((a: any) => (a.announcement_reads?.length ?? 0) === 0).length
+        const today = getTodayDate()
+        return (data ?? [])
+            .filter((a: any) => isActiveOn(a.time_period, today))
+            .filter((a: any) => (a.announcement_reads?.length ?? 0) === 0).length
     },
 
     // Mark every visible announcement read for this faculty in one shot — called
@@ -225,7 +235,7 @@ export const notificationService = {
 
         const { data, error } = await supabase
             .from('announcements')
-            .select('id, announcement_reads(user_id)')
+            .select('id, time_period, announcement_reads(user_id)')
             .eq('is_draft', false)
             .eq('is_deleted', false)
             .or(buildAudienceFilter(courseIds))
@@ -233,7 +243,9 @@ export const notificationService = {
 
         if (error) throw new Error(error.message)
 
+        const today = getTodayDate()
         const unreadIds = (data ?? [])
+            .filter((a: any) => isActiveOn(a.time_period, today))
             .filter((a: any) => (a.announcement_reads?.length ?? 0) === 0)
             .map((a: any) => a.id)
 

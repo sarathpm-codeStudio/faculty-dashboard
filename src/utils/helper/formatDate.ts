@@ -72,6 +72,17 @@ export function timeAgo(isoString: string): string {
     return `Updated ${years} year${years > 1 ? 's' : ''} ago`
 }
 
+const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** "2026-07-01" → "Jul 01, 2026". Parses parts manually to avoid TZ drift. */
+export const formatLongDate = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return ''
+    const [year, month, day] = String(dateStr).split('T')[0].split('-')
+    const m = parseInt(month, 10)
+    if (!year || !day || Number.isNaN(m) || m < 1 || m > 12) return ''
+    return `${MONTHS_SHORT[m - 1]} ${day.padStart(2, '0')}, ${year}`
+}
+
 export const formatDateTime = (isoString: string): string => {
     const date = new Date(isoString)
 
