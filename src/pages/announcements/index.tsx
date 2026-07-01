@@ -9,7 +9,8 @@ import { IoAddCircleOutline } from 'react-icons/io5'
 import { Button, Heading, Paragraph, DataTable } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { useGetAllAnnouncements, useDeleteAnnouncement } from '@/hooks/announcement'
-import { formatDate, formatDateTime } from '@/utils/helper/formatDate'
+import { formatDate, formatDateTime, formatLongDate } from '@/utils/helper/formatDate'
+import { getTodayDate, parseTimePeriod } from '@/utils/timePeriod'
 import ActionsMenu from '@/components/features/ActionBtn'
 import { toast } from 'sonner'
 
@@ -46,6 +47,29 @@ type Tab = 'All' | 'Drafts' | 'Archive'
 
 const TABS: Tab[] = ['All', 'Drafts']
 
+type AnnouncementStatus = 'draft' | 'scheduled' | 'active' | 'expired'
+
+// Derive a status from the row. ISO yyyy-mm-dd strings compare correctly, so we
+// string-compare against today (date-accurate, no timezone drift).
+const deriveStatus = (row: any): AnnouncementStatus => {
+  if (row?.is_draft) return 'draft'
+
+  const period = parseTimePeriod(row?.time_period)
+  const today = getTodayDate()
+
+  if (period?.start && period.start > today) return 'scheduled'
+  if (period?.end && period.end < today) return 'expired'
+  return 'active'
+}
+
+// Pill label + dot/text/background colors per status.
+const STATUS_META: Record<AnnouncementStatus, { label: string; text: string; dot: string; bg: string }> = {
+  draft: { label: 'Draft', text: 'text-gray-500', dot: 'bg-gray-400', bg: 'bg-gray-100' },
+  scheduled: { label: 'Scheduled', text: 'text-orange-500', dot: 'bg-orange-400', bg: 'bg-orange-50' },
+  active: { label: 'Active', text: 'text-[#00875A]', dot: 'bg-[#00875A]', bg: 'bg-[#E6F4EF]' },
+  expired: { label: 'Expired', text: 'text-gray-400', dot: 'bg-gray-400', bg: 'bg-gray-100' },
+}
+
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 18 },
   animate: { opacity: 1, y: 0 },
@@ -59,6 +83,11 @@ const AnnouncementsPage = () => {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [rangeLabel, setRangeLabel] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
+  // Only filter by range once both ends are picked.
+  const dateRangeActive = !!startDate && !!endDate
 
   // query
   const { data: announcements, isLoading: getAllAnnouncementsLoading } = useGetAllAnnouncements({
@@ -66,6 +95,8 @@ const AnnouncementsPage = () => {
     limit: pageSize,
     filter: activeTab === 'Drafts' ? 'draft' : 'all',
     search: "",
+    start_date: dateRangeActive ? startDate : undefined,
+    end_date: dateRangeActive ? endDate : undefined,
   })
 
   // mutation
@@ -98,7 +129,10 @@ const AnnouncementsPage = () => {
       render: row => (
         <div className="flex items-center gap-3">
           <AnnouncementIcon type={"megaphone"} />
-          <span onClick={() => navigate(`/announcements/${row.id}`)} className="text-sm font-semibold text-[#191c1e] cursor-pointer">{row?.title}</span>
+          <span
+            // onClick={() => navigate(`/announcements/${row.id}`)}
+            className="text-sm font-semibold text-[#191c1e] cursor-pointer"
+          >{row?.title}</span>
         </div>
       ),
     },
@@ -114,27 +148,33 @@ const AnnouncementsPage = () => {
     },
     {
       key: 'date',
-      header: 'Date',
+      header: 'Created',
       render: row => <span className="text-sm text-[#767683]">{formatDateTime(row?.created_at)}</span>,
     },
     {
       key: 'timePeriod',
       header: 'Time Period',
-      render: row => (
-        <span className="text-sm text-[#767683] whitespace-pre-line">{row?.time_period.split("/").join(" to ") || ""}</span>
-      ),
+      render: row => {
+        const period = parseTimePeriod(row?.time_period)
+        return (
+          <span className="text-sm text-[#767683] whitespace-pre-line">
+            {period ? `${formatLongDate(period.start)} – ${formatLongDate(period.end)}` : ""}
+          </span>
+        )
+      },
     },
     {
       key: 'status',
       header: 'Status',
-      render: row => (
-        <span className={`inline-flex items-center gap-1 text-xs font-bold ${row?.is_draft ? 'text-orange-500' : 'text-[#00875A]'
-          }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${row?.is_draft ? 'bg-orange-500' : 'bg-[#00875A]'
-            }`} />
-          {row?.is_draft ? 'Draft' : 'Active'}
-        </span>
-      ),
+      render: row => {
+        const meta = STATUS_META[deriveStatus(row)]
+        return (
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${meta.bg} ${meta.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+            {meta.label}
+          </span>
+        )
+      },
     },
     {
       key: 'actions',
@@ -207,10 +247,33 @@ const AnnouncementsPage = () => {
           ))}
         </div>
         <div className="flex items-center gap-4">
-          {/* <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#2c1452] transition-colors">
-            <Filter size={14} />
-            Filter
-          </button> */}
+          {/* Date range filter */}
+          <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-1.5">
+            <MdOutlineCalendarMonth size={16} className="text-[#767683] shrink-0" />
+            <input
+              type="date"
+              value={startDate}
+              max={endDate || undefined}
+              onChange={(e) => { setStartDate(e.target.value); setPage(1) }}
+              className="bg-transparent outline-none text-sm text-[#191c1e] font-medium cursor-pointer"
+            />
+            <span className="text-[#767683]">–</span>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate || undefined}
+              onChange={(e) => { setEndDate(e.target.value); setPage(1) }}
+              className="bg-transparent outline-none text-sm text-[#191c1e] font-medium cursor-pointer"
+            />
+            {dateRangeActive && (
+              <button
+                onClick={() => { setStartDate(''); setEndDate(''); setPage(1) }}
+                className="text-xs text-[#767683] font-semibold hover:text-[#2c1452] transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <button className="flex items-center gap-1.5 text-sm text-[#767683] font-semibold hover:text-[#2c1452] transition-colors">
             <ArrowUpDown size={14} />
             Sort by: Date

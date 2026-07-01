@@ -10,6 +10,7 @@ import { authService } from '@/services/authService'
 import { toast } from 'sonner'
 import GlobalUploadIndicator from '@/components/ui/GlobalUploadIndicator'
 import { useNotificationRealtime } from '@/hooks/notification'
+import { useChatRealtimeGlobal } from '@/hooks/chat'
 // import { useVideoUploadProgress } from '@/hooks/video'
 
 
@@ -54,6 +55,9 @@ const AppShell = () => {
     // Listen for incoming notifications: updates the bell count, plays a sound
     // and shows a toast as soon as the user lands in the app.
     useNotificationRealtime(user?.id)
+    // Keep chat live on every page (not only the chat view): updates unread
+    // counts/previews and marks incoming messages delivered app-wide.
+    useChatRealtimeGlobal(user?.id)
     // useVideoUploadProgress(user?.id)
 
 
