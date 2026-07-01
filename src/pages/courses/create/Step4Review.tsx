@@ -69,6 +69,7 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
 
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [resubmitConfirmOpen, setResubmitConfirmOpen] = useState(false)
+  const [updatedOpen, setUpdatedOpen] = useState(false)
   const [resultOpen, setResultOpen] = useState(false)
   const [resultMessage, setResultMessage] = useState('')
   const [resultTitle, setResultTitle] = useState('Publish Course')
@@ -184,7 +185,7 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
           {[
             { icon: <MdVideoLibrary size={20} />, label: 'Video Lessons', count: coursePreview?.content_inventory?.video_lessons, blue: false },
             { icon: <HiDocumentDuplicate size={20} />, label: 'PDF Resources', count: coursePreview?.content_inventory?.pdf_resources, blue: false },
-            { icon: <FaRegImage size={20} />, label: 'Images', count: coursePreview?.content_inventory?.images, blue: true },
+            // { icon: <FaRegImage size={20} />, label: 'Images', count: coursePreview?.content_inventory?.images, blue: true },
             { icon: <BsPencilSquare size={20} />, label: 'Test', count: coursePreview?.content_inventory?.tests, blue: false },
           ].map(({ icon, label, count, blue }) => (
             <div key={label} className="flex items-center justify-between text-sm">
@@ -233,8 +234,11 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
             <div className="flex items-center gap-3 bg-[#F2F4F6] rounded-xl px-4 py-3">
               <ShieldCheck size={16} className="text-[#2c1452] shrink-0" />
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Duration</p>
-                <p className="text-sm font-bold text-[#2c1452]">{coursePreview?.validity}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Validity</p>
+                <p className="text-sm font-bold text-[#2c1452]">
+                  {
+                    coursePreview?.validity === "lifetime" ? "Lifetime" : coursePreview?.validity + " months"
+                  }</p>
               </div>
             </div>
           </div>
@@ -270,18 +274,34 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
             )}
           </Button>
         ) : (
-          <>
-            <Button variant="white" onClick={onDraft}>Save as draft</Button>
-            <Button variant="primary" onClick={() => setConfirmOpen(true)} disabled={isPublishing}>
-              {isPublishing ? (
-                <>
-                  <Spinner size={20} color="#ffffff" label="" /> Publishing...
-                </>
-              ) : (
-                <>Publish Course <MdRocketLaunch size={25} /></>
-              )}
-            </Button>
-          </>
+
+          coursePreview?.status === "draft" ? (
+            <>
+              <Button variant="white" onClick={onDraft}>Save as draft</Button>
+              <Button variant="primary" onClick={() => setConfirmOpen(true)} disabled={isPublishing}>
+                {isPublishing ? (
+                  <>
+                    <Spinner size={20} color="#ffffff" label="" /> Publishing...
+                  </>
+                ) : (
+                  <>Publish Course <MdRocketLaunch size={25} /></>
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* <Button variant="white" onClick={onDraft}>Update Course</Button> */}
+              <Button variant="primary" onClick={() => setUpdatedOpen(true)} disabled={isPublishing}>
+                {isPublishing ? (
+                  <>
+                    <Spinner size={20} color="#ffffff" label="" /> Updating...
+                  </>
+                ) : (
+                  <>Update Course <MdRocketLaunch size={25} /></>
+                )}
+              </Button>
+            </>
+          )
         )}
       </div>
 
@@ -313,6 +333,20 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
         confirmText="Resubmit"
         cancelText="Cancel"
         loading={isResubmitting}
+      />
+
+      <ConfirmDeleteModal
+        open={updatedOpen}
+        onClose={() => setUpdatedOpen(false)}
+        onConfirm={() => {
+          setUpdatedOpen(false)
+          navigate(`/courses`)
+        }}
+        variant="primary"
+        title="Course Updated"
+        message="Your course updated successfully."
+        confirmText="OK"
+        hideCancel
       />
 
       <ConfirmDeleteModal

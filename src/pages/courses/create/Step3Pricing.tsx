@@ -55,23 +55,23 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
       try {
         const payload = values.isFree
           ? {
-              validity: values.validity,
-              price: 0,
-              discount: 0,
-              discount_type: '',
-              final_price: 0,
-              enableCoupons: false,
-              is_free: true,
-            }
+            validity: values.validity,
+            price: 0,
+            discount: 0,
+            discount_type: '',
+            final_price: 0,
+            enableCoupons: false,
+            is_free: true,
+          }
           : {
-              validity: values.validity,
-              price: Number(values.price) || 0,
-              discount: values.discount ? Number(values.discount) : 0,
-              discount_type: values.discountType,
-              final_price: Number(studentPrice) || 0,
-              enableCoupons: values.enableCoupons,
-              is_free: false,
-            }
+            validity: values.validity,
+            price: Number(values.price) || 0,
+            discount: values.discount ? Number(values.discount) : 0,
+            discount_type: values.discountType,
+            final_price: Number(studentPrice) || 0,
+            enableCoupons: values.enableCoupons,
+            is_free: false,
+          }
         await addCoursePricing(payload)
         toast.success('Course pricing added successfully')
         onNext()
@@ -187,8 +187,8 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
         {/* White form card */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
           <Select
-            label="Course Duration"
-            placeholder="Select duration"
+            label="Course Validity"
+            placeholder="Select Validity"
             options={validityOptions}
             name="validity"
             value={values.validity}
@@ -287,59 +287,59 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
           </div>
         ) : (
           <>
-        {/* Students Price card */}
-        <div
-          className="rounded-2xl p-7 text-white"
-          style={{ background: 'linear-gradient(135deg, #2c1452, #2c1452)' }}
-        >
-          <p className="text-xs font-semibold uppercase tracking-widest opacity-70 mb-2">Students Price</p>
-          <p className="text-4xl font-bold tracking-tight">₹{studentPrice.toFixed(2)}</p>
-          <p className="text-xs opacity-60 mt-2 leading-relaxed">
-            Calculated based on a {discount}{discountType === 'percentage' ? '%' : '₹'} discount applied to the ₹{price.toFixed(2)}.
-          </p>
-          {discount > 0 && (
-            <p className="text-xs opacity-60 mt-2 leading-relaxed">
-              You save ₹{saved.toFixed(2)} on this course.
-            </p>
-          )}
-        </div>
+            {/* Students Price card */}
+            <div
+              className="rounded-2xl p-7 text-white"
+              style={{ background: 'linear-gradient(135deg, #2c1452, #2c1452)' }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-widest opacity-70 mb-2">Students Price</p>
+              <p className="text-4xl font-bold tracking-tight">₹{studentPrice.toFixed(2)}</p>
+              <p className="text-xs opacity-60 mt-2 leading-relaxed">
+                Calculated based on a {discount}{discountType === 'percentage' ? '%' : '₹'} discount applied to the ₹{price.toFixed(2)}.
+              </p>
+              {discount > 0 && (
+                <p className="text-xs opacity-60 mt-2 leading-relaxed">
+                  You save ₹{saved.toFixed(2)} on this course.
+                </p>
+              )}
+            </div>
 
-        {/* Price breakdown */}
-        <div className="flex flex-col gap-3 px-1">
-          <div className="flex justify-between text-sm">
-            <Paragraph className='text-xs font-semibold text-gray-600'>Course Price</Paragraph>
-            <span className="font-semibold text-gray-700">₹{price.toFixed(2)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <Paragraph className='text-xs font-semibold text-gray-600'>Discount</Paragraph>
-            <span className="font-semibold text-gray-700">
-              {discount}{discountType === 'percentage' ? '%' : '₹'}
-            </span>
-          </div>
-          <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
-            <Paragraph className='text-xs font-semibold text-gray-600'>Students Price</Paragraph>
-            <span className="font-bold text-[#2c1452]">₹{studentPrice.toFixed(2)}</span>
-          </div>
-        </div>
+            {/* Price breakdown */}
+            <div className="flex flex-col gap-3 px-1">
+              <div className="flex justify-between text-sm">
+                <Paragraph className='text-xs font-semibold text-gray-600'>Course Price</Paragraph>
+                <span className="font-semibold text-gray-700">₹{price.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <Paragraph className='text-xs font-semibold text-gray-600'>Discount</Paragraph>
+                <span className="font-semibold text-gray-700">
+                  {discount}{discountType === 'percentage' ? '%' : '₹'}
+                </span>
+              </div>
+              <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
+                <Paragraph className='text-xs font-semibold text-gray-600'>Students Price</Paragraph>
+                <span className="font-bold text-[#2c1452]">₹{studentPrice.toFixed(2)}</span>
+              </div>
+            </div>
 
-        {/* Discount Calculator */}
-        <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col gap-4">
-          <Subheading className='text-[#2c1452] font-bold'>Discount Calculator</Subheading>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-              <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Sum of Courses</Paragraph>
-              <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{price.toFixed(2)}</p>
+            {/* Discount Calculator */}
+            <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col gap-4">
+              <Subheading className='text-[#2c1452] font-bold'>Discount Calculator</Subheading>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
+                  <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Sum of Courses</Paragraph>
+                  <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{price.toFixed(2)}</p>
+                </div>
+                <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
+                  <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Student Price</Paragraph>
+                  <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{studentPrice.toFixed(2)}</p>
+                </div>
+                <div className="bg-[#E6FBF7] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
+                  <Paragraph className='text-xs font-semibold text-[#00A98F] whitespace-nowrap'>Student Saved</Paragraph>
+                  <p className="text-sm font-bold text-[#00A98F] whitespace-nowrap">₹{saved.toFixed(2)}</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-              <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Student Price</Paragraph>
-              <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{studentPrice.toFixed(2)}</p>
-            </div>
-            <div className="bg-[#E6FBF7] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-              <Paragraph className='text-xs font-semibold text-[#00A98F] whitespace-nowrap'>Student Saved</Paragraph>
-              <p className="text-sm font-bold text-[#00A98F] whitespace-nowrap">₹{saved.toFixed(2)}</p>
-            </div>
-          </div>
-        </div>
           </>
         )}
 
