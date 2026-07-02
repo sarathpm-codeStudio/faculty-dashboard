@@ -268,3 +268,22 @@ export const useGetCourseRevenueTrend = (courseId: string, period: ChartPeriod, 
     enabled: enabled && !!courseId,
   })
 }
+
+export const useGetCourseEnrollments = (
+  courseId: string,
+  payload: { page: number; limit: number },
+  enabled = true
+) => {
+  return useQuery({
+    queryKey: ['course-enrollments', courseId, payload.page, payload.limit],
+    queryFn: () => courseService.getCourseEnrollments(courseId, payload),
+    enabled: enabled && !!courseId,
+  })
+}
+
+export const useExportCourseEnrollments = () => {
+  return useMutation({
+    mutationKey: ['course-enrollments-export'],
+    mutationFn: (courseId: string) => courseService.exportCourseEnrollments(courseId),
+  })
+}

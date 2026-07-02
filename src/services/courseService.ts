@@ -1458,7 +1458,96 @@ export const courseService = {
     }
   },
 
+  getCourseEnrollments: async (
+    courseId: string,
+    payload: { page: number; limit: number }
+  ): Promise<any> => {
+    try {
+      const { page, limit } = payload;
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
 
+      const { data, error, count } = await supabase
+        .from("enrollments")
+        .select(
+          `
+            id,
+            enrolled_at,
+            expires_at,
+            amount_paid,
+            student:profiles!enrollments_student_id_fkey (
+              id,
+              account_id,
+              first_name,
+              last_name,
+              avatar_url
+            )
+          `,
+          { count: "exact" }
+        )
+        .eq("course_id", courseId)
+        .order("enrolled_at", { ascending: false })
+        .range(from, to);
+
+      if (error) throw new Error(error.message);
+
+      const rows = (data ?? []).map((item: any) => ({
+        id: item.id,
+        account_id: item.student?.account_id ?? null,
+        first_name: item.student?.first_name ?? "",
+        last_name: item.student?.last_name ?? "",
+        avatar_url: item.student?.avatar_url ?? null,
+        enrolled_at: item.enrolled_at,
+        expires_at: item.expires_at,
+        amount_paid: item.amount_paid,
+      }));
+
+      return {
+        data: rows,
+        pagination: {
+          page,
+          limit,
+          total: count ?? 0,
+          totalPages: Math.ceil((count ?? 0) / limit),
+        },
+      };
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  },
+
+  exportCourseEnrollments: async (courseId: string): Promise<void> => {
+    try {
+      const { data, headers } = await apiClient.get(
+        `/courses/${courseId}/enrollments/export`,
+        { responseType: 'blob' }
+      );
+
+      const blob = new Blob([data], {
+        type:
+          (headers['content-type'] as string) ||
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      // Prefer server-provided filename from Content-Disposition, else fallback.
+      const disposition = headers['content-disposition'] as string | undefined;
+      const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      const fileName = match ? decodeURIComponent(match[1]) : `enrollments-${courseId}.xlsx`;
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error?.message || 'Failed to export enrollments';
+      throw new Error(message);
+    }
+  },
 
 
 }

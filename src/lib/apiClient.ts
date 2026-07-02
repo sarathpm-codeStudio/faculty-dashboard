@@ -7,7 +7,7 @@ import { supabase } from '@/services/supabase';
 import { useAuthStore } from '../store/authStore';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/faculty`,
 });
 
 // ─── REQUEST interceptor ─────────────────────────────
