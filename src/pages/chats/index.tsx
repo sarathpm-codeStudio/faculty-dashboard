@@ -7,8 +7,23 @@ import courseImg from '@/assets/images/cou1.png'
 import brandLogo from '@/assets/icons/brand_icon.svg'
 import { RiAccountCircleLine, RiCustomerService2Line, RiChat3Line } from 'react-icons/ri'
 import { useGetMyChatRooms, useGetAdminId, useStartAdminChat, useRoomMessages, useSendMessage, useMarkRoomRead, useMarkMessagesSeen, useActiveThreadRealtime } from '@/hooks/chat'
+import { usePresenceHeartbeat, usePeerPresence } from '@/hooks/presence'
 import type { ChatRoomSummary, ChatMessage } from '@/services/chatService'
 import { useAuthStore } from '@/store/authStore'
+
+// "last seen" label for an offline peer, e.g. "last seen 5m ago" / "yesterday".
+const formatLastSeen = (iso: string): string => {
+  const secs = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
+  if (secs < 60) return 'just now'
+  const mins = Math.floor(secs / 60)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days === 1) return 'yesterday'
+  if (days < 7) return `${days}d ago`
+  return new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' })
+}
 
 // Display name for a room: the peer for DIRECT chats, falling back to the
 // room's own name (admin rooms are labelled this way) then a generic label.
@@ -121,6 +136,11 @@ const ChatsPage = () => {
   // app-wide by useChatRealtimeGlobal in the app shell).
   useActiveThreadRealtime(activeId)
 
+  // Broadcast my own presence for as long as I'm on the chat page (online +
+  // heartbeat now, offline on leave). Live presence of the open peer for the
+  // header's active / last-seen indicator.
+  usePresenceHeartbeat(!!myId)
+
   const handleSend = () => {
     const body = text.trim()
     if (!activeId || !body || sendMessage.isPending) return
@@ -158,6 +178,7 @@ const ChatsPage = () => {
   )
 
   const active = rooms.find(r => r.id === activeId) ?? null
+  const peerPresence = usePeerPresence(active?.peer?.id)
 
   // If the open room disappears from the list, fall back to the welcome screen.
   useEffect(() => {
@@ -348,10 +369,17 @@ const ChatsPage = () => {
                   <img src={active ? avatarFor(active) : courseImg} alt={active ? roomName(active) : ''} className={`w-15 h-15 rounded-xl ${active ? avatarClass(active) : 'object-cover'}`} />
                   <div>
                     <Paragraph className="text-sm font-bold text-[#2c1452]">{active ? roomName(active) : ''}</Paragraph>
-                    <Paragraph className="!text-[10px] text-green-500 font-semibold flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-                      ACTIVE
-                    </Paragraph>
+                    {peerPresence.isOnline ? (
+                      <Paragraph className="!text-[10px] text-green-500 font-semibold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                        Active now
+                      </Paragraph>
+                    ) : (
+                      <Paragraph className="!text-[10px] text-gray-400 font-semibold flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gray-300 inline-block" />
+                        {peerPresence.lastSeen ? `last seen ${formatLastSeen(peerPresence.lastSeen)}` : 'Offline'}
+                      </Paragraph>
+                    )}
                   </div>
                 </div>
                 <button className="flex items-center gap-1.5 text-xs font-semibold text-[#2c1452] hover:underline">
