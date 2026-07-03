@@ -9,10 +9,12 @@ import { useAudioRecorder } from '@/hooks/useAudioRecorder'
 import { formatDuration, pseudoPeaks } from '@/utils/audio'
 import courseImg from '@/assets/images/cou1.png'
 import brandLogo from '@/assets/icons/brand_icon.svg'
-import { RiAccountCircleLine, RiCustomerService2Line, RiChat3Line } from 'react-icons/ri'
-import { useGetMyChatRooms, useGetAdminId, useStartAdminChat, useRoomMessages, useSendMessage, useSendAudioMessage, useSendFileMessage, useDeleteMessage, useMarkRoomRead, useMarkMessagesSeen, useActiveThreadRealtime, useTyping } from '@/hooks/chat'
+import { useNavigate } from 'react-router-dom'
+import { RiCustomerService2Line, RiChat3Line } from 'react-icons/ri'
+import { useGetMyChatRooms, useGetAdminId, useStartAdminChat, useRoomMessages, useSendMessage, useSendAudioMessage, useSendFilesMessage, useDeleteMessage, useMarkRoomRead, useMarkMessagesSeen, useActiveThreadRealtime, useThreadCatchUp, useTyping } from '@/hooks/chat'
 import { usePresenceHeartbeat, usePeerPresence } from '@/hooks/presence'
-import { CHAT_ATTACHMENT_MAX_BYTES, type ChatRoomSummary, type ChatMessage, type ChatReplyPreview } from '@/services/chatService'
+import { MessageAttachments } from '@/components/ui/MessageAttachments'
+import { CHAT_ATTACHMENT_MAX_BYTES, type ChatRoomSummary, type ChatMessage, type ChatReplyPreview, type ChatAttachment } from '@/services/chatService'
 import { useAuthStore } from '@/store/authStore'
 
 // "last seen" label for an offline peer, e.g. "last seen 5m ago" / "yesterday".
@@ -39,17 +41,33 @@ const roomAvatar = (room: ChatRoomSummary): string =>
   room.peer?.avatar_url || courseImg
 
 // One-line preview of the last message; non-text messages show their kind.
+// Count of files in an attachment message's (decrypted) content, min 1.
+const attachmentCount = (content: string | null): number => {
+  if (!content) return 1
+  try {
+    const parsed = JSON.parse(content)
+    if (Array.isArray(parsed?.files) && parsed.files.length) return parsed.files.length
+  } catch {
+    /* not JSON */
+  }
+  return 1
+}
+
+// "📎"-prefixed label for a non-text message, count-aware for albums.
+const attachmentLabel = (type: string, content: string | null): string => {
+  if (type === 'IMAGE' || type === 'PDF') {
+    const n = attachmentCount(content)
+    const noun = type === 'IMAGE' ? 'Photo' : 'Document'
+    return `📎 ${n > 1 ? `${n} ${noun}s` : noun}`
+  }
+  return `📎 ${type.charAt(0) + type.slice(1).toLowerCase()}`
+}
+
 const lastMessagePreview = (room: ChatRoomSummary): string => {
   const m = room.last_message
   if (!m) return 'No messages yet'
   if (m.is_deleted) return 'This message was deleted'
-  if (m.message_type !== 'TEXT') {
-    const label =
-      m.message_type === 'PDF'
-        ? 'PDF'
-        : m.message_type.charAt(0) + m.message_type.slice(1).toLowerCase()
-    return `📎 ${label}`
-  }
+  if (m.message_type !== 'TEXT') return attachmentLabel(m.message_type, m.content)
   return m.content ?? ''
 }
 
@@ -116,16 +134,26 @@ const colorForName = (name: string): string => {
 }
 const initialOf = (name: string): string => name.trim().charAt(0).toUpperCase() || '?'
 
+// Attachments of an IMAGE/PDF message: the album stored (as JSON) in decrypted
+// `content`, falling back to the single file_url of older/legacy messages.
+const parseAttachments = (msg: ChatMessage): ChatAttachment[] => {
+  if (msg.content) {
+    try {
+      const parsed = JSON.parse(msg.content)
+      if (Array.isArray(parsed?.files) && parsed.files.length)
+        return parsed.files.map((f: any) => ({ url: f.url, name: f.name, size: f.size }))
+    } catch {
+      /* not JSON → fall through to the single-file path */
+    }
+  }
+  if (msg.file_url) return [{ url: msg.file_url, name: msg.file_name ?? '', size: msg.file_size ?? 0 }]
+  return []
+}
+
 // One-line text for a quoted (replied-to) message; non-text shows its kind.
 const replyPreviewText = (r: ChatReplyPreview): string => {
   if (r.is_deleted) return 'This message was deleted'
-  if (r.message_type !== 'TEXT') {
-    const label =
-      r.message_type === 'PDF'
-        ? 'PDF'
-        : r.message_type.charAt(0) + r.message_type.slice(1).toLowerCase()
-    return `📎 ${label}`
-  }
+  if (r.message_type !== 'TEXT') return attachmentLabel(r.message_type, r.content)
   return r.content ?? ''
 }
 
@@ -137,6 +165,13 @@ const listVariants: Variants = {
 const listItemVariants: Variants = {
   hidden: { opacity: 0, x: -20 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+}
+
+// WhatsApp-style thread background: the classic beige with a subtle repeating
+// doodle pattern (inline SVG tile, no image asset needed).
+const chatBgStyle: React.CSSProperties = {
+  backgroundColor: '#efeae2',
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%23d9d1c3' stroke-width='1.3' stroke-linecap='round' opacity='0.55'%3E%3Ccircle cx='16' cy='18' r='5'/%3E%3Cpath d='M62 14l6 6m0-6l-6 6'/%3E%3Cpath d='M24 66q5-7 10 0'/%3E%3Ccircle cx='78' cy='72' r='3'/%3E%3Cpath d='M44 40l4 4m0-4l-4 4'/%3E%3Cpath d='M84 38q4-5 8 0'/%3E%3Ccircle cx='52' cy='86' r='4'/%3E%3Cpath d='M8 88l5 5m0-5l-5 5'/%3E%3C/g%3E%3C/svg%3E")`,
 }
 
 // An optimistic voice message that shows in the thread the moment you hit send,
@@ -169,16 +204,16 @@ interface PendingText {
   replyTo: ChatReplyPreview | null
 }
 
-// An optimistic attachment (image / PDF) shown while its file uploads. Images
-// preview from a local object URL; documents show their file card. `status`
-// flips 'uploading' → gone on success, or → 'error' (retryable) on failure.
+// An optimistic attachment message (one or more images / PDFs) shown while the
+// files upload. Images preview from local object URLs. `status` flips
+// 'uploading' → gone on success, or → 'error' (retryable) on failure.
 interface PendingFile {
   id: string
   roomId: string
   kind: 'IMAGE' | 'PDF'
-  file: File
-  // Local preview for images ('' for documents).
-  previewUrl: string
+  files: File[]
+  // Local preview object URLs for images (empty for documents).
+  previews: string[]
   createdAt: string
   status: 'uploading' | 'error'
   replyToMessageId?: string | null
@@ -204,6 +239,12 @@ const ChatsPage = () => {
   // Attachments currently uploading (or failed and awaiting retry).
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const pendingFilesRef = useRef<PendingFile[]>([])
+  // In-app attachment viewer (image lightbox with album nav / PDF viewer).
+  const [viewer, setViewer] = useState<
+    | { kind: 'IMAGE'; images: { url: string; name: string }[]; index: number }
+    | { kind: 'PDF'; url: string; name: string }
+    | null
+  >(null)
   // Attachment picker popover state + hidden file inputs (image / PDF).
   const [attachOpen, setAttachOpen] = useState(false)
   const attachWrapRef = useRef<HTMLDivElement>(null)
@@ -217,6 +258,7 @@ const ChatsPage = () => {
   const inputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  const navigate = useNavigate()
   const myId = useAuthStore(s => s.user?.id)
 
   const { data: rooms = [], isLoading: leftLoading } = useGetMyChatRooms()
@@ -239,7 +281,7 @@ const ChatsPage = () => {
   const startAdminChat = useStartAdminChat()
   const sendMessage = useSendMessage()
   const sendAudioMessage = useSendAudioMessage()
-  const sendFileMessage = useSendFileMessage()
+  const sendFilesMessage = useSendFilesMessage()
   const deleteMessage = useDeleteMessage()
   const markRoomRead = useMarkRoomRead()
   const markMessagesSeen = useMarkMessagesSeen()
@@ -250,6 +292,10 @@ const ChatsPage = () => {
   // Live updates for the open conversation (room list + delivered are handled
   // app-wide by useChatRealtimeGlobal in the app shell).
   useActiveThreadRealtime(activeId)
+
+  // Self-heal the open thread on room open + window focus: quietly merges any
+  // messages a missed realtime event left out, without reloading the view.
+  useThreadCatchUp(activeId)
 
   // Ephemeral typing indicator for the open room (broadcast, no DB writes).
   const { peerTyping, notifyTyping, stopTyping } = useTyping(activeId, myId)
@@ -382,21 +428,21 @@ const ChatsPage = () => {
     if (pending) uploadAudio(pending)
   }
 
-  // Upload (or re-upload) a pending attachment; mirrors uploadAudio.
-  const uploadFile = (pending: PendingFile) => {
+  // Upload (or re-upload) a pending attachment message; mirrors uploadAudio.
+  const uploadFiles = (pending: PendingFile) => {
     setPendingFiles(list =>
       list.map(p => (p.id === pending.id ? { ...p, status: 'uploading' } : p)),
     )
-    sendFileMessage.mutate(
+    sendFilesMessage.mutate(
       {
         roomId: pending.roomId,
-        file: pending.file,
+        files: pending.files,
         kind: pending.kind,
         replyToMessageId: pending.replyToMessageId,
       },
       {
         onSuccess: () => {
-          if (pending.previewUrl) URL.revokeObjectURL(pending.previewUrl)
+          pending.previews.forEach(u => u && URL.revokeObjectURL(u))
           setPendingFiles(list => list.filter(p => p.id !== pending.id))
         },
         onError: (err: any) => {
@@ -409,10 +455,10 @@ const ChatsPage = () => {
     )
   }
 
-  // Retry an attachment whose upload failed.
+  // Retry an attachment message whose upload failed.
   const retryFile = (id: string) => {
     const pending = pendingFiles.find(p => p.id === id)
-    if (pending) uploadFile(pending)
+    if (pending) uploadFiles(pending)
   }
 
   // Open the hidden file input for the picked attachment kind.
@@ -421,23 +467,25 @@ const ChatsPage = () => {
     ;(kind === 'IMAGE' ? imageInputRef : docInputRef).current?.click()
   }
 
-  // Validate the chosen file (type + 5 MB cap), then show it optimistically and
-  // upload in the background — same flow as voice messages.
+  // Validate the chosen files (type + 5 MB cap each), then show them as one
+  // optimistic album message and upload in the background.
   const handleFileSelected = (kind: 'IMAGE' | 'PDF', e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const files = Array.from(e.target.files ?? [])
     // Reset so picking the same file again still fires onChange.
     e.target.value = ''
-    if (!file || !activeId) return
+    if (!files.length || !activeId) return
 
-    const validType =
-      kind === 'IMAGE' ? file.type.startsWith('image/') : file.type === 'application/pdf'
-    if (!validType) {
-      toast.error(kind === 'IMAGE' ? 'Only images can be attached' : 'Only PDF documents can be attached')
-      return
-    }
-    if (file.size > CHAT_ATTACHMENT_MAX_BYTES) {
-      toast.error('File is too large — maximum size is 5 MB')
-      return
+    for (const file of files) {
+      const validType =
+        kind === 'IMAGE' ? file.type.startsWith('image/') : file.type === 'application/pdf'
+      if (!validType) {
+        toast.error(kind === 'IMAGE' ? 'Only images can be attached' : 'Only PDF documents can be attached')
+        return
+      }
+      if (file.size > CHAT_ATTACHMENT_MAX_BYTES) {
+        toast.error(`"${file.name}" is too large — maximum size is 5 MB`)
+        return
+      }
     }
 
     const replyTarget = replyTo
@@ -446,8 +494,8 @@ const ChatsPage = () => {
       id: `pending-${crypto.randomUUID()}`,
       roomId: activeId,
       kind,
-      file,
-      previewUrl: kind === 'IMAGE' ? URL.createObjectURL(file) : '',
+      files,
+      previews: kind === 'IMAGE' ? files.map(f => URL.createObjectURL(f)) : [],
       createdAt: new Date().toISOString(),
       status: 'uploading',
       replyToMessageId: replyTarget?.id,
@@ -462,8 +510,13 @@ const ChatsPage = () => {
         : null,
     }
     setPendingFiles(list => [...list, pending])
-    uploadFile(pending)
+    uploadFiles(pending)
   }
+
+  // Open the image lightbox / PDF viewer for an attachment.
+  const openImageViewer = (images: { url: string; name: string }[], index: number) =>
+    setViewer({ kind: 'IMAGE', images, index })
+  const openPdfViewer = (url: string, name: string) => setViewer({ kind: 'PDF', url, name })
 
   // Open the confirm modal for one of my own messages.
   const handleDelete = (msg: ChatMessage) => setPendingDelete(msg)
@@ -553,7 +606,7 @@ const ChatsPage = () => {
   useEffect(
     () => () => {
       pendingAudiosRef.current.forEach(p => URL.revokeObjectURL(p.src))
-      pendingFilesRef.current.forEach(p => p.previewUrl && URL.revokeObjectURL(p.previewUrl))
+      pendingFilesRef.current.forEach(p => p.previews.forEach(u => u && URL.revokeObjectURL(u)))
     },
     [],
   )
@@ -568,6 +621,36 @@ const ChatsPage = () => {
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [attachOpen])
+
+  // Close the attachment viewer with Escape.
+  useEffect(() => {
+    if (!viewer) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setViewer(null)
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [viewer])
+
+  // Download an attachment without opening a tab: fetch it as a blob and click
+  // a same-origin object URL (a plain `download` attr is ignored cross-origin).
+  const downloadAttachment = async (url: string, name: string) => {
+    try {
+      const res = await fetch(url)
+      if (!res.ok) throw new Error()
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = name || 'attachment'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(objectUrl)
+    } catch {
+      toast.error('Could not download file')
+    }
+  }
 
   // Close the emoji picker on any click outside it (the trigger lives inside the
   // wrapper too, so tapping it just toggles rather than close-then-reopen).
@@ -782,16 +865,29 @@ const ChatsPage = () => {
             <AnimatePresence mode="wait">
               <motion.div
                 key={`header-${activeId}`}
-                className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0"
+                className="flex items-center justify-between px-6 py-2.5 border-b border-gray-200 shrink-0"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
               >
                 <div className="flex items-center gap-3">
-                  <img src={active ? avatarFor(active) : courseImg} alt={active ? roomName(active) : ''} className={`w-15 h-15 rounded-xl ${active ? avatarClass(active) : 'object-cover'}`} />
+                  <img src={active ? avatarFor(active) : courseImg} alt={active ? roomName(active) : ''} className={`w-10 h-10 rounded-lg ${active && isAdminRoom(active) ? 'object-contain p-1.5 bg-gray-100' : 'object-cover'}`} />
                   <div>
-                    <Paragraph className="text-sm font-bold text-[#2c1452]">{active ? roomName(active) : ''}</Paragraph>
+                    {/* Clicking the name opens the student's profile — except for
+                        the admin conversation, which has no profile page here. */}
+                    {active && !isAdminRoom(active) && active.peer?.id ? (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/students/${active.peer!.id}`)}
+                        title="View profile"
+                        className="block text-left"
+                      >
+                        <Paragraph className="text-sm font-bold text-[#2c1452]">{roomName(active)}</Paragraph>
+                      </button>
+                    ) : (
+                      <Paragraph className="text-sm font-bold text-[#2c1452]">{active ? roomName(active) : ''}</Paragraph>
+                    )}
                     {peerPresence.isOnline ? (
                       <Paragraph className="!text-[10px] text-green-500 font-semibold flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
@@ -805,17 +901,13 @@ const ChatsPage = () => {
                     )}
                   </div>
                 </div>
-                <button className="flex items-center gap-1.5 text-xs font-semibold text-[#2c1452] hover:underline">
-                  <RiAccountCircleLine size={20} />
-                  View Profile
-                </button>
               </motion.div>
             </AnimatePresence>
 
             {/* Messages — rendered column-reverse so the newest message sits at
                 the bottom and is visible the instant a room opens. Scrolling up
                 loads older history (older pages prepend above without a jump). */}
-            <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto scrollbar-hide px-6 py-5 flex flex-col-reverse gap-4">
+            <div ref={scrollRef} onScroll={handleScroll} style={chatBgStyle} className="flex-1 overflow-y-auto scrollbar-hide px-6 py-5 flex flex-col-reverse gap-4">
               {/* Typing indicator — first child so it pins to the bottom (newest). */}
               {peerTyping && !chatLoading && (
                 <div className="flex items-start">
@@ -842,7 +934,7 @@ const ChatsPage = () => {
                     className="group flex flex-col items-end"
                   >
                     <div className="flex max-w-[75%] items-center gap-2 flex-row-reverse">
-                      <div className="min-w-0 rounded-2xl rounded-tr-sm bg-[#2c1452] px-4 py-3 text-white">
+                      <div className="min-w-0 rounded-2xl rounded-tr-sm bg-[#2c1452] px-3 py-2 text-white">
                         {quote && (
                           <div className="mb-2 w-full rounded-lg border-l-2 border-white/60 bg-white/15 px-2.5 py-1.5 text-left">
                             <p className="text-[11px] font-bold text-white">{replyAuthor(quote.sender_id)}</p>
@@ -861,31 +953,53 @@ const ChatsPage = () => {
                         ) : p.kind === 'text' ? (
                           <Paragraph className="!text-sm leading-relaxed text-white">{p.text.content}</Paragraph>
                         ) : p.file.kind === 'IMAGE' ? (
-                          <div className="relative">
-                            <img
-                              src={p.file.previewUrl}
-                              alt={p.file.file.name}
-                              className="max-h-[260px] max-w-[220px] rounded-lg object-cover opacity-80"
-                            />
-                            {p.file.status === 'uploading' && (
-                              <span className="absolute inset-0 m-auto h-6 w-6 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex min-w-[200px] items-center gap-3 rounded-xl bg-white px-3 py-2">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100">
-                              {p.file.status === 'uploading' ? (
-                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
-                              ) : (
-                                <FileText size={14} className="text-blue-600" />
+                          // Optimistic image album: local previews + spinner overlay.
+                          p.file.previews.length === 1 ? (
+                            <div className="relative">
+                              <img src={p.file.previews[0]} alt="" className="max-h-[280px] max-w-[230px] rounded-lg object-cover opacity-80" />
+                              {p.file.status === 'uploading' && (
+                                <span className="absolute inset-0 m-auto h-6 w-6 animate-spin rounded-full border-2 border-white/40 border-t-white" />
                               )}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-xs font-semibold text-[#191c1e]">{p.file.file.name}</p>
-                              <p className="text-[10px] text-gray-400">
-                                {p.file.status === 'uploading' ? 'Uploading…' : 'Failed'}
-                              </p>
+                          ) : (
+                            <div className="grid w-[230px] grid-cols-2 gap-1">
+                              {p.file.previews.slice(0, 4).map((u, i) => {
+                                const wide = p.file.previews.length === 3 && i === 0
+                                const extra = p.file.previews.length - 4
+                                return (
+                                  <div key={i} className={`relative overflow-hidden rounded-lg ${wide ? 'col-span-2 aspect-[2/1]' : 'aspect-square'}`}>
+                                    <img src={u} alt="" className="h-full w-full object-cover opacity-80" />
+                                    {i === 3 && extra > 0 && (
+                                      <span className="absolute inset-0 flex items-center justify-center bg-black/50 text-lg font-semibold text-white">+{extra}</span>
+                                    )}
+                                    {p.file.status === 'uploading' && i === 0 && (
+                                      <span className="absolute inset-0 m-auto h-6 w-6 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                                    )}
+                                  </div>
+                                )
+                              })}
                             </div>
+                          )
+                        ) : (
+                          // Optimistic PDF card list.
+                          <div className="flex flex-col gap-2">
+                            {p.file.files.map((f, i) => (
+                              <div key={i} className="flex min-w-[200px] items-center gap-3 rounded-xl bg-white px-3 py-2">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+                                  {p.file.status === 'uploading' ? (
+                                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-blue-200 border-t-blue-600" />
+                                  ) : (
+                                    <FileText size={14} className="text-blue-600" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-xs font-semibold text-[#191c1e]">{f.name}</p>
+                                  <p className="text-[10px] text-gray-400">
+                                    {p.file.status === 'uploading' ? 'Uploading…' : 'Failed'}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -944,7 +1058,7 @@ const ChatsPage = () => {
                           className={`group flex flex-col ${mine ? 'items-end' : 'items-start'}`}
                         >
                           <div className={`flex items-center gap-2 max-w-[75%] ${mine ? 'flex-row-reverse' : ''}`}>
-                            <div className={`min-w-0 rounded-2xl px-4 py-3 transition-shadow ${mine
+                            <div className={`min-w-0 rounded-2xl px-3 py-2 transition-shadow ${mine
                               ? 'bg-[#2c1452] text-white rounded-tr-sm'
                               : 'bg-white text-[#191c1e] rounded-tl-sm'
                               } ${highlightId === msg.id ? 'ring-2 ring-offset-2 ring-[#2c1452]' : ''}`}>
@@ -966,16 +1080,22 @@ const ChatsPage = () => {
                                   )}
                                   {msg.message_type === 'AUDIO' && msg.file_url ? (
                                     <AudioPlayer src={msg.file_url} content={msg.content} seed={msg.id} mine={mine} />
-                                  ) : msg.message_type === 'IMAGE' && msg.file_url ? (
-                                    // Image attachment — click opens the original.
-                                    <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="block">
-                                      <img
-                                        src={msg.file_url}
-                                        alt={msg.file_name ?? 'Image'}
-                                        loading="lazy"
-                                        className="max-h-[260px] max-w-[220px] rounded-lg object-cover"
-                                      />
-                                    </a>
+                                  ) : msg.message_type === 'IMAGE' ? (
+                                    <MessageAttachments
+                                      kind="IMAGE"
+                                      items={parseAttachments(msg)}
+                                      onOpenImage={openImageViewer}
+                                      onOpenPdf={openPdfViewer}
+                                      onDownload={downloadAttachment}
+                                    />
+                                  ) : msg.message_type === 'PDF' ? (
+                                    <MessageAttachments
+                                      kind="PDF"
+                                      items={parseAttachments(msg)}
+                                      onOpenImage={openImageViewer}
+                                      onOpenPdf={openPdfViewer}
+                                      onDownload={downloadAttachment}
+                                    />
                                   ) : (
                                     <>
                                       {msg.content && (
@@ -984,24 +1104,32 @@ const ChatsPage = () => {
                                         </Paragraph>
                                       )}
 
+                                      {/* Legacy non-text types (VIDEO / FILE). */}
                                       {msg.message_type !== 'TEXT' && msg.file_url && (
-                                        <a
-                                          href={msg.file_url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className={`flex items-center gap-3 ${msg.content ? 'mt-3' : ''} bg-white rounded-xl px-3 py-2`}
-                                        >
-                                          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                                            <FileText size={14} className="text-blue-600" />
-                                          </div>
-                                          <div className="flex-1 min-w-0">
-                                            <p className="text-xs font-semibold text-[#191c1e] truncate">{msg.file_name ?? 'Attachment'}</p>
-                                            <p className="text-[10px] text-gray-400">{formatAttachment(msg)}</p>
-                                          </div>
-                                          <span className="shrink-0 text-gray-400 hover:text-[#2c1452]">
+                                        <div className={`flex items-center gap-3 ${msg.content ? 'mt-3' : ''} bg-white rounded-xl px-3 py-2`}>
+                                          <button
+                                            type="button"
+                                            onClick={() => downloadAttachment(msg.file_url!, msg.file_name ?? 'Attachment')}
+                                            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                                            title="Download"
+                                          >
+                                            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                                              <FileText size={14} className="text-blue-600" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-xs font-semibold text-[#191c1e] truncate">{msg.file_name ?? 'Attachment'}</p>
+                                              <p className="text-[10px] text-gray-400">{formatAttachment(msg)}</p>
+                                            </div>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => downloadAttachment(msg.file_url!, msg.file_name ?? 'Attachment')}
+                                            title="Download"
+                                            className="shrink-0 text-gray-400 hover:text-[#2c1452]"
+                                          >
                                             <Download size={14} />
-                                          </span>
-                                        </a>
+                                          </button>
+                                        </div>
                                       )}
                                     </>
                                   )}
@@ -1182,6 +1310,7 @@ const ChatsPage = () => {
                       ref={imageInputRef}
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       onChange={e => handleFileSelected('IMAGE', e)}
                     />
@@ -1189,6 +1318,7 @@ const ChatsPage = () => {
                       ref={docInputRef}
                       type="file"
                       accept="application/pdf,.pdf"
+                      multiple
                       className="hidden"
                       onChange={e => handleFileSelected('PDF', e)}
                     />
@@ -1237,6 +1367,80 @@ const ChatsPage = () => {
         confirmText="Delete"
         loading={deleteMessage.isPending}
       />
+
+      {/* In-app attachment viewer: image lightbox (with album nav) / embedded
+          PDF viewer with a working download — never opens a new tab. */}
+      {viewer && (() => {
+        const current = viewer.kind === 'IMAGE' ? viewer.images[viewer.index]! : { url: viewer.url, name: viewer.name }
+        const many = viewer.kind === 'IMAGE' && viewer.images.length > 1
+        const step = (d: number) =>
+          setViewer(v =>
+            v && v.kind === 'IMAGE'
+              ? { ...v, index: (v.index + d + v.images.length) % v.images.length }
+              : v,
+          )
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setViewer(null)}>
+            <div className="absolute inset-0 bg-black/70" />
+            <div
+              className="relative z-10 flex max-h-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex shrink-0 items-center justify-between gap-4 border-b border-gray-200 px-4 py-3">
+                <p className="truncate text-sm font-semibold text-[#191c1e]">
+                  {current.name}
+                  {many ? ` · ${viewer.index + 1}/${viewer.images.length}` : ''}
+                </p>
+                <div className="flex shrink-0 items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => downloadAttachment(current.url, current.name)}
+                    title="Download"
+                    className="text-gray-400 hover:text-[#2c1452]"
+                  >
+                    <Download size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewer(null)}
+                    title="Close"
+                    className="text-gray-400 hover:text-[#2c1452]"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+              <div className="relative flex items-center justify-center">
+                {viewer.kind === 'IMAGE' ? (
+                  <img src={current.url} alt={current.name} className="max-h-[78vh] w-auto object-contain" />
+                ) : (
+                  <iframe src={viewer.url} title={viewer.name} className="h-[78vh] w-[72vw] max-w-full" />
+                )}
+                {many && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => step(-1)}
+                      title="Previous"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => step(1)}
+                      title="Next"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
+                    >
+                      ›
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

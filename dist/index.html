@@ -2,14 +2,47 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/brand_icon.svg" />
+    <link rel="apple-touch-icon" href="/brand_icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // iOS Safari "Request Desktop Website" only spoofs the User-Agent (to a Mac)
+      // — unlike Android it does NOT widen the layout viewport, so a page using
+      // width=device-width still renders at the phone width and our tablet/desktop
+      // layout never kicks in. Detect an Apple touch device masquerading as a Mac
+      // (= iPhone in desktop mode) on a phone-sized screen, and force a desktop
+      // width so the layout renders the same as on Android desktop view.
+      (function () {
+        try {
+          var ua = navigator.userAgent || ''
+          var isAppleTouchMac = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1
+          var phoneScreen = Math.min(screen.width, screen.height) <= 500
+          if (isAppleTouchMac && phoneScreen) {
+            var vp = document.querySelector('meta[name=viewport]')
+            if (vp) vp.setAttribute('content', 'width=1280')
+          }
+        } catch (e) { /* no-op */ }
+      })()
+    </script>
     <title>Learninough</title>
+    <meta name="description" content="Learninough — online learning platform for faculty and students." />
+    <meta name="theme-color" content="#2c1452" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Learninough" />
+    <meta property="og:description" content="Learninough — online learning platform for faculty and students." />
+    <meta property="og:image" content="/brand_icon.svg" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Learninough" />
+    <meta name="twitter:description" content="Learninough — online learning platform for faculty and students." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/assets/index-DhAUlJ4w.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-G4dlIeaK.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="/assets/index-DaY1tZ7u.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CEadV8fo.css">
   </head>
   <body>
     <div id="root"></div>
