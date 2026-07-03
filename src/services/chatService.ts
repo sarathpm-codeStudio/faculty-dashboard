@@ -21,6 +21,7 @@ export interface ChatLastMessage {
     message_type: string
     sender_id: string
     created_at: string | null
+    is_deleted: boolean
 }
 
 // One row in the chat list: the room plus everything the list needs to render
@@ -39,6 +40,15 @@ export interface ChatRoomSummary {
 const peerName = (p: any): string =>
     [p?.first_name, p?.last_name].filter(Boolean).join(' ').trim()
 
+// Compact preview of the message a reply quotes (decrypted for rendering).
+export interface ChatReplyPreview {
+    id: string
+    sender_id: string
+    message_type: string
+    content: string | null
+    is_deleted: boolean
+}
+
 // A single message inside a room, as stored in chat_messages.
 export interface ChatMessage {
     id: string
@@ -51,10 +61,53 @@ export interface ChatMessage {
     file_size: number | null
     status: string
     created_at: string | null
+    // Soft-delete flag: a deleted message is kept as a "This message was
+    // deleted" tombstone rather than removed from the thread.
+    is_deleted: boolean
+    // The message this one replies to (null when it isn't a reply). `reply_to`
+    // is the resolved, decrypted preview of that quoted message.
+    reply_to_message_id: string | null
+    reply_to?: ChatReplyPreview | null
+}
+
+// Resolve the quoted-message preview for any rows that reply to another
+// message, mutating each row's `reply_to` in place. One batched lookup.
+export const attachReplyPreviews = async (rows: ChatMessage[]): Promise<void> => {
+    const replyIds = Array.from(
+        new Set(rows.map(r => r.reply_to_message_id).filter(Boolean) as string[]),
+    )
+    if (!replyIds.length) return
+
+    const { data } = await supabase
+        .from('chat_messages')
+        .select('id, sender_id, message_type, content, is_deleted')
+        .in('id', replyIds)
+
+    const byId = new Map<string, ChatReplyPreview>()
+    await Promise.all(
+        (data ?? []).map(async (m: any) => {
+            byId.set(m.id, {
+                id: m.id,
+                sender_id: m.sender_id,
+                message_type: m.message_type,
+                // A quote of a deleted message has no content to show.
+                content: m.is_deleted ? null : await decryptMessageSafe(m.content),
+                is_deleted: !!m.is_deleted,
+            })
+        }),
+    )
+
+    for (const r of rows) {
+        if (r.reply_to_message_id)
+            r.reply_to = byId.get(r.reply_to_message_id) ?? null
+    }
 }
 
 // How many messages to load per page when opening / scrolling up a room.
 export const CHAT_MESSAGES_PAGE_SIZE = 25
+
+// Max attachment size for chat uploads (5 MB).
+export const CHAT_ATTACHMENT_MAX_BYTES = 5 * 1024 * 1024
 
 export const chatService = {
     // One page of a room's messages, newest first on the wire but returned
@@ -65,13 +118,13 @@ export const chatService = {
         roomId: string,
         before?: string,
     ): Promise<{ items: ChatMessage[]; nextCursor: string | null }> => {
+        // Deleted messages are kept (as tombstones), so we don't filter them out.
         let q = supabase
             .from('chat_messages')
             .select(
-                'id, room_id, sender_id, message_type, content, file_url, file_name, file_size, status, created_at',
+                'id, room_id, sender_id, message_type, content, file_url, file_name, file_size, status, created_at, is_deleted, reply_to_message_id',
             )
             .eq('room_id', roomId)
-            .eq('is_deleted', false)
             .order('created_at', { ascending: false })
             .limit(CHAT_MESSAGES_PAGE_SIZE)
 
@@ -86,12 +139,17 @@ export const chatService = {
                 ? rows[rows.length - 1].created_at
                 : null
 
-        // Decrypt each message's content back to plaintext for rendering.
+        // Decrypt each message's content back to plaintext for rendering; a
+        // deleted message has nothing to show, so skip it.
         await Promise.all(
             rows.map(async row => {
-                row.content = await decryptMessageSafe(row.content)
+                row.content = row.is_deleted
+                    ? null
+                    : await decryptMessageSafe(row.content)
             }),
         )
+        // Resolve the quoted preview for any (non-deleted) replies in this page.
+        await attachReplyPreviews(rows.filter(r => !r.is_deleted))
 
         // Reverse to oldest→newest so the page renders top→bottom.
         return { items: rows.slice().reverse(), nextCursor }
@@ -154,18 +212,22 @@ export const chatService = {
         if (lastIds.length) {
             const { data: msgs, error: msgErr } = await supabase
                 .from('chat_messages')
-                .select('id, room_id, content, message_type, sender_id, created_at')
+                .select('id, room_id, content, message_type, sender_id, created_at, is_deleted')
                 .in('id', lastIds)
 
             if (msgErr) throw new Error(msgErr.message)
             for (const m of msgs ?? []) {
                 lastByRoom.set((m as any).room_id, {
                     id: (m as any).id,
-                    // Decrypt the preview text so the room list is readable.
-                    content: await decryptMessageSafe((m as any).content),
+                    // Decrypt the preview text so the room list is readable; a
+                    // deleted last message has nothing to show.
+                    content: (m as any).is_deleted
+                        ? null
+                        : await decryptMessageSafe((m as any).content),
                     message_type: (m as any).message_type,
                     sender_id: (m as any).sender_id,
                     created_at: (m as any).created_at,
+                    is_deleted: !!(m as any).is_deleted,
                 })
             }
         }
@@ -309,7 +371,11 @@ export const chatService = {
 
     // Send a text message into a room, then point the room at it as its latest
     // message so the list preview and ordering stay in sync.
-    sendMessage: async (roomId: string, content: string): Promise<ChatMessage> => {
+    sendMessage: async (
+        roomId: string,
+        content: string,
+        replyToMessageId?: string | null,
+    ): Promise<ChatMessage> => {
         const userId = getCurrentUserId()
         if (!userId) throw new Error('Not authenticated')
 
@@ -327,9 +393,10 @@ export const chatService = {
                 message_type: 'TEXT',
                 content: encryptedBody,
                 status: 'sent',
+                reply_to_message_id: replyToMessageId ?? null,
             })
             .select(
-                'id, room_id, sender_id, message_type, content, file_url, file_name, file_size, status, created_at',
+                'id, room_id, sender_id, message_type, content, file_url, file_name, file_size, status, created_at, is_deleted, reply_to_message_id',
             )
             .single()
 
@@ -337,6 +404,8 @@ export const chatService = {
 
         // Hand the caller back the readable text (the row itself holds ciphertext).
         ;(message as ChatMessage).content = body
+        // Resolve its quoted preview too, for callers that render it directly.
+        await attachReplyPreviews([message as ChatMessage])
 
         const { error: roomErr } = await supabase
             .from('chat_rooms')
@@ -349,6 +418,163 @@ export const chatService = {
         if (roomErr) throw new Error(roomErr.message)
 
         return message as ChatMessage
+    },
+
+    // Send a voice message: upload the recorded blob to the public `chat-media`
+    // bucket, then store an AUDIO message pointing at it. The duration + waveform
+    // ride (encrypted) in `content` so the player can render without re-decoding.
+    sendAudioMessage: async (
+        roomId: string,
+        blob: Blob,
+        opts: { duration: number; peaks: number[]; mimeType: string },
+        replyToMessageId?: string | null,
+    ): Promise<ChatMessage> => {
+        const userId = getCurrentUserId()
+        if (!userId) throw new Error('Not authenticated')
+
+        const ext = opts.mimeType.includes('ogg')
+            ? 'ogg'
+            : opts.mimeType.includes('mp4')
+              ? 'm4a'
+              : 'webm'
+        const path = `voice/${roomId}/${crypto.randomUUID()}.${ext}`
+
+        const { error: upErr } = await supabase.storage
+            .from('chat-media')
+            .upload(path, blob, { contentType: opts.mimeType, upsert: false })
+        if (upErr) throw new Error(upErr.message)
+
+        const { data: pub } = supabase.storage.from('chat-media').getPublicUrl(path)
+
+        const meta = JSON.stringify({
+            d: Math.max(1, Math.round(opts.duration)),
+            w: opts.peaks,
+        })
+        const encryptedMeta = await encryptMessage(meta)
+
+        const { data: message, error: msgErr } = await supabase
+            .from('chat_messages')
+            .insert({
+                room_id: roomId,
+                sender_id: userId,
+                message_type: 'AUDIO',
+                content: encryptedMeta,
+                file_url: pub.publicUrl,
+                file_name: 'Voice message',
+                file_size: blob.size,
+                status: 'sent',
+                reply_to_message_id: replyToMessageId ?? null,
+            })
+            .select(
+                'id, room_id, sender_id, message_type, content, file_url, file_name, file_size, status, created_at, is_deleted, reply_to_message_id',
+            )
+            .single()
+
+        if (msgErr) throw new Error(msgErr.message)
+
+        // Hand back the readable meta (the row itself holds ciphertext).
+        ;(message as ChatMessage).content = meta
+        await attachReplyPreviews([message as ChatMessage])
+
+        const { error: roomErr } = await supabase
+            .from('chat_rooms')
+            .update({
+                last_message_id: message.id,
+                last_message_at: (message as ChatMessage).created_at,
+            })
+            .eq('id', roomId)
+
+        if (roomErr) throw new Error(roomErr.message)
+
+        return message as ChatMessage
+    },
+
+    // Send an attachment (image or PDF): upload the file to the public
+    // `chat-media` bucket, then store an IMAGE/DOCUMENT message pointing at it.
+    // Size and type are validated here as the last line of defence (the UI
+    // validates before uploading too).
+    sendFileMessage: async (
+        roomId: string,
+        file: File,
+        kind: 'IMAGE' | 'PDF',
+        replyToMessageId?: string | null,
+    ): Promise<ChatMessage> => {
+        const userId = getCurrentUserId()
+        if (!userId) throw new Error('Not authenticated')
+
+        if (file.size > CHAT_ATTACHMENT_MAX_BYTES)
+            throw new Error('Attachment is too large (max 5 MB)')
+        const validType =
+            kind === 'IMAGE'
+                ? file.type.startsWith('image/')
+                : file.type === 'application/pdf'
+        if (!validType)
+            throw new Error(
+                kind === 'IMAGE'
+                    ? 'Only images can be attached'
+                    : 'Only PDF documents can be attached',
+            )
+
+        const ext =
+            file.name.split('.').pop()?.toLowerCase() ||
+            (kind === 'IMAGE' ? 'jpg' : 'pdf')
+        const path = `files/${roomId}/${crypto.randomUUID()}.${ext}`
+
+        const { error: upErr } = await supabase.storage
+            .from('chat-media')
+            .upload(path, file, { contentType: file.type, upsert: false })
+        if (upErr) throw new Error(upErr.message)
+
+        const { data: pub } = supabase.storage.from('chat-media').getPublicUrl(path)
+
+        const { data: message, error: msgErr } = await supabase
+            .from('chat_messages')
+            .insert({
+                room_id: roomId,
+                sender_id: userId,
+                message_type: kind,
+                content: null,
+                file_url: pub.publicUrl,
+                file_name: file.name,
+                file_size: file.size,
+                status: 'sent',
+                reply_to_message_id: replyToMessageId ?? null,
+            })
+            .select(
+                'id, room_id, sender_id, message_type, content, file_url, file_name, file_size, status, created_at, is_deleted, reply_to_message_id',
+            )
+            .single()
+
+        if (msgErr) throw new Error(msgErr.message)
+
+        await attachReplyPreviews([message as ChatMessage])
+
+        const { error: roomErr } = await supabase
+            .from('chat_rooms')
+            .update({
+                last_message_id: message.id,
+                last_message_at: (message as ChatMessage).created_at,
+            })
+            .eq('id', roomId)
+
+        if (roomErr) throw new Error(roomErr.message)
+
+        return message as ChatMessage
+    },
+
+    // Soft-delete one of my own messages: flip is_deleted so it renders as a
+    // "This message was deleted" tombstone for everyone. Scoped to the sender.
+    deleteMessage: async (messageId: string): Promise<void> => {
+        const userId = getCurrentUserId()
+        if (!userId) throw new Error('Not authenticated')
+
+        const { error } = await supabase
+            .from('chat_messages')
+            .update({ is_deleted: true })
+            .eq('id', messageId)
+            .eq('sender_id', userId)
+
+        if (error) throw new Error(error.message)
     },
 
     // Mark the other party's messages in a room as delivered (recipient's
