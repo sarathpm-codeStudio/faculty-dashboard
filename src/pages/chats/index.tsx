@@ -872,7 +872,20 @@ const ChatsPage = () => {
                 transition={{ duration: 0.3, ease: 'easeOut' }}
               >
                 <div className="flex items-center gap-3">
-                  <img src={active ? avatarFor(active) : courseImg} alt={active ? roomName(active) : ''} className={`w-10 h-10 rounded-lg ${active && isAdminRoom(active) ? 'object-contain p-1.5 bg-gray-100' : 'object-cover'}`} />
+                  {/* Admin room → brand logo; peer with a photo → photo; no
+                      photo → initials avatar (same look as the room list). */}
+                  {active && isAdminRoom(active) ? (
+                    <img src={brandLogo} alt={roomName(active)} className="w-10 h-10 rounded-lg object-contain p-1.5 bg-gray-100" />
+                  ) : active?.peer?.avatar_url ? (
+                    <img src={active.peer.avatar_url} alt={roomName(active)} className="w-10 h-10 rounded-lg object-cover" />
+                  ) : (
+                    <div
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-base font-bold text-white"
+                      style={{ backgroundColor: colorForName(active ? roomName(active) : '?') }}
+                    >
+                      {initialOf(active ? roomName(active) : '')}
+                    </div>
+                  )}
                   <div>
                     {/* Clicking the name opens the student's profile — except for
                         the admin conversation, which has no profile page here. */}
