@@ -9,10 +9,14 @@ import Button from '@/components/ui/Button'
 import { useGetBankDetails } from '@/hooks/bank'
 import { useGetTransactionHistory } from '@/hooks/bank'
 import { useAuthStore } from '@/store/authStore'
+import PayoutBreakdownModal from './PayoutBreakdownModal'
 
 type Transaction = {
     id: string
     transactionId: string
+    payoutId: string
+    paymentId: string
+    period: string
     amount: number
     amountDisplay: string
     type: string
@@ -20,43 +24,6 @@ type Transaction = {
     time: string
     date: string
 }
-
-const COLUMNS: TableColumn<Transaction>[] = [
-    {
-        key: 'transactionId',
-        header: 'TRANSACTION ID',
-        render: row => <span className="text-sm font-bold text-[#2c1452]">{row.transactionId}</span>,
-    },
-    {
-        key: 'time',
-        header: 'TIME',
-        render: row => <span className="text-sm text-[#191c1e]">{row.time}</span>,
-    },
-    {
-        key: 'amount',
-        header: 'AMOUNT',
-        render: row => <span className="text-sm font-bold text-[#191c1e]">{row.amountDisplay ?? "₹0"}</span>,
-    },
-    {
-        key: 'date',
-        header: 'DATE',
-        render: row => <span className="text-sm text-[#191c1e]">{row.date}</span>,
-    },
-    {
-        key: 'status',
-        header: 'STATUS',
-        render: row => (
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${row.status === 'SUCCESS'
-                ? 'bg-[#E6FBF7] text-[#00875A]'
-                : row.status === 'PENDING'
-                    ? 'bg-orange-50 text-orange-500'
-                    : 'bg-red-50 text-red-500'
-                }`}>
-                {row.status}
-            </span>
-        ),
-    },
-]
 
 const fadeUp = (delay = 0) => ({
     initial: { opacity: 0, y: 18 },
@@ -68,13 +35,70 @@ const BankDetailsAndTransaction = () => {
     const navigate = useNavigate()
     const [loading, setLoading] = useState(true)
     const [showAll, setShowAll] = useState(false)
+    const [openPayoutId, setOpenPayoutId] = useState<string | null>(null)
 
     const authUser = useAuthStore((s) => s.user)
 
 
     // query
-    const { data: bankDetails, isLoading: isLoadingBankDetails } = useGetBankDetails()
+    const { data: bankDetails } = useGetBankDetails()
     const { data: transactionHistory, isLoading: isLoadingTransactionHistory } = useGetTransactionHistory(authUser?.id, 6)
+
+    const COLUMNS: TableColumn<Transaction>[] = [
+        {
+            key: 'transactionId',
+            header: 'TRANSACTION ID',
+            render: row => <span className="text-sm font-bold text-[#2c1452]">{row.transactionId}</span>,
+        },
+        {
+            key: 'period',
+            header: 'PERIOD',
+            render: row => <span className="text-sm text-[#191c1e]">{row.period}</span>,
+        },
+        {
+            key: 'time',
+            header: 'TIME',
+            render: row => <span className="text-sm text-[#191c1e]">{row.time}</span>,
+        },
+        {
+            key: 'amount',
+            header: 'AMOUNT',
+            render: row => <span className="text-sm font-bold text-[#191c1e]">{row.amountDisplay ?? "₹0"}</span>,
+        },
+        {
+            key: 'date',
+            header: 'DATE',
+            render: row => <span className="text-sm text-[#191c1e]">{row.date}</span>,
+        },
+        {
+            key: 'status',
+            header: 'STATUS',
+            render: row => (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${row.status === 'SUCCESS'
+                    ? 'bg-[#E6FBF7] text-[#00875A]'
+                    : row.status === 'PENDING'
+                        ? 'bg-orange-50 text-orange-500'
+                        : 'bg-red-50 text-red-500'
+                    }`}>
+                    {row.status}
+                </span>
+            ),
+        },
+        {
+            key: 'actions',
+            header: '',
+            headerClassName: 'text-right',
+            cellClassName: 'text-right',
+            render: row => (
+                <button
+                    onClick={() => setOpenPayoutId(row.payoutId)}
+                    className="text-sm font-bold text-[#2c1452] hover:opacity-70 transition-opacity"
+                >
+                    View
+                </button>
+            ),
+        },
+    ]
 
 
 
@@ -295,6 +319,13 @@ const BankDetailsAndTransaction = () => {
                     </motion.div>
                 </div>
             </div>
+
+            <PayoutBreakdownModal
+                open={openPayoutId !== null}
+                payoutId={openPayoutId}
+                facultyId={authUser?.id}
+                onClose={() => setOpenPayoutId(null)}
+            />
         </div>
     )
 }

@@ -509,7 +509,7 @@ export const studentServices = {
             // 2. Direct course enrollments for this faculty
             const { data: directEnrollments, error: directError } = await supabase
                 .from('enrollments')
-                .select('id, course_id, amount_paid, is_bundle_enrollment, enrolled_at')
+                .select('id, course_id, amount_paid, gst_amount, is_bundle_enrollment, enrolled_at')
                 .eq('faculty_id', getCurrentFacultyId())
                 .eq('student_id', studentId);
 
@@ -529,13 +529,38 @@ export const studentServices = {
             const bundleCourseCount = directEnrollments?.filter(e => e.is_bundle_enrollment).length ?? 0;
             const totalCourseCount = directCourseCount + bundleCourseCount;
 
-            // 5. Total amount spent
+            // 5. Faculty's total revenue from this student — the faculty share
+            //    after GST and commission (workflow §3/§4), NOT the student's gross
+            //    spend. Rate = this faculty's commission_rate, else platform default.
+            const { data: facultyProfile } = await supabase
+                .from('profiles')
+                .select('commission_rate')
+                .eq('id', getCurrentFacultyId())
+                .maybeSingle();
+
+            const { data: commissionSetting } = await supabase
+                .from('platform_settings')
+                .select('value')
+                .eq('key', 'default_commission_percent')
+                .maybeSingle();
+
+            const commissionRate =
+                facultyProfile?.commission_rate ?? Number(commissionSetting?.value) ?? 20;
+
+            // Singles: base = amount_paid − GST, then minus commission
             const directRevenue = directEnrollments
                 ?.filter(e => !e.is_bundle_enrollment)
-                .reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
+                .reduce((sum, e) => {
+                    const base = (e.amount_paid ?? 0) - (e.gst_amount ?? 0);
+                    return sum + (base - Math.round(base * commissionRate / 100));
+                }, 0) ?? 0;
 
+            // Bundles: commission on the full amount_paid (no separate GST)
             const bundleRevenue = bundleEnrollments
-                ?.reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
+                ?.reduce((sum, e) => {
+                    const base = e.amount_paid ?? 0;
+                    return sum + (base - Math.round(base * commissionRate / 100));
+                }, 0) ?? 0;
 
             const totalAmountSpent = directRevenue + bundleRevenue;
 

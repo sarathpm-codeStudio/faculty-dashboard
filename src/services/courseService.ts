@@ -18,6 +18,26 @@ import { buildChartPeriodSlots, ChartPeriod, getChartPeriodBounds, getPeriodTren
 // (often `undefined`) value that survives logout/login without a page reload.
 const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
+// Commission % for the current faculty: their profiles.commission_rate,
+// falling back to the platform default (workflow §7).
+const resolveFacultyCommission = async (): Promise<number> => {
+  const facultyId = getCurrentFacultyId();
+  const [{ data: profile }, { data: setting }] = await Promise.all([
+    facultyId
+      ? supabase.from('profiles').select('commission_rate').eq('id', facultyId).maybeSingle()
+      : Promise.resolve({ data: null } as any),
+    supabase.from('platform_settings').select('value').eq('key', 'default_commission_percent').maybeSingle(),
+  ]);
+  const rate = profile?.commission_rate ?? Number(setting?.value);
+  return Number.isFinite(rate) ? rate : 20;
+};
+
+// Faculty's net revenue for one enrollment = (amount_paid − GST) − commission.
+const facultyRevenueOf = (amountPaid: number, gst: number, rate: number): number => {
+  const base = (amountPaid ?? 0) - (gst ?? 0);
+  return base - Math.round((base * rate) / 100);
+};
+
 export const courseService = {
 
   getAll: async ({ filter, search }: { filter: any, search?: string }): Promise<any> => {
@@ -1281,15 +1301,19 @@ export const courseService = {
     // }
     try {
 
-      // 1. Total Revenue + Active Students count
+      // 1. Total Revenue (faculty net = after GST + commission) + Active Students
       const { data: enrollments, error: enrollmentError } = await supabase
         .from("enrollments")
-        .select("amount_paid, student_id")
+        .select("amount_paid, gst_amount, student_id")
         .eq("course_id", courseId);
 
       if (enrollmentError) throw new Error(enrollmentError.message);
 
-      const totalRevenue = enrollments?.reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
+      const commissionRate = await resolveFacultyCommission();
+      const totalRevenue = enrollments?.reduce(
+        (sum, e) => sum + facultyRevenueOf(e.amount_paid ?? 0, e.gst_amount ?? 0, commissionRate),
+        0,
+      ) ?? 0;
       const activeStudents = enrollments?.length ?? 0;
 
       // 2. Completion Rate — avg completion_pct across all students in this course
@@ -1405,7 +1429,7 @@ export const courseService = {
 
       const { data: current, error: currentError } = await supabase
         .from("enrollments")
-        .select("enrolled_at, amount_paid")
+        .select("enrolled_at, amount_paid, gst_amount")
         .eq("course_id", courseId)
         .gte("enrolled_at", bounds.fromDate.toISOString())
         .lte("enrolled_at", bounds.rangeEnd.toISOString());
@@ -1415,7 +1439,7 @@ export const courseService = {
 
       const { data: previous, error: previousError } = await supabase
         .from("enrollments")
-        .select("amount_paid")
+        .select("amount_paid, gst_amount")
         .eq("course_id", courseId)
         .gte("enrolled_at", previousStart.toISOString())
         .lte("enrolled_at", previousEnd.toISOString());
@@ -1423,8 +1447,12 @@ export const courseService = {
       if (previousError) throw new Error(previousError.message);
       const previousEnrollments = previous ?? [];
 
-      const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
-      const previousTotal = previousEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
+      // Revenue = faculty net share (after GST + commission)
+      const commissionRate = await resolveFacultyCommission();
+      const currentTotal = currentEnrollments.reduce(
+        (sum, e) => sum + facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate), 0);
+      const previousTotal = previousEnrollments.reduce(
+        (sum, e) => sum + facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate), 0);
 
       let trendText = "0% no change";
       if (previousTotal > 0) {
@@ -1442,7 +1470,8 @@ export const courseService = {
         if (!grouped) continue;
         revenueByGroup.set(
           grouped.group,
-          (revenueByGroup.get(grouped.group) ?? 0) + Number(e.amount_paid)
+          (revenueByGroup.get(grouped.group) ?? 0) +
+            facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate)
         );
       }
 

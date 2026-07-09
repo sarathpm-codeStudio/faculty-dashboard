@@ -165,7 +165,7 @@ export const dashboardService = {
 
             if (payoutError) throw new Error(payoutError.message);
 
-            const totalRevenue = (payoutRows ?? []).reduce(
+            const realizedRevenue = (payoutRows ?? []).reduce(
                 (sum, t) => sum + Number(t.amount ?? 0),
                 0
             );
@@ -175,6 +175,10 @@ export const dashboardService = {
             //     "Not yet settled" = no COURSE_SALE row for the single enrollment
             //     and no BUNDLE_SALE row for the bundle enrollment.
             const pendingPayout = await getPendingPayout(db, facultyId, courseIds, enrollments);
+
+            // Total revenue = already received (PAYOUT rows) + still pending.
+            // The pending portion is also surfaced separately on the card.
+            const totalRevenue = realizedRevenue + pendingPayout;
 
             // 5. Active coupons count
             const { count: activeCoupons, error: couponsError } = await db

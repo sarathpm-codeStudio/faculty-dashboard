@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Mail, Clock } from 'lucide-react'
+import { ArrowLeft, Mail, Clock, User } from 'lucide-react'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsPencilFill } from 'react-icons/bs'
 import { HiMiniCurrencyDollar } from 'react-icons/hi2'
@@ -119,8 +119,16 @@ const StudentDetailPage = () => {
                         <div className="relative shrink-0">
                             {studentAnalyticsLoading ? (
                                 <Skeleton className="w-30 h-30 rounded-2xl" />
+                            ) : studentAnalytics?.student?.avatar_url ? (
+                                <img
+                                    src={studentAnalytics.student.avatar_url}
+                                    alt={`${studentAnalytics?.student?.first_name ?? ''} ${studentAnalytics?.student?.last_name ?? ''}`.trim() || 'Student'}
+                                    className="w-30 h-30 rounded-2xl object-cover"
+                                />
                             ) : (
-                                <img src={studentAnalytics?.student?.avatar_url} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
+                                <div className="w-30 h-30 rounded-2xl bg-[#F2F4F6] flex items-center justify-center">
+                                    <User className="text-[#2c1452]" size={48} strokeWidth={1.5} />
+                                </div>
                             )}
                         </div>
                         <div className="mt-1 flex-1">
@@ -183,8 +191,8 @@ const StudentDetailPage = () => {
 
                             icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
 
-                            label="Total Spend"
-                            value={String(studentAnalytics?.totalAmountSpent ?? 0)}
+                            label="Total Revenue"
+                            value={(studentAnalytics?.totalAmountSpent ?? 0).toLocaleString('en-IN')}
                             prefix="₹"
                         // valueColor="#00875A"
                         />
