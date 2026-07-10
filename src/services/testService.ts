@@ -245,6 +245,27 @@ export const testService = {
         }
     },
 
+    // Resolve a test's primary-key id from the shared unique_id.
+    // Course materials of type TEST store the same unique_id as their test,
+    // so the academic structure can jump straight to the test edit page.
+    getTestIdByUniqueId: async (unique_id: string) => {
+        try {
+
+            const { data: result, error } = await supabase.from("tests")
+                .select("id")
+                .eq("unique_id", unique_id)
+                .single();
+            if (error) throw error;
+            return result?.id ?? null;
+
+        } catch (error: any) {
+
+            console.log("error", error);
+
+            throw new Error(error)
+        }
+    },
+
     getTestAnalytics: async (testId: string) => {
         // try {
         //     const { data } = await apiClient.get(`/test/${test_id}/analytics`)
