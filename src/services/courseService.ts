@@ -38,6 +38,19 @@ const facultyRevenueOf = (amountPaid: number, gst: number, rate: number): number
   return base - Math.round((base * rate) / 100);
 };
 
+// Actual settled faculty share (recorded COURSE_SALE.amount) per enrollment.
+// Already-processed sales keep this amount even if commission later changes
+// (enrollment-payout-workflow.md §7) — only unsettled enrollments recompute.
+const settledSharesFor = async (enrollmentIds: string[]): Promise<Map<string, number>> => {
+  if (enrollmentIds.length === 0) return new Map();
+  const { data } = await supabase
+    .from('faculty_transactions')
+    .select('enrollment_id, amount')
+    .eq('type', 'COURSE_SALE')
+    .in('enrollment_id', enrollmentIds);
+  return new Map((data ?? []).map((r) => [r.enrollment_id, Number(r.amount ?? 0)]));
+};
+
 export const courseService = {
 
   getAll: async ({ filter, search }: { filter: any, search?: string }): Promise<any> => {
@@ -1304,14 +1317,17 @@ export const courseService = {
       // 1. Total Revenue (faculty net = after GST + commission) + Active Students
       const { data: enrollments, error: enrollmentError } = await supabase
         .from("enrollments")
-        .select("amount_paid, gst_amount, student_id")
+        .select("id, amount_paid, gst_amount, student_id")
         .eq("course_id", courseId);
 
       if (enrollmentError) throw new Error(enrollmentError.message);
 
       const commissionRate = await resolveFacultyCommission();
+      const settled = await settledSharesFor((enrollments ?? []).map((e) => e.id));
       const totalRevenue = enrollments?.reduce(
-        (sum, e) => sum + facultyRevenueOf(e.amount_paid ?? 0, e.gst_amount ?? 0, commissionRate),
+        (sum, e) => sum + (settled.has(e.id)
+          ? settled.get(e.id)!
+          : facultyRevenueOf(e.amount_paid ?? 0, e.gst_amount ?? 0, commissionRate)),
         0,
       ) ?? 0;
       const activeStudents = enrollments?.length ?? 0;
@@ -1429,7 +1445,7 @@ export const courseService = {
 
       const { data: current, error: currentError } = await supabase
         .from("enrollments")
-        .select("enrolled_at, amount_paid, gst_amount")
+        .select("id, enrolled_at, amount_paid, gst_amount")
         .eq("course_id", courseId)
         .gte("enrolled_at", bounds.fromDate.toISOString())
         .lte("enrolled_at", bounds.rangeEnd.toISOString());
@@ -1439,7 +1455,7 @@ export const courseService = {
 
       const { data: previous, error: previousError } = await supabase
         .from("enrollments")
-        .select("amount_paid, gst_amount")
+        .select("id, amount_paid, gst_amount")
         .eq("course_id", courseId)
         .gte("enrolled_at", previousStart.toISOString())
         .lte("enrolled_at", previousEnd.toISOString());
@@ -1447,12 +1463,19 @@ export const courseService = {
       if (previousError) throw new Error(previousError.message);
       const previousEnrollments = previous ?? [];
 
-      // Revenue = faculty net share (after GST + commission)
+      // Revenue = faculty net share. Settled sales keep their recorded amount
+      // (unchanged by later commission edits); only unpaid recompute (§7).
       const commissionRate = await resolveFacultyCommission();
-      const currentTotal = currentEnrollments.reduce(
-        (sum, e) => sum + facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate), 0);
-      const previousTotal = previousEnrollments.reduce(
-        (sum, e) => sum + facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate), 0);
+      const settled = await settledSharesFor(
+        [...currentEnrollments, ...previousEnrollments].map((e) => e.id).filter(Boolean),
+      );
+      const netOf = (e: { id?: string; amount_paid?: number; gst_amount?: number }) =>
+        e.id && settled.has(e.id)
+          ? settled.get(e.id)!
+          : facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate);
+
+      const currentTotal = currentEnrollments.reduce((sum, e) => sum + netOf(e), 0);
+      const previousTotal = previousEnrollments.reduce((sum, e) => sum + netOf(e), 0);
 
       let trendText = "0% no change";
       if (previousTotal > 0) {
@@ -1470,8 +1493,7 @@ export const courseService = {
         if (!grouped) continue;
         revenueByGroup.set(
           grouped.group,
-          (revenueByGroup.get(grouped.group) ?? 0) +
-            facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate)
+          (revenueByGroup.get(grouped.group) ?? 0) + netOf(e)
         );
       }
 
