@@ -247,10 +247,15 @@ export const couponServices = {
             const to = from + limit - 1;
 
             // Base query
+            // used_count on the coupons row is never maintained, so derive the
+            // real usage from coupon_redemptions instead of trusting the column.
             let query = db
                 .from("coupons")
                 .select(`
                     *,
+                    coupon_redemptions (
+                        count
+                    ),
                     coupon_courses (
                         course_id,
                         courses (
@@ -285,13 +290,22 @@ export const couponServices = {
             const { data: coupons, error, count } = await query;
             if (error) throw new Error(error.message);
 
+            // Overwrite the stale used_count column with the redemption count.
+            const couponsWithUsage = (coupons ?? []).map((coupon: any) => {
+                const { coupon_redemptions, ...rest } = coupon;
+                return {
+                    ...rest,
+                    used_count: coupon_redemptions?.[0]?.count ?? 0,
+                };
+            });
+
             // Calculate pagination meta
             const totalPages = Math.ceil((count ?? 0) / limit);
             const hasNextPage = page < totalPages;
             const hasPrevPage = page > 1;
 
             return {
-                coupons,
+                coupons: couponsWithUsage,
                 pagination: {
                     total: count ?? 0,
                     total_pages: totalPages,
