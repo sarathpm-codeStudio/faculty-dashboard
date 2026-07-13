@@ -735,6 +735,76 @@ export const testService = {
 
     },
 
+    /** Download the sample .xlsx faculty fill in before importing questions. */
+    downloadQuestionTemplate: async () => {
+        try {
+            const { data, headers } = await apiClient.get('/tests/questions/import/template', {
+                responseType: 'blob',
+            })
+
+            const disposition: string = headers['content-disposition'] ?? ''
+            const filename = disposition.match(/filename="?([^"]+)"?/)?.[1] ?? 'question-import-template.xlsx'
+
+            const url = URL.createObjectURL(data)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = filename
+            link.click()
+            URL.revokeObjectURL(url)
+
+        } catch (error: any) {
+            const message = error?.response?.data?.message || error?.message || 'Something went wrong'
+            console.log("error", error)
+            throw new Error(message)
+        }
+    },
+
+    /**
+     * Upload an .xlsx of questions to the import Lambda, which parses, validates and
+     * inserts them.
+     *
+     * The file is sent base64-encoded inside a JSON body rather than as a raw binary
+     * body: a raw body only survives if the gateway base64-encodes it, which
+     * serverless-offline does not do for incoming requests — the bytes get mangled by
+     * UTF-8 decoding and the workbook arrives corrupt.
+     */
+    importQuestions: async (
+        test_id: string,
+        file: File,
+        placement: { moduleId?: string; materialId?: string; materialTitle?: string },
+    ) => {
+        try {
+            const buffer = await file.arrayBuffer()
+
+            // btoa() only accepts a binary string, so chunk it — spreading a whole
+            // multi-hundred-KB array into String.fromCharCode blows the call stack.
+            const bytes = new Uint8Array(buffer)
+            let binary = ''
+            const CHUNK = 8192
+            for (let i = 0; i < bytes.length; i += CHUNK) {
+                binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK))
+            }
+
+            const { data } = await apiClient.post(`/tests/${test_id}/questions/import`, {
+                file: btoa(binary),
+                moduleId: placement.moduleId || undefined,
+                materialId: placement.materialId || undefined,
+                materialTitle: placement.materialTitle || undefined,
+            })
+
+            return data?.data
+
+        } catch (error: any) {
+            const message =
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                error?.message ||
+                'Something went wrong'
+            console.log("error", error)
+            throw new Error(message)
+        }
+    },
+
     getQuestionsByTestId: async (test_id: string) => {
         // try {
         //     const { data } = await apiClient.get(`/test/${test_id}/questions`)
