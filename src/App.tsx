@@ -57,11 +57,11 @@ const App = () => {
     const hydrated = useAuthStore.persist.hasHydrated()
       ? Promise.resolve()
       : new Promise<void>((resolve) => {
-          const unsub = useAuthStore.persist.onFinishHydration(() => {
-            unsub()
-            resolve()
-          })
+        const unsub = useAuthStore.persist.onFinishHydration(() => {
+          unsub()
+          resolve()
         })
+      })
 
     let active = true
     Promise.all([minSplash, hydrated]).then(() => {
@@ -79,6 +79,7 @@ const App = () => {
   return (
     <>
       <MobileBlocker />
+
       <Toaster position="top-right" richColors />
       <BrowserRouter>
         <Routes>
