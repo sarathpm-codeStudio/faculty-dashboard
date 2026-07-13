@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { ArrowLeft, Mail, Clock, User } from 'lucide-react'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsPencilFill } from 'react-icons/bs'
@@ -9,6 +10,7 @@ import { Button, Heading, DataTable, Subheading, Skeleton, SkeletonStatCard } fr
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import { useGetStudentAnalytics, useGetStudentCourses } from '@/hooks/student'
+import { useStartConversation } from '@/hooks/chat'
 
 type EnrolledCourse = {
     id: string
@@ -94,6 +96,17 @@ const StudentDetailPage = () => {
     }, !!id)
     const { data: studentAnalytics, isLoading: studentAnalyticsLoading } = useGetStudentAnalytics(id, !!id)
 
+    // Reuses the existing 1:1 room with this student, or creates one, then opens
+    // it on the chats page.
+    const startConversation = useStartConversation()
+    const handleMessageStudent = () => {
+        if (!id) return
+        startConversation.mutate(id, {
+            onSuccess: ({ roomId }) => navigate('/chats', { state: { roomId } }),
+            onError: (err: any) => toast.error(err?.message ?? 'Could not open chat with this student'),
+        })
+    }
+
     return (
         <div className="flex flex-col h-full overflow-hidden bg-gray-50 max-lg:h-auto max-lg:min-h-full max-lg:overflow-visible">
 
@@ -152,13 +165,17 @@ const StudentDetailPage = () => {
 
                     {/* Actions */}
                     <div className="flex flex-col items-end gap-2.5 shrink-0">
-                        <Button className="!h-10 !text-sm !px-5">
+                        <Button
+                            className="!h-10 !text-sm !px-5"
+                            onClick={handleMessageStudent}
+                            loading={startConversation.isPending}
+                        >
                             <Mail size={14} />
                             Message Student
                         </Button>
-                        <Button variant="white" className="!h-10 !text-sm !px-5 !text-red-500 w-full">
+                        {/* <Button variant="white" className="!h-10 !text-sm !px-5 !text-red-500 w-full">
                             Block
-                        </Button>
+                        </Button> */}
                     </div>
 
                 </div>

@@ -9,7 +9,7 @@ import { useAudioRecorder } from '@/hooks/useAudioRecorder'
 import { formatDuration, pseudoPeaks } from '@/utils/audio'
 import courseImg from '@/assets/images/cou1.png'
 import brandLogo from '@/assets/icons/brand_icon.svg'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { RiCustomerService2Line, RiChat3Line } from 'react-icons/ri'
 import { useGetMyChatRooms, useGetAdminId, useStartAdminChat, useRoomMessages, useSendMessage, useSendAudioMessage, useSendFilesMessage, useDeleteMessage, useMarkRoomRead, useMarkMessagesSeen, useActiveThreadRealtime, useThreadCatchUp, useTyping } from '@/hooks/chat'
 import { usePresenceHeartbeat, usePeerPresence } from '@/hooks/presence'
@@ -259,7 +259,18 @@ const ChatsPage = () => {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const navigate = useNavigate()
+  const location = useLocation()
   const myId = useAuthStore(s => s.user?.id)
+
+  // A room we opened programmatically (a just-created one, or one handed over by
+  // another page) isn't in the cached room list until ['chat-rooms'] refetches.
+  // Remember it so the "room disappeared" guard below doesn't deselect it in the
+  // meantime.
+  const pendingOpenRef = useRef<string | null>(null)
+  const openRoom = (roomId: string) => {
+    pendingOpenRef.current = roomId
+    setActiveId(roomId)
+  }
 
   const { data: rooms = [], isLoading: leftLoading } = useGetMyChatRooms()
   const { data: adminId } = useGetAdminId()
@@ -557,10 +568,19 @@ const ChatsPage = () => {
 
   const handleChatWithAdmin = () => {
     startAdminChat.mutate(undefined, {
-      onSuccess: ({ roomId }) => setActiveId(roomId),
+      onSuccess: ({ roomId }) => openRoom(roomId),
       onError: (err: any) => toast.error(err?.message ?? 'Could not start chat with admin'),
     })
   }
+
+  // Open the room another page sent us to (e.g. "Message Student" on a student's
+  // profile), then clear it from history state so a refresh doesn't reopen it.
+  const incomingRoomId = (location.state as { roomId?: string } | null)?.roomId
+  useEffect(() => {
+    if (!incomingRoomId) return
+    openRoom(incomingRoomId)
+    navigate('/chats', { replace: true, state: null })
+  }, [incomingRoomId, navigate])
 
   const filtered = useMemo(
     () => rooms.filter(r => roomName(r).toLowerCase().includes(search.toLowerCase())),
@@ -586,9 +606,15 @@ const ChatsPage = () => {
   const roomPhoto = (room: ChatRoomSummary): string | undefined =>
     isAdminRoom(room) ? brandLogo : room.peer?.avatar_url || undefined
 
-  // If the open room disappears from the list, fall back to the welcome screen.
+  // If the open room disappears from the list, fall back to the welcome screen —
+  // unless it's one we just opened and the list hasn't caught up with it yet.
   useEffect(() => {
-    if (activeId && !rooms.some(r => r.id === activeId)) setActiveId(null)
+    if (!activeId) return
+    if (rooms.some(r => r.id === activeId)) {
+      pendingOpenRef.current = null
+      return
+    }
+    if (pendingOpenRef.current !== activeId) setActiveId(null)
   }, [rooms, activeId])
 
   // Drop any in-progress reply when switching conversations.
@@ -842,23 +868,30 @@ const ChatsPage = () => {
       <div className="flex-1 flex flex-col min-w-0 bg-gray-100">
 
         {!active ? (
-          /* Welcome screen — shown until the user opens a conversation. */
-          <motion.div
-            className="flex-1 flex flex-col items-center justify-center text-center px-6"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: 'easeOut' }}
-          >
-            <div className="w-20 h-20 rounded-2xl bg-[#2c1452]/10 flex items-center justify-center mb-4">
-              <RiChat3Line size={40} className="text-[#2c1452]" />
+          activeId ? (
+            /* A room we just opened, still waiting on the room list to load it. */
+            <div className="flex-1 flex items-center justify-center">
+              <span className="h-7 w-7 animate-spin rounded-full border-2 border-[#2c1452] border-t-transparent" />
             </div>
-            <Heading className="text-[#2c1452] mb-1">Welcome to Chat</Heading>
-            <Paragraph className="text-gray-400 !text-sm max-w-xs">
-              {rooms.length === 0
-                ? 'You have no conversations yet. Start one with the admin to get going.'
-                : 'Select a conversation from the left to start chatting.'}
-            </Paragraph>
-          </motion.div>
+          ) : (
+            /* Welcome screen — shown until the user opens a conversation. */
+            <motion.div
+              className="flex-1 flex flex-col items-center justify-center text-center px-6"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            >
+              <div className="w-20 h-20 rounded-2xl bg-[#2c1452]/10 flex items-center justify-center mb-4">
+                <RiChat3Line size={40} className="text-[#2c1452]" />
+              </div>
+              <Heading className="text-[#2c1452] mb-1">Welcome to Chat</Heading>
+              <Paragraph className="text-gray-400 !text-sm max-w-xs">
+                {rooms.length === 0
+                  ? 'You have no conversations yet. Start one with the admin to get going.'
+                  : 'Select a conversation from the left to start chatting.'}
+              </Paragraph>
+            </motion.div>
+          )
         ) : (
           <>
             {/* Chat Header */}
