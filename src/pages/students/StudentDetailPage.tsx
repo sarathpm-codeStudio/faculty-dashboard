@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Mail, Clock } from 'lucide-react'
+import { toast } from 'sonner'
+import { ArrowLeft, Mail, Clock, User } from 'lucide-react'
 import { MdOutlineMenuBook } from 'react-icons/md'
 import { BsPencilFill } from 'react-icons/bs'
 import { HiMiniCurrencyDollar } from 'react-icons/hi2'
@@ -9,6 +10,7 @@ import { Button, Heading, DataTable, Subheading, Skeleton, SkeletonStatCard } fr
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import { useGetStudentAnalytics, useGetStudentCourses } from '@/hooks/student'
+import { useStartConversation } from '@/hooks/chat'
 
 type EnrolledCourse = {
     id: string
@@ -94,6 +96,17 @@ const StudentDetailPage = () => {
     }, !!id)
     const { data: studentAnalytics, isLoading: studentAnalyticsLoading } = useGetStudentAnalytics(id, !!id)
 
+    // Reuses the existing 1:1 room with this student, or creates one, then opens
+    // it on the chats page.
+    const startConversation = useStartConversation()
+    const handleMessageStudent = () => {
+        if (!id) return
+        startConversation.mutate(id, {
+            onSuccess: ({ roomId }) => navigate('/chats', { state: { roomId } }),
+            onError: (err: any) => toast.error(err?.message ?? 'Could not open chat with this student'),
+        })
+    }
+
     return (
         <div className="flex flex-col h-full overflow-hidden bg-gray-50 max-lg:h-auto max-lg:min-h-full max-lg:overflow-visible">
 
@@ -119,8 +132,16 @@ const StudentDetailPage = () => {
                         <div className="relative shrink-0">
                             {studentAnalyticsLoading ? (
                                 <Skeleton className="w-30 h-30 rounded-2xl" />
+                            ) : studentAnalytics?.student?.avatar_url ? (
+                                <img
+                                    src={studentAnalytics.student.avatar_url}
+                                    alt={`${studentAnalytics?.student?.first_name ?? ''} ${studentAnalytics?.student?.last_name ?? ''}`.trim() || 'Student'}
+                                    className="w-30 h-30 rounded-2xl object-cover"
+                                />
                             ) : (
-                                <img src={studentAnalytics?.student?.avatar_url} alt="Elena Rodriguez" className="w-30 h-30 rounded-2xl object-cover" />
+                                <div className="w-30 h-30 rounded-2xl bg-[#F2F4F6] flex items-center justify-center">
+                                    <User className="text-[#2c1452]" size={48} strokeWidth={1.5} />
+                                </div>
                             )}
                         </div>
                         <div className="mt-1 flex-1">
@@ -144,13 +165,17 @@ const StudentDetailPage = () => {
 
                     {/* Actions */}
                     <div className="flex flex-col items-end gap-2.5 shrink-0">
-                        <Button className="!h-10 !text-sm !px-5">
+                        <Button
+                            className="!h-10 !text-sm !px-5"
+                            onClick={handleMessageStudent}
+                            loading={startConversation.isPending}
+                        >
                             <Mail size={14} />
                             Message Student
                         </Button>
-                        <Button variant="white" className="!h-10 !text-sm !px-5 !text-red-500 w-full">
+                        {/* <Button variant="white" className="!h-10 !text-sm !px-5 !text-red-500 w-full">
                             Block
-                        </Button>
+                        </Button> */}
                     </div>
 
                 </div>
@@ -183,8 +208,8 @@ const StudentDetailPage = () => {
 
                             icon={<div className="flex h-10 w-12 items-center justify-center rounded-[8px] bg-gray-400"><HiMiniCurrencyDollar className="text-yellow-400" size={30} /></div>}
 
-                            label="Total Spend"
-                            value={String(studentAnalytics?.totalAmountSpent ?? 0)}
+                            label="Total Revenue"
+                            value={(studentAnalytics?.totalAmountSpent ?? 0).toLocaleString('en-IN')}
                             prefix="₹"
                         // valueColor="#00875A"
                         />

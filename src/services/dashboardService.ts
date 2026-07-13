@@ -23,7 +23,18 @@ const DEFAULT_COMMISSION_PERCENT = 20;
 // Commission rate to apply when estimating an unpaid enrollment's faculty share.
 // Historical rows store their own commission_percent, but unpaid enrollments
 // have no transaction yet, so we use the current platform default.
-const getCommissionPercent = async (db: typeof supabase): Promise<number> => {
+const getCommissionPercent = async (db: typeof supabase, facultyId?: string): Promise<number> => {
+    // Per-faculty rate wins (profiles.commission_rate); platform default is the
+    // fallback (workflow §7). Matches the admin + payout calculation.
+    if (facultyId) {
+        const { data: profile } = await db
+            .from("profiles")
+            .select("commission_rate")
+            .eq("id", facultyId)
+            .maybeSingle();
+        if (profile?.commission_rate != null) return Number(profile.commission_rate);
+    }
+
     const { data, error } = await db
         .from("platform_settings")
         .select("value")
@@ -48,7 +59,7 @@ const getPendingPayout = async (
 ): Promise<number> => {
     if (!facultyId) return 0;
 
-    const commissionPercent = await getCommissionPercent(db);
+    const commissionPercent = await getCommissionPercent(db, facultyId);
     const facultyShareRatio = 1 - commissionPercent / 100;
 
     // Already-settled enrollment / bundle ids, from existing sale rows.
@@ -165,7 +176,7 @@ export const dashboardService = {
 
             if (payoutError) throw new Error(payoutError.message);
 
-            const totalRevenue = (payoutRows ?? []).reduce(
+            const realizedRevenue = (payoutRows ?? []).reduce(
                 (sum, t) => sum + Number(t.amount ?? 0),
                 0
             );
@@ -175,6 +186,10 @@ export const dashboardService = {
             //     "Not yet settled" = no COURSE_SALE row for the single enrollment
             //     and no BUNDLE_SALE row for the bundle enrollment.
             const pendingPayout = await getPendingPayout(db, facultyId, courseIds, enrollments);
+
+            // Total revenue = already received (PAYOUT rows) + still pending.
+            // The pending portion is also surfaced separately on the card.
+            const totalRevenue = realizedRevenue + pendingPayout;
 
             // 5. Active coupons count
             const { count: activeCoupons, error: couponsError } = await db
@@ -284,22 +299,33 @@ export const dashboardService = {
             // Compare against the immediately preceding rolling window of equal length.
             const { previousStart, previousEnd } = getPreviousPeriodBounds(period, bounds);
 
-            // Faculty net revenue = (amount_paid - GST) after the platform commission.
-            // Mirrors the payout calc in enrollment-payout-workflow.md §3.
-            const commissionPercent = await getCommissionPercent(db);
-            const facultyShareRatio = 1 - commissionPercent / 100;
-            const facultyNet = (e: { amount_paid?: number; gst_amount?: number }) => {
+            // Already-processed sales keep their recorded faculty share — a later
+            // commission change never rewrites them. Only pending enrollments are
+            // estimated at the current rate (enrollment-payout-workflow.md §7).
+            const { data: saleRows } = await db
+                .from("faculty_transactions")
+                .select("enrollment_id, amount")
+                .eq("faculty_id", getCurrentFacultyId())
+                .eq("type", "COURSE_SALE")
+                .not("enrollment_id", "is", null);
+            const settledByEnrollment = new Map(
+                (saleRows ?? []).map((r) => [r.enrollment_id, Number(r.amount ?? 0)]),
+            );
+
+            const commissionPercent = await getCommissionPercent(db, getCurrentFacultyId());
+            const facultyNet = (e: { id?: string; amount_paid?: number; gst_amount?: number }) => {
+                if (e.id && settledByEnrollment.has(e.id)) return settledByEnrollment.get(e.id)!;
                 const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0);
                 if (base <= 0) return 0;
-                return base * facultyShareRatio;
+                return base - Math.round((base * commissionPercent) / 100);
             };
 
-            let currentEnrollments: { enrolled_at?: string; amount_paid?: number; gst_amount?: number }[] = [];
-            let previousEnrollments: { amount_paid?: number; gst_amount?: number }[] = [];
+            let currentEnrollments: { id?: string; enrolled_at?: string; amount_paid?: number; gst_amount?: number }[] = [];
+            let previousEnrollments: { id?: string; amount_paid?: number; gst_amount?: number }[] = [];
             if (courseIds.length > 0) {
                 const { data: current, error: currentError } = await db
                     .from("enrollments")
-                    .select("enrolled_at, amount_paid, gst_amount")
+                    .select("id, enrolled_at, amount_paid, gst_amount")
                     .in("course_id", courseIds)
                     .gte("enrolled_at", bounds.fromDate.toISOString())
                     .lte("enrolled_at", bounds.rangeEnd.toISOString());
@@ -309,7 +335,7 @@ export const dashboardService = {
 
                 const { data: previous, error: previousError } = await db
                     .from("enrollments")
-                    .select("amount_paid, gst_amount")
+                    .select("id, amount_paid, gst_amount")
                     .in("course_id", courseIds)
                     .gte("enrolled_at", previousStart.toISOString())
                     .lte("enrolled_at", previousEnd.toISOString());
@@ -331,14 +357,64 @@ export const dashboardService = {
 
             const revenueByGroup = new Map(slots.map((s) => [s.group, 0]));
 
-            for (const e of currentEnrollments) {
-                if (!e.enrolled_at) continue;
-                const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
-                if (!grouped) continue;
-                revenueByGroup.set(
-                    grouped.group,
-                    (revenueByGroup.get(grouped.group) ?? 0) + facultyNet(e)
-                );
+            if (period === 'year') {
+                // Previous months come from CREDITED faculty_transactions (permanent —
+                // survive enrollment deletes, never change on commission edits). Current
+                // month adds live pending. Matches the dashboard "already credited" rule.
+                const { data: saleTxns } = await db
+                    .from('faculty_transactions')
+                    .select('amount, transacted_at, payout_time_period, enrollment_id')
+                    .eq('faculty_id', getCurrentFacultyId())
+                    .in('type', ['COURSE_SALE', 'BUNDLE_SALE']);
+
+                const nowY = new Date();
+                // Group a month by its 15th, but never past "now" (a future date in
+                // the current month falls outside the chart range and would be dropped).
+                const groupDateForMonth = (year: number, month: number) => {
+                    const mid = new Date(year, month, 15);
+                    return mid.getTime() > nowY.getTime() ? nowY : mid;
+                };
+
+                for (const r of saleTxns ?? []) {
+                    let dt: Date | null = null;
+                    const parsed = r.payout_time_period ? new Date(`1 ${r.payout_time_period}`) : null;
+                    if (parsed && !Number.isNaN(parsed.getTime())) dt = groupDateForMonth(parsed.getFullYear(), parsed.getMonth());
+                    else if (r.transacted_at) dt = new Date(r.transacted_at);
+                    if (!dt) continue;
+                    const grouped = groupTimestampForChartPeriod(dt.toISOString(), period, bounds);
+                    if (!grouped) continue;
+                    revenueByGroup.set(grouped.group, (revenueByGroup.get(grouped.group) ?? 0) + Number(r.amount ?? 0));
+                }
+
+                // Current-month pending (unpaid this month) at current rate
+                const paidIds = new Set((saleTxns ?? []).map((r) => r.enrollment_id).filter(Boolean));
+                const thisMonthStart = new Date(nowY.getFullYear(), nowY.getMonth(), 1).toISOString();
+                const nextMonthStart = new Date(nowY.getFullYear(), nowY.getMonth() + 1, 1).toISOString();
+                const { data: pendEnr } = await db
+                    .from('enrollments')
+                    .select('id, amount_paid, gst_amount')
+                    .eq('faculty_id', getCurrentFacultyId()).eq('is_bundle_enrollment', false).eq('payment_status', 'SUCCESS').gt('amount_paid', 0)
+                    .gte('enrolled_at', thisMonthStart).lt('enrolled_at', nextMonthStart);
+
+                let pending = 0;
+                for (const e of pendEnr ?? []) {
+                    if (paidIds.has(e.id)) continue;
+                    const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0);
+                    if (base > 0) pending += base - Math.round((base * commissionPercent) / 100);
+                }
+                // Group the current month by "now" so it always lands in range.
+                const curGrouped = groupTimestampForChartPeriod(nowY.toISOString(), period, bounds);
+                if (curGrouped) revenueByGroup.set(curGrouped.group, (revenueByGroup.get(curGrouped.group) ?? 0) + pending);
+            } else {
+                for (const e of currentEnrollments) {
+                    if (!e.enrolled_at) continue;
+                    const grouped = groupTimestampForChartPeriod(e.enrolled_at, period, bounds);
+                    if (!grouped) continue;
+                    revenueByGroup.set(
+                        grouped.group,
+                        (revenueByGroup.get(grouped.group) ?? 0) + facultyNet(e)
+                    );
+                }
             }
 
             const chartData = slots.map((s) => ({

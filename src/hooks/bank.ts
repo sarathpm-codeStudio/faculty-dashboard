@@ -30,6 +30,15 @@ export const useGetTransactionHistory = (facultyId: any, limit: number | null) =
 }
 
 
+export const useGetPayoutBreakdown = (facultyId: any, payoutId: string | null) => {
+    return useQuery({
+        queryKey: ['payout-breakdown', facultyId, payoutId],
+        queryFn: () => bankServices.getPayoutBreakdown(facultyId, payoutId as string),
+        enabled: Boolean(facultyId && payoutId),
+    })
+}
+
+
 export const useGetTransactionAnalyticsWithTransactions = (facultyId: any,{
     page = 1,
     limit = 5,

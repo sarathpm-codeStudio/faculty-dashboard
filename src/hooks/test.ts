@@ -87,6 +87,17 @@ export const useAddQuestion = (test_id: string) => {
     })
 }
 
+export const useImportQuestions = (test_id: string) => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({ file, placement }: { file: File, placement: any }) =>
+            testService.importQuestions(test_id, file, placement),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['questions', test_id] })
+        },
+    })
+}
+
 export const useGetQuestionsByTestId = (test_id: string, isEnabled: boolean) => {
     return useQuery({
         queryKey: ['questions', test_id],

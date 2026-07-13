@@ -18,6 +18,39 @@ import { buildChartPeriodSlots, ChartPeriod, getChartPeriodBounds, getPeriodTren
 // (often `undefined`) value that survives logout/login without a page reload.
 const getCurrentFacultyId = () => useAuthStore.getState().user?.id;
 
+// Commission % for the current faculty: their profiles.commission_rate,
+// falling back to the platform default (workflow §7).
+const resolveFacultyCommission = async (): Promise<number> => {
+  const facultyId = getCurrentFacultyId();
+  const [{ data: profile }, { data: setting }] = await Promise.all([
+    facultyId
+      ? supabase.from('profiles').select('commission_rate').eq('id', facultyId).maybeSingle()
+      : Promise.resolve({ data: null } as any),
+    supabase.from('platform_settings').select('value').eq('key', 'default_commission_percent').maybeSingle(),
+  ]);
+  const rate = profile?.commission_rate ?? Number(setting?.value);
+  return Number.isFinite(rate) ? rate : 20;
+};
+
+// Faculty's net revenue for one enrollment = (amount_paid − GST) − commission.
+const facultyRevenueOf = (amountPaid: number, gst: number, rate: number): number => {
+  const base = (amountPaid ?? 0) - (gst ?? 0);
+  return base - Math.round((base * rate) / 100);
+};
+
+// Actual settled faculty share (recorded COURSE_SALE.amount) per enrollment.
+// Already-processed sales keep this amount even if commission later changes
+// (enrollment-payout-workflow.md §7) — only unsettled enrollments recompute.
+const settledSharesFor = async (enrollmentIds: string[]): Promise<Map<string, number>> => {
+  if (enrollmentIds.length === 0) return new Map();
+  const { data } = await supabase
+    .from('faculty_transactions')
+    .select('enrollment_id, amount')
+    .eq('type', 'COURSE_SALE')
+    .in('enrollment_id', enrollmentIds);
+  return new Map((data ?? []).map((r) => [r.enrollment_id, Number(r.amount ?? 0)]));
+};
+
 export const courseService = {
 
   getAll: async ({ filter, search }: { filter: any, search?: string }): Promise<any> => {
@@ -1281,15 +1314,22 @@ export const courseService = {
     // }
     try {
 
-      // 1. Total Revenue + Active Students count
+      // 1. Total Revenue (faculty net = after GST + commission) + Active Students
       const { data: enrollments, error: enrollmentError } = await supabase
         .from("enrollments")
-        .select("amount_paid, student_id")
+        .select("id, amount_paid, gst_amount, student_id")
         .eq("course_id", courseId);
 
       if (enrollmentError) throw new Error(enrollmentError.message);
 
-      const totalRevenue = enrollments?.reduce((sum, e) => sum + (e.amount_paid ?? 0), 0) ?? 0;
+      const commissionRate = await resolveFacultyCommission();
+      const settled = await settledSharesFor((enrollments ?? []).map((e) => e.id));
+      const totalRevenue = enrollments?.reduce(
+        (sum, e) => sum + (settled.has(e.id)
+          ? settled.get(e.id)!
+          : facultyRevenueOf(e.amount_paid ?? 0, e.gst_amount ?? 0, commissionRate)),
+        0,
+      ) ?? 0;
       const activeStudents = enrollments?.length ?? 0;
 
       // 2. Completion Rate — avg completion_pct across all students in this course
@@ -1405,7 +1445,7 @@ export const courseService = {
 
       const { data: current, error: currentError } = await supabase
         .from("enrollments")
-        .select("enrolled_at, amount_paid")
+        .select("id, enrolled_at, amount_paid, gst_amount")
         .eq("course_id", courseId)
         .gte("enrolled_at", bounds.fromDate.toISOString())
         .lte("enrolled_at", bounds.rangeEnd.toISOString());
@@ -1415,7 +1455,7 @@ export const courseService = {
 
       const { data: previous, error: previousError } = await supabase
         .from("enrollments")
-        .select("amount_paid")
+        .select("id, amount_paid, gst_amount")
         .eq("course_id", courseId)
         .gte("enrolled_at", previousStart.toISOString())
         .lte("enrolled_at", previousEnd.toISOString());
@@ -1423,8 +1463,19 @@ export const courseService = {
       if (previousError) throw new Error(previousError.message);
       const previousEnrollments = previous ?? [];
 
-      const currentTotal = currentEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
-      const previousTotal = previousEnrollments.reduce((sum, e) => sum + Number(e.amount_paid), 0);
+      // Revenue = faculty net share. Settled sales keep their recorded amount
+      // (unchanged by later commission edits); only unpaid recompute (§7).
+      const commissionRate = await resolveFacultyCommission();
+      const settled = await settledSharesFor(
+        [...currentEnrollments, ...previousEnrollments].map((e) => e.id).filter(Boolean),
+      );
+      const netOf = (e: { id?: string; amount_paid?: number; gst_amount?: number }) =>
+        e.id && settled.has(e.id)
+          ? settled.get(e.id)!
+          : facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate);
+
+      const currentTotal = currentEnrollments.reduce((sum, e) => sum + netOf(e), 0);
+      const previousTotal = previousEnrollments.reduce((sum, e) => sum + netOf(e), 0);
 
       let trendText = "0% no change";
       if (previousTotal > 0) {
@@ -1442,7 +1493,7 @@ export const courseService = {
         if (!grouped) continue;
         revenueByGroup.set(
           grouped.group,
-          (revenueByGroup.get(grouped.group) ?? 0) + Number(e.amount_paid)
+          (revenueByGroup.get(grouped.group) ?? 0) + netOf(e)
         );
       }
 
@@ -1458,7 +1509,96 @@ export const courseService = {
     }
   },
 
+  getCourseEnrollments: async (
+    courseId: string,
+    payload: { page: number; limit: number }
+  ): Promise<any> => {
+    try {
+      const { page, limit } = payload;
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
 
+      const { data, error, count } = await supabase
+        .from("enrollments")
+        .select(
+          `
+            id,
+            enrolled_at,
+            expires_at,
+            amount_paid,
+            student:profiles!enrollments_student_id_fkey (
+              id,
+              account_id,
+              first_name,
+              last_name,
+              avatar_url
+            )
+          `,
+          { count: "exact" }
+        )
+        .eq("course_id", courseId)
+        .order("enrolled_at", { ascending: false })
+        .range(from, to);
+
+      if (error) throw new Error(error.message);
+
+      const rows = (data ?? []).map((item: any) => ({
+        id: item.id,
+        account_id: item.student?.account_id ?? null,
+        first_name: item.student?.first_name ?? "",
+        last_name: item.student?.last_name ?? "",
+        avatar_url: item.student?.avatar_url ?? null,
+        enrolled_at: item.enrolled_at,
+        expires_at: item.expires_at,
+        amount_paid: item.amount_paid,
+      }));
+
+      return {
+        data: rows,
+        pagination: {
+          page,
+          limit,
+          total: count ?? 0,
+          totalPages: Math.ceil((count ?? 0) / limit),
+        },
+      };
+    } catch (error: any) {
+      throw new Error(error.message);
+    }
+  },
+
+  exportCourseEnrollments: async (courseId: string): Promise<void> => {
+    try {
+      const { data, headers } = await apiClient.get(
+        `/courses/${courseId}/enrollments/export`,
+        { responseType: 'blob' }
+      );
+
+      const blob = new Blob([data], {
+        type:
+          (headers['content-type'] as string) ||
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+
+      // Prefer server-provided filename from Content-Disposition, else fallback.
+      const disposition = headers['content-disposition'] as string | undefined;
+      const match = disposition?.match(/filename\*?=(?:UTF-8'')?"?([^";]+)"?/i);
+      const fileName = match ? decodeURIComponent(match[1]) : `enrollments-${courseId}.xlsx`;
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message || error?.message || 'Failed to export enrollments';
+      throw new Error(message);
+    }
+  },
 
 
 }

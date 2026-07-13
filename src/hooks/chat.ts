@@ -1,11 +1,38 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { chatService } from '@/services/chatService'
+import { chatService, attachReplyPreviews, type ChatMessage } from '@/services/chatService'
 import { supabase } from '@/services/supabase'
+import { useAuthStore } from '@/store/authStore'
+import { decryptMessageSafe } from '@/utils/chatEncryption'
 
 const chatMessagesQueryKey = (roomId?: string | null) =>
     ['chat-messages', roomId] as const
+
+// Shape of the paginated messages cache for a room.
+type MessagesPage = { items: ChatMessage[]; nextCursor: string | null }
+type MessagesInfiniteData = { pages: MessagesPage[]; pageParams: unknown[] }
+
+// Append a message to the newest page of a room's thread cache, in place and
+// idempotently (deduped by id). Used so a just-sent message lands instantly
+// without a refetch — and so the later realtime echo is a no-op.
+const appendMessageToThread = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    roomId: string,
+    message: ChatMessage,
+) => {
+    queryClient.setQueryData<MessagesInfiniteData>(
+        chatMessagesQueryKey(roomId),
+        old => {
+            if (!old || old.pages.length === 0) return old
+            const exists = old.pages.some(p => p.items.some(m => m.id === message.id))
+            if (exists) return old
+            const [first, ...rest] = old.pages
+            if (!first) return old
+            return { ...old, pages: [{ ...first, items: [...first.items, message] }, ...rest] }
+        },
+    )
+}
 
 // The platform admin's profile id — used to tell whether the faculty already
 // has an admin conversation.
@@ -37,6 +64,12 @@ export const useRoomMessages = (roomId?: string | null) => {
         initialPageParam: undefined as string | undefined,
         getNextPageParam: lastPage => lastPage.nextCursor ?? undefined,
         enabled: !!roomId,
+        // The open thread is kept live in place by realtime patches; without
+        // this, react-query refetches every loaded page on each window focus,
+        // visibly reloading the conversation (e.g. when testing two apps
+        // side by side and clicking between windows).
+        refetchOnWindowFocus: false,
+        staleTime: Infinity,
     })
 }
 
@@ -44,10 +77,83 @@ export const useRoomMessages = (roomId?: string | null) => {
 export const useSendMessage = () => {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: ({ roomId, content }: { roomId: string; content: string }) =>
-            chatService.sendMessage(roomId, content),
-        onSuccess: (_data, { roomId }) => {
-            queryClient.invalidateQueries({ queryKey: chatMessagesQueryKey(roomId) })
+        mutationFn: ({
+            roomId,
+            content,
+            replyToMessageId,
+        }: {
+            roomId: string
+            content: string
+            replyToMessageId?: string | null
+        }) => chatService.sendMessage(roomId, content, replyToMessageId),
+        // Drop the just-sent message straight into the thread cache (no refetch),
+        // so it replaces the optimistic bubble with no flicker; the later
+        // realtime echo is deduped. Only the room list is refreshed.
+        onSuccess: (message, { roomId }) => {
+            appendMessageToThread(queryClient, roomId, message)
+            queryClient.invalidateQueries({ queryKey: ['chat-rooms'] })
+        },
+    })
+}
+
+// Send a voice message (record → upload → store), then refresh the thread and
+// room list. Same refresh contract as useSendMessage.
+export const useSendAudioMessage = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({
+            roomId,
+            blob,
+            meta,
+            replyToMessageId,
+        }: {
+            roomId: string
+            blob: Blob
+            meta: { duration: number; peaks: number[]; mimeType: string }
+            replyToMessageId?: string | null
+        }) => chatService.sendAudioMessage(roomId, blob, meta, replyToMessageId),
+        // Append straight into the thread cache so the real voice bubble replaces
+        // the optimistic one with no flicker (realtime echo is deduped).
+        onSuccess: (message, { roomId }) => {
+            appendMessageToThread(queryClient, roomId, message)
+            queryClient.invalidateQueries({ queryKey: ['chat-rooms'] })
+        },
+    })
+}
+
+// Send one or more attachments (image / PDF album) as a single message, then
+// drop it straight into the thread cache — same no-refetch contract as text and
+// voice sends.
+export const useSendFilesMessage = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({
+            roomId,
+            files,
+            kind,
+            replyToMessageId,
+        }: {
+            roomId: string
+            files: File[]
+            kind: 'IMAGE' | 'PDF'
+            replyToMessageId?: string | null
+        }) => chatService.sendFilesMessage(roomId, files, kind, replyToMessageId),
+        onSuccess: (message, { roomId }) => {
+            appendMessageToThread(queryClient, roomId, message)
+            queryClient.invalidateQueries({ queryKey: ['chat-rooms'] })
+        },
+    })
+}
+
+// Soft-delete my own message, then refresh that thread and the room list so the
+// tombstone (and any updated last-message preview) shows everywhere.
+export const useDeleteMessage = () => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({ messageId }: { messageId: string; roomId: string }) =>
+            chatService.deleteMessage(messageId),
+        // The tombstone flips in via the realtime UPDATE patch (no refetch).
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['chat-rooms'] })
         },
     })
@@ -64,15 +170,12 @@ export const useMarkRoomRead = () => {
     })
 }
 
-// Mark the open room's incoming messages as seen, then refresh that thread so
-// the read ticks update locally too.
+// Mark the open room's incoming messages as seen. No thread refetch: the status
+// change flows back to the sender via realtime and updates their ticks in
+// place, so refetching here would only reload our own view for nothing.
 export const useMarkMessagesSeen = () => {
-    const queryClient = useQueryClient()
     return useMutation({
         mutationFn: (roomId: string) => chatService.markMessagesSeen(roomId),
-        onSuccess: (_data, roomId) => {
-            queryClient.invalidateQueries({ queryKey: chatMessagesQueryKey(roomId) })
-        },
     })
 }
 
@@ -118,6 +221,16 @@ export const useChatRealtimeGlobal = (myId?: string) => {
                 payload => {
                     const row = payload.new as { room_id?: string; sender_id?: string }
                     void queryClient.invalidateQueries({ queryKey: ['chat-rooms'] })
+                    // Mark that room's thread stale WITHOUT refetching now: the
+                    // open room is patched live by useActiveThreadRealtime, and
+                    // a closed room's thread must refetch next time it's opened
+                    // (its cache never receives realtime patches while closed).
+                    if (row?.room_id) {
+                        void queryClient.invalidateQueries({
+                            queryKey: chatMessagesQueryKey(row.room_id),
+                            refetchType: 'none',
+                        })
+                    }
                     // A message from someone else, and I'm online → delivered + toast.
                     if (row?.room_id && row.sender_id && row.sender_id !== myRef.current) {
                         void chatService.markMessagesDelivered(row.room_id)
@@ -128,8 +241,17 @@ export const useChatRealtimeGlobal = (myId?: string) => {
             .on(
                 'postgres_changes',
                 { event: 'UPDATE', schema: 'public', table: 'chat_messages' },
-                () => {
+                payload => {
                     void queryClient.invalidateQueries({ queryKey: ['chat-rooms'] })
+                    // Same stale-marking as INSERT: keeps a closed room's ticks
+                    // and deletions fresh for its next open, no refetch now.
+                    const roomId = (payload.new as { room_id?: string })?.room_id
+                    if (roomId) {
+                        void queryClient.invalidateQueries({
+                            queryKey: chatMessagesQueryKey(roomId),
+                            refetchType: 'none',
+                        })
+                    }
                 },
             )
             .subscribe()
@@ -154,16 +276,78 @@ export const useActiveThreadRealtime = (activeRoomId?: string | null) => {
     useEffect(() => {
         const channel = supabase
             .channel('faculty-chat-thread')
+            // INSERT: decrypt + resolve the reply preview, then append to the
+            // newest page of the open thread in place (no refetch → no reload),
+            // skipping any message already present (e.g. our own echo).
             .on(
                 'postgres_changes',
-                { event: '*', schema: 'public', table: 'chat_messages' },
+                { event: 'INSERT', schema: 'public', table: 'chat_messages' },
                 payload => {
-                    const roomId = (payload.new as { room_id?: string })?.room_id
-                    if (roomId && roomId === activeRef.current) {
-                        void queryClient.invalidateQueries({
-                            queryKey: chatMessagesQueryKey(roomId),
-                        })
-                    }
+                    const incoming = payload.new as ChatMessage
+                    const roomId = incoming?.room_id
+                    if (!roomId || roomId !== activeRef.current) return
+                    // My own sends enter the thread via the mutation's onSuccess
+                    // swap (which replaces the optimistic clock bubble in one
+                    // render). Appending the echo here too would land BEFORE the
+                    // request resolves, briefly duplicating the bubble — the
+                    // "chat reloads on send" flicker.
+                    if (incoming.sender_id === useAuthStore.getState().user?.id) return
+
+                    void (async () => {
+                        incoming.content = incoming.is_deleted
+                            ? null
+                            : await decryptMessageSafe(incoming.content)
+                        if (!incoming.is_deleted) await attachReplyPreviews([incoming])
+                        queryClient.setQueryData<MessagesInfiniteData>(
+                            chatMessagesQueryKey(roomId),
+                            old => {
+                                if (!old || old.pages.length === 0) return old
+                                const exists = old.pages.some(p =>
+                                    p.items.some(m => m.id === incoming.id),
+                                )
+                                if (exists) return old
+                                const [first, ...rest] = old.pages
+                                if (!first) return old
+                                // Newest page holds items oldest→newest; append.
+                                return {
+                                    ...old,
+                                    pages: [
+                                        { ...first, items: [...first.items, incoming] },
+                                        ...rest,
+                                    ],
+                                }
+                            },
+                        )
+                    })()
+                },
+            )
+            // UPDATE: patch the changed message in place so status ticks and
+            // deletions update live without reloading the whole thread. Keep the
+            // already-decrypted content (the payload carries ciphertext).
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'chat_messages' },
+                payload => {
+                    const updated = payload.new as ChatMessage
+                    const roomId = updated?.room_id
+                    if (!roomId || roomId !== activeRef.current) return
+                    queryClient.setQueryData<MessagesInfiniteData>(
+                        chatMessagesQueryKey(roomId),
+                        old =>
+                            old
+                                ? {
+                                      ...old,
+                                      pages: old.pages.map(p => ({
+                                          ...p,
+                                          items: p.items.map(m =>
+                                              m.id === updated.id
+                                                  ? { ...m, ...updated, content: m.content }
+                                                  : m,
+                                          ),
+                                      })),
+                                  }
+                                : old,
+                    )
                 },
             )
             .subscribe()
@@ -172,6 +356,171 @@ export const useActiveThreadRealtime = (activeRoomId?: string | null) => {
             void supabase.removeChannel(channel)
         }
     }, [queryClient])
+}
+
+/**
+ * Catch-up sync for the open thread: quietly fetches the newest page and merges
+ * any messages the cache is missing — in place, deduped, sorted; no refetch and
+ * no visible reload (when nothing is new, the cache object is returned as-is so
+ * nothing re-renders). Runs when the room opens and whenever the window regains
+ * focus, so the thread self-heals even if a realtime event was missed (dropped
+ * socket, sleeping tab, etc.).
+ */
+export const useThreadCatchUp = (roomId?: string | null) => {
+    const queryClient = useQueryClient()
+
+    useEffect(() => {
+        if (!roomId) return
+        let cancelled = false
+
+        const catchUp = async () => {
+            try {
+                const page = await chatService.getMessagesPage(roomId)
+                if (cancelled) return
+                queryClient.setQueryData<MessagesInfiniteData>(
+                    chatMessagesQueryKey(roomId),
+                    old => {
+                        if (!old || old.pages.length === 0) return old
+                        const known = new Set(
+                            old.pages.flatMap(p => p.items.map(m => m.id)),
+                        )
+                        const fresh = page.items.filter(m => !known.has(m.id))
+                        if (!fresh.length) return old
+                        const [first, ...rest] = old.pages
+                        if (!first) return old
+                        // Newest page holds items oldest→newest; merge the
+                        // missing ones in and re-sort so mid-stream gaps land
+                        // in the right place too.
+                        const merged = [...first.items, ...fresh].sort((a, b) =>
+                            (a.created_at ?? '').localeCompare(b.created_at ?? ''),
+                        )
+                        return { ...old, pages: [{ ...first, items: merged }, ...rest] }
+                    },
+                )
+            } catch {
+                /* best-effort sync — ignore failures */
+            }
+        }
+
+        void catchUp()
+        const onFocus = () => void catchUp()
+        window.addEventListener('focus', onFocus)
+        return () => {
+            cancelled = true
+            window.removeEventListener('focus', onFocus)
+        }
+    }, [roomId, queryClient])
+}
+
+/**
+ * Ephemeral typing indicator over a Supabase Realtime broadcast channel
+ * (`chat-typing:<roomId>`, event `typing`, payload `{ user_id, typing }`). No
+ * DB writes — typing is transient. `self: false` means we never receive our own
+ * events. Returns whether the peer is typing, plus `notifyTyping` (call on each
+ * keystroke) and `stopTyping` (call on send / when the field clears).
+ */
+export const useTyping = (roomId?: string | null, myId?: string) => {
+    const [peerTyping, setPeerTyping] = useState(false)
+    const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+    const subscribedRef = useRef(false)
+    // Whether I'm currently broadcasting "typing".
+    const activeRef = useRef(false)
+    // Last time we broadcast "typing: true", to throttle re-sends.
+    const lastTrueRef = useRef(0)
+    const stopTimer = useRef<number | undefined>(undefined)
+    const clearTimer = useRef<number | undefined>(undefined)
+
+    useEffect(() => {
+        if (!roomId) {
+            setPeerTyping(false)
+            return
+        }
+
+        const channel = supabase.channel(`chat-typing:${roomId}`, {
+            config: { broadcast: { self: false } },
+        })
+
+        channel.on('broadcast', { event: 'typing' }, ({ payload }) => {
+            if (!payload || payload.user_id === myId) return
+            if (payload.typing) {
+                setPeerTyping(true)
+                // Auto-clear if we miss the peer's "stopped" event.
+                window.clearTimeout(clearTimer.current)
+                clearTimer.current = window.setTimeout(() => setPeerTyping(false), 4000)
+            } else {
+                window.clearTimeout(clearTimer.current)
+                setPeerTyping(false)
+            }
+        })
+
+        channel.subscribe(status => {
+            subscribedRef.current = status === 'SUBSCRIBED'
+        })
+        channelRef.current = channel
+
+        return () => {
+            // Best-effort "stopped typing" before tearing the channel down.
+            if (activeRef.current && subscribedRef.current) {
+                void channel.send({
+                    type: 'broadcast',
+                    event: 'typing',
+                    payload: { user_id: myId, typing: false },
+                })
+            }
+            activeRef.current = false
+            subscribedRef.current = false
+            window.clearTimeout(stopTimer.current)
+            window.clearTimeout(clearTimer.current)
+            setPeerTyping(false)
+            void supabase.removeChannel(channel)
+            channelRef.current = null
+        }
+    }, [roomId, myId])
+
+    // Announce that I'm typing, then auto-stop after a short pause. Re-broadcast
+    // "typing" at most every ~1.2s while typing so a peer that just subscribed
+    // (or missed the first packet) still picks it up mid-burst.
+    const notifyTyping = useCallback(() => {
+        const channel = channelRef.current
+        if (!channel || !myId || !subscribedRef.current) return
+        const now = Date.now()
+        if (now - lastTrueRef.current > 1200) {
+            lastTrueRef.current = now
+            activeRef.current = true
+            void channel.send({
+                type: 'broadcast',
+                event: 'typing',
+                payload: { user_id: myId, typing: true },
+            })
+        }
+        window.clearTimeout(stopTimer.current)
+        stopTimer.current = window.setTimeout(() => {
+            activeRef.current = false
+            lastTrueRef.current = 0
+            void channel.send({
+                type: 'broadcast',
+                event: 'typing',
+                payload: { user_id: myId, typing: false },
+            })
+        }, 2500)
+    }, [myId])
+
+    // Stop immediately (e.g. right after sending a message).
+    const stopTyping = useCallback(() => {
+        const channel = channelRef.current
+        window.clearTimeout(stopTimer.current)
+        lastTrueRef.current = 0
+        if (channel && myId && activeRef.current && subscribedRef.current) {
+            activeRef.current = false
+            void channel.send({
+                type: 'broadcast',
+                event: 'typing',
+                payload: { user_id: myId, typing: false },
+            })
+        }
+    }, [myId])
+
+    return { peerTyping, notifyTyping, stopTyping }
 }
 
 // Start (or reopen) a 1:1 conversation with another user, then refresh the list.

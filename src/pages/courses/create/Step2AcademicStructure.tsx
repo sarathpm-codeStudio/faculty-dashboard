@@ -4,6 +4,7 @@ import { FolderSimple, DotsSixVertical, ArrowLeft as PhArrowLeft, ExamIcon } fro
 import { ArrowRight, ChevronRight, Download, FileText as FilePdfIcon, Home, Image as LucideImage, Link as LinkIcon, Loader2, MoreVertical, Pencil, StickyNote, Trash2, Upload, Video, Video as VideoIcon, X } from 'lucide-react'
 import { tpstreamsUploadService } from '@/services/tpstreamsUploadService'
 import { storageService } from '@/services'
+import { testService } from '@/services/testService'
 import { Button, ConfirmDeleteModal, Input, Modal, Paragraph, Skeleton, Subheading, Textarea, ImageCropperModal } from '@/components/ui'
 import {
   ASPECT_RATIO_16_9,
@@ -332,6 +333,27 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       return
     }
     openEditMaterialModal(item)
+  }
+
+  // A TEST material shares its unique_id with the matching row in the tests
+  // table. Resolve that test's id and open its edit page directly, instead of
+  // dumping the user on the all-tests listing to re-find the test.
+  const handleEditTest = async (item: any) => {
+    setMenuOpenId(null)
+    if (!item?.unique_id) {
+      navigate('/tests')
+      return
+    }
+    try {
+      const testId = await testService.getTestIdByUniqueId(item.unique_id)
+      if (testId) {
+        navigate(`/tests/${testId}/edit`)
+      } else {
+        navigate('/tests')
+      }
+    } catch {
+      navigate('/tests')
+    }
   }
 
   const handleDeleteItem = (item: any) => {
@@ -943,7 +965,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                           >
                             <button
                               type="button"
-                              onClick={node?.type === "TEST" ? () => navigate("/tests") : () => handleEditItem(node)}
+                              onClick={node?.type === "TEST" ? () => handleEditTest(node) : () => handleEditItem(node)}
                               className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-[#F2F4F6]"
                             >
                               <Pencil size={14} className="text-[#2c1452]" /> Edit

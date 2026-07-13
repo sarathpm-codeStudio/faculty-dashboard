@@ -1,17 +1,27 @@
 
 
 
-import { useMemo, useState } from 'react'
-import { Pencil, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { Pencil, Trash2, ArrowLeft, Loader2, Download, Upload, FileSpreadsheet, X, AlertCircle } from 'lucide-react'
 import { useFormik } from 'formik'
 import * as Yup from 'yup'
 import { Textarea, Select, Paragraph, Checkbox } from '@/components/ui'
 import Button from '@/components/ui/Button'
 import { IoRocketOutline } from 'react-icons/io5'
-import { useAddQuestion, useGetQuestionsByTestId, useUpdateQuestion, useDeleteQuestion, usePublishTest, useSaveDraft } from '@/hooks/test'
+import { useAddQuestion, useImportQuestions, useGetQuestionsByTestId, useUpdateQuestion, useDeleteQuestion, usePublishTest, useSaveDraft } from '@/hooks/test'
 import { toast } from 'sonner'
 import { useNavigate } from 'react-router-dom'
 import { useGetAllContentInModule, useGetAllFoldersInCourse } from '@/hooks/useCourse'
+import { testService } from '@/services/testService'
+
+/** Rows past this are ignored by the import Lambda — surfaced here so the UI can say so. */
+const MAX_IMPORT_ROWS = 200
+
+interface ImportResult {
+  imported: number
+  total: number
+  skipped: { row: number; error: string }[]
+}
 
 interface Props {
   onBack: () => void
@@ -55,6 +65,13 @@ const Step2AddQuestions = ({
   const [editQuestionId, setEditQuestionId] = useState<any>(null)
   const [questionModuleId, setQuestionModuleId] = useState('')
 
+  const [mode, setMode] = useState<'manual' | 'import'>('manual')
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const navigate = useNavigate()
 
   const activeModuleId = testModuleId || questionModuleId
@@ -75,6 +92,7 @@ const Step2AddQuestions = ({
   )
 
   const { mutateAsync: addQuestion, isPending: isAddingQuestion } = useAddQuestion(testId)
+  const { mutateAsync: importQuestions, isPending: isImportingQuestions } = useImportQuestions(testId)
   const { mutateAsync: updateQuestion, isPending: isUpdatingQuestion } = useUpdateQuestion(testId, editQuestionId)
   const { mutateAsync: deleteQuestion } = useDeleteQuestion(testId)
   const { mutateAsync: publishTest, isPending: isPublishingTest } = usePublishTest()
@@ -109,6 +127,28 @@ const Step2AddQuestions = ({
     return moduleOptions.find((module: { value: string; label: string }) => module.value === testModuleId)?.label ?? ''
   }, [hasPreselectedModule, testModuleId, testModuleName, moduleOptions])
 
+  /** Where a question lands — shared by the manual form and the Excel import. */
+  const resolvePlacement = (formValues: typeof INITIAL_VALUES) => {
+    const selectedMaterial = materialOptions.find(
+      (option: { value: string; label: string }) => option.value === formValues.materialId,
+    )
+    const effectiveModuleId = testModuleId || questionModuleId || formValues.moduleId
+    const selectedModule = moduleOptions.find(
+      (option: { value: string; label: string }) => option.value === effectiveModuleId,
+    )
+
+    return {
+      moduleId: effectiveModuleId,
+      moduleTitle: hasPreselectedModule
+        ? preselectedModuleTitle
+        : selectedModule?.label || formValues.moduleTitle,
+      materialId: hasPreselectedMaterial ? testMaterialId : formValues.materialId,
+      materialTitle: hasPreselectedMaterial
+        ? preselectedMaterialTitle
+        : selectedMaterial?.label || formValues.materialTitle,
+    }
+  }
+
   const questionSchema = useMemo(() => Yup.object({
     text: Yup.string().trim().required('Question text is required'),
     moduleId: needsModuleSelect
@@ -130,30 +170,17 @@ const Step2AddQuestions = ({
     validateOnChange: true,
     validateOnBlur: true,
     onSubmit: async (values) => {
-      const selectedMaterial = materialOptions.find(
-        (option: { value: string; label: string }) => option.value === values.materialId,
-      )
-      const effectiveModuleId = testModuleId || questionModuleId || values.moduleId
-      const selectedModule = moduleOptions.find(
-        (option: { value: string; label: string }) => option.value === effectiveModuleId,
-      )
-      const effectiveModuleTitle = hasPreselectedModule
-        ? preselectedModuleTitle
-        : selectedModule?.label || values.moduleTitle
-      const effectiveMaterialId = hasPreselectedMaterial ? testMaterialId : values.materialId
-      const effectiveMaterialTitle = hasPreselectedMaterial
-        ? preselectedMaterialTitle
-        : selectedMaterial?.label || values.materialTitle
+      const placement = resolvePlacement(values)
 
       const questionPayload = {
         test_id: testId,
         question: values.text,
         type: 'mcq',
         marks: 5,
-        module_id: effectiveModuleId,
-        module_title: effectiveModuleTitle,
-        material_id: effectiveMaterialId,
-        material_title: effectiveMaterialTitle,
+        module_id: placement.moduleId,
+        module_title: placement.moduleTitle,
+        material_id: placement.materialId,
+        material_title: placement.materialTitle,
       }
 
       const optionsPayload = [
@@ -228,6 +255,84 @@ const Step2AddQuestions = ({
     handleSubmit()
   }
 
+  /* ── Excel import ─────────────────────────────────────────────── */
+
+  const resetImport = () => {
+    setImportFile(null)
+    setImportResult(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const switchMode = (nextMode: 'manual' | 'import') => {
+    if (nextMode === mode) return
+    setMode(nextMode)
+    if (nextMode === 'import' && isEditQuestion) {
+      setIsEditQuestion(false)
+      setEditQuestionId(null)
+      resetQuestionForm()
+    }
+    if (nextMode === 'manual') resetImport()
+  }
+
+  const handleDownloadTemplate = async () => {
+    setIsDownloadingTemplate(true)
+    try {
+      await testService.downloadQuestionTemplate()
+      toast.success('Sample template downloaded')
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not download the template. Please try again.')
+    } finally {
+      setIsDownloadingTemplate(false)
+    }
+  }
+
+  const handleFileSelect = (file: File | undefined) => {
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      toast.error('Please upload an .xlsx file. Download the sample template to get the right format.')
+      return
+    }
+
+    setImportFile(file)
+    setImportResult(null)
+  }
+
+  const handleImportQuestions = async () => {
+    if (!importFile) return
+
+    const placement = resolvePlacement(values)
+
+    if (needsModuleSelect && !placement.moduleId) {
+      setTouched({ moduleId: true })
+      toast.error('Please select a module for the imported questions.')
+      return
+    }
+    if (needsMaterialSelect && !placement.materialId) {
+      setTouched({ moduleId: true, materialId: true })
+      toast.error('Please select a material for the imported questions.')
+      return
+    }
+
+    try {
+      // The Lambda parses and validates the workbook — it returns what it imported
+      // and which rows it had to skip.
+      const result: ImportResult = await importQuestions({ file: importFile, placement })
+
+      setImportResult(result)
+      setImportFile(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+
+      toast.success(`${result.imported} question${result.imported > 1 ? 's' : ''} imported successfully`)
+
+      if (result.skipped?.length) {
+        toast.warning(`${result.skipped.length} row(s) were skipped because they had errors.`)
+      }
+    } catch (error: any) {
+      toast.error(error?.message || 'Could not import that file.')
+    }
+  }
+
   // const handleEditQuestion = (editQuestionData: any) => {
   //   setIsEditQuestion(true)
   //   console.log("editQuestionData", editQuestionData)
@@ -268,6 +373,11 @@ const Step2AddQuestions = ({
 
 
   const handleEditQuestion = (editQuestionData: any) => {
+    // Editing is a manual-form action — drop out of import mode so the question
+    // being edited is actually visible.
+    setMode('manual')
+    resetImport()
+
     setIsEditQuestion(true)
     setEditQuestionId(editQuestionData.id)
 
@@ -388,22 +498,47 @@ const Step2AddQuestions = ({
       <div className="lg:col-span-8 flex flex-col gap-5">
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
-          <div className="flex items-center gap-3 border-l-4 border-[#2c1452] pl-3">
-            <Paragraph className="font-bold text-[#2c1452] !text-base">Add Questions</Paragraph>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-3 border-l-4 border-[#2c1452] pl-3">
+              <Paragraph className="font-bold text-[#2c1452] !text-base">Add Questions</Paragraph>
+            </div>
+
+            {/* Manual entry vs Excel import */}
+            <div className="flex items-center gap-1 bg-[#F2F4F6] rounded-full p-1">
+              {([
+                { key: 'manual', label: 'Add Manually' },
+                { key: 'import', label: 'Import from Excel' },
+              ] as const).map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => switchMode(tab.key)}
+                  className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors
+                      ${mode === tab.key
+                      ? 'bg-[#2c1452] text-white'
+                      : 'text-[#767683] hover:text-[#2c1452]'
+                    }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Question text */}
-          <div>
-            <Textarea
-              label="Question Text"
-              placeholder="Type your question here..."
-              rows={3}
-              value={values.text}
-              onChange={e => setFieldValue('text', e.target.value)}
-              onBlur={handleBlur('text')}
-            />
-            {err('text')}
-          </div>
+          {mode === 'manual' && (
+            <div>
+              <Textarea
+                label="Question Text"
+                placeholder="Type your question here..."
+                rows={3}
+                value={values.text}
+                onChange={e => setFieldValue('text', e.target.value)}
+                onBlur={handleBlur('text')}
+              />
+              {err('text')}
+            </div>
+          )}
 
           {/* Module selector — only when test was created with course only */}
           {needsModuleSelect && (
@@ -483,6 +618,8 @@ const Step2AddQuestions = ({
           )}
 
           {/* MCQ options + correct answer */}
+          {mode === 'manual' && (
+          <>
           <div className="flex flex-col gap-3">
             <Paragraph className="!text-sm font-bold text-gray-700">Options</Paragraph>
 
@@ -549,6 +686,133 @@ const Step2AddQuestions = ({
 
             </Button>
           </div>
+          </>
+          )}
+
+          {/* ── Import questions from Excel ── */}
+          {mode === 'import' && (
+            <div className="flex flex-col gap-4">
+
+              {/* Step 1 — sample format */}
+              <div className="rounded-xl border border-[#2c1452]/15 bg-[#F2F4F6] px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-start gap-3">
+                  <FileSpreadsheet size={18} className="text-[#2c1452] mt-0.5 shrink-0" />
+                  <div>
+                    <Paragraph className="!text-sm font-bold text-[#2c1452]">
+                      Download the sample format
+                    </Paragraph>
+                    <Paragraph className="!text-xs text-[#767683] mt-0.5">
+                      One question per row, four options and the correct answer (A–D). Up to {MAX_IMPORT_ROWS} questions.
+                    </Paragraph>
+                  </div>
+                </div>
+                <Button
+                  variant="white"
+                  className="!h-9 !text-xs !px-4 whitespace-nowrap"
+                  onClick={handleDownloadTemplate}
+                  disabled={isDownloadingTemplate}
+                >
+                  {isDownloadingTemplate ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <>
+                      <Download size={14} />
+                      Sample .xlsx
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {/* Step 2 — upload the filled file */}
+              <div
+                onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={e => {
+                  e.preventDefault()
+                  setIsDragging(false)
+                  handleFileSelect(e.dataTransfer.files?.[0])
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                className={`rounded-xl border-2 border-dashed px-4 py-8 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors
+                    ${isDragging
+                    ? 'border-[#2c1452] bg-[#2c1452]/5'
+                    : 'border-gray-200 hover:border-[#2c1452]/40 hover:bg-[#F2F4F6]'
+                  }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx"
+                  className="hidden"
+                  onChange={e => handleFileSelect(e.target.files?.[0])}
+                />
+                <Upload size={20} className="text-[#767683]" />
+                <Paragraph className="!text-sm font-bold text-[#2c1452]">
+                  Drop your .xlsx file here, or click to browse
+                </Paragraph>
+                <Paragraph className="!text-xs text-[#767683]">
+                  Only .xlsx files created from the sample format are accepted
+                </Paragraph>
+              </div>
+
+              {/* Selected file */}
+              {importFile && (
+                <div className="rounded-xl bg-[#F2F4F6] px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileSpreadsheet size={16} className="text-[#2c1452] shrink-0" />
+                    <Paragraph className="!text-sm font-semibold text-[#2c1452] truncate">
+                      {importFile.name}
+                    </Paragraph>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={resetImport}
+                    className="p-1.5 rounded-lg hover:bg-white transition-colors text-[#767683] shrink-0"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
+
+              {/* Result of the last import */}
+              {importResult && (
+                <div className="rounded-xl border border-gray-100 bg-white px-4 py-3 flex flex-col gap-2">
+                  <Paragraph className="!text-sm font-bold text-[#2c1452]">
+                    Imported {importResult.imported} of {importResult.total} row{importResult.total > 1 ? 's' : ''}
+                  </Paragraph>
+
+                  {importResult.skipped?.length > 0 && (
+                    <div className="flex flex-col gap-1.5 mt-1">
+                      <div className="flex items-center gap-1.5">
+                        <AlertCircle size={13} className="text-red-500" />
+                        <Paragraph className="!text-xs font-bold text-red-500">
+                          {importResult.skipped.length} row(s) skipped
+                        </Paragraph>
+                      </div>
+                      <div className="flex flex-col gap-1 max-h-40 overflow-y-auto">
+                        {importResult.skipped.map(skipped => (
+                          <p key={skipped.row} className="text-[11px] text-[#767683]">
+                            <span className="font-bold text-[#2c1452]">Row {skipped.row}</span> — {skipped.error}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end">
+                <Button
+                  variant="primary"
+                  className="!h-10 !text-sm !px-5"
+                  onClick={handleImportQuestions}
+                  disabled={!importFile || isImportingQuestions}
+                >
+                  {isImportingQuestions ? <Loader2 className="animate-spin" /> : 'Import Questions'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Added questions list */}
