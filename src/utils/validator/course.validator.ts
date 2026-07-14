@@ -6,15 +6,17 @@ import * as Yup from 'yup'
 
 export const courseBasicDetailsSchema = Yup.object({
     title: Yup.string().required('Course name is required'),
-    description: Yup.string().min(10, 'Description must be at least 10 characters'),
+    description: Yup.string()
+        .trim()
+        .min(10, 'Description must be at least 10 characters')
+        .max(5000, 'Description cannot exceed 5000 characters')
+        .required('Description is required'),
     category: Yup.string().required('Category is required'),
     level: Yup.string().required('Level is required'),
     languages: Yup.array().min(1, 'Select at least one language'),
-    cover_image: Yup.mixed().when('cover_image_url', {
-        is: (val: any) => !val,
-        then: (schema) => schema.required('Cover image is required'),
-        otherwise: (schema) => schema.nullable(),
-    }),
+    // The URL is what actually gets persisted, so validate that rather than the
+    // picked File — otherwise a submit mid-upload passes and saves no cover.
+    cover_image_url: Yup.string().nullable().required('Cover image is required'),
     // introVideo: Yup.mixed().required('Intro video is required'),
 })
 

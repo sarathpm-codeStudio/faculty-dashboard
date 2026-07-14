@@ -75,11 +75,9 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
       onSuccess: (assetId) => {
         formik.setFieldValue('intro_video_asset_id', assetId)
         setUploadStatus('done')
-        toast.success('Intro video uploaded successfully')
       },
       onError: () => {
         setUploadStatus('failed')
-        toast.error('Video upload failed')
       },
     })
   }
@@ -146,6 +144,11 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   const coverPreview =
     imgPreview ?? formik.values.cover_image_url ?? courseDetails?.cover_image ?? null
 
+  const coverError =
+    formik.touched.cover_image_url && formik.errors.cover_image_url
+      ? (formik.errors.cover_image_url as string)
+      : undefined
+
   const handleCoverFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast.error('Please upload a JPEG, PNG, or WebP image')
@@ -188,6 +191,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
       toast.error('Failed to upload cover image')
       formik.setFieldValue('cover_image_url', null)
       formik.setFieldValue('cover_image', null)
+      formik.setFieldTouched('cover_image_url', true)
       setImgPreview(null)
     } finally {
       setCoverUploading(false)
@@ -202,6 +206,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
   const handleCoverClear = () => {
     formik.setFieldValue('cover_image', null)
     formik.setFieldValue('cover_image_url', null)
+    formik.setFieldTouched('cover_image_url', true)
     setImgPreview(null)
   }
 
@@ -364,9 +369,10 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
             previewType="image"
             aspectRatio={ASPECT_RATIO_16_9}
             icon={<Image size={20} />}
-            title="Cover Image"
+            title="Cover Image *"
             hint="JPEG or PNG — 16:9 required (e.g. 1920×1080)"
             loading={coverUploading}
+            error={coverError}
             onFile={handleCoverFile}
             onClear={handleCoverClear}
           />
@@ -456,7 +462,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
                     onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
                     fullWidth
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || coverUploading}
                   >
                     {isSubmitting && activeBtn === 'draft'
                       ? <Loader2 size={16} className="animate-spin" />
@@ -469,7 +475,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
                   onClick={() => { setIsDraft(true); setActiveBtn('draft') }}
                   fullWidth
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || coverUploading}
                 >
                   {isSubmitting && activeBtn === 'draft'
                     ? <Loader2 size={16} className="animate-spin" />
@@ -480,7 +486,7 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
               variant="primary"
               fullWidth
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || coverUploading}
               onClick={() => setActiveBtn('next')}
             >
               {isSubmitting && activeBtn === 'next'

@@ -14,6 +14,7 @@ interface UploadBoxProps {
     videoBlockedMessage?: string | null
     /** e.g. 16/9 — preview container uses this aspect ratio */
     aspectRatio?: number
+    error?: string | null
     onFile: (file: File) => void
     onClear: () => void
 }
@@ -28,6 +29,7 @@ export const UploadBox = ({
     loading = false,
     videoBlockedMessage = null,
     aspectRatio,
+    error = null,
     onFile,
     onClear,
 }: UploadBoxProps) => {
@@ -42,6 +44,7 @@ export const UploadBox = ({
     }
 
     return (
+        <div className="flex flex-col gap-1.5 w-full">
         <div
             onClick={() => ref.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
@@ -49,7 +52,11 @@ export const UploadBox = ({
             onDrop={handleDrop}
             className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden w-full
         ${aspectRatio ? 'min-h-[120px]' : 'h-[200px]'}
-        ${drag ? 'border-[#2c1452] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#2c1452]/40'}`}
+        ${drag
+                    ? 'border-[#2c1452] bg-[#eef0ff]'
+                    : error
+                        ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                        : 'border-gray-200 bg-[#F8F9FB] hover:border-[#2c1452]/40'}`}
             style={aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
         >
             {preview ? (
@@ -119,6 +126,8 @@ export const UploadBox = ({
                 onClick={(e) => e.stopPropagation()}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }}
             />
+        </div>
+            {error && <p className="text-red-500 text-xs">{error}</p>}
         </div>
     )
 }

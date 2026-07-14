@@ -851,6 +851,16 @@ export const courseService = {
         if (testError) throw new Error(testError.message);
       }
 
+      if (material?.type === MaterialType.VIDEO && material?.unique_id) {
+        const { error: uploadProgressError } = await supabase
+          .from("video_upload_progress")
+          .delete()
+          .eq("unique_id", material.unique_id)
+          .eq("type", "module");
+
+        if (uploadProgressError) throw new Error(uploadProgressError.message);
+      }
+
       if (material?.folder_id) {
         const folderCountField =
           material.type === MaterialType.VIDEO ? "total_video" :
@@ -1222,6 +1232,20 @@ export const courseService = {
     }
 
 
+  },
+
+
+  // Number of live materials in the course, across every folder. Used to stop a
+  // faculty leaving the academic step with an empty (or folders-only) course.
+  countCourseMaterials: async (courseId: string): Promise<number> => {
+    const { count, error } = await supabase
+      .from("course_materials")
+      .select("id", { count: "exact", head: true })
+      .eq("course_id", courseId)
+      .eq("is_deleted", false)
+
+    if (error) throw new Error(error.message)
+    return count ?? 0
   },
 
 

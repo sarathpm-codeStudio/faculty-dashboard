@@ -74,7 +74,10 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
         formik.touched[field] && formik.errors[field] ? formik.errors[field] : undefined
 
     const handleFile = (file: File) => {
-        if (!file.type.startsWith('image/')) return
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please upload a JPG or PNG image')
+            return
+        }
         const reader = new FileReader()
         reader.onloadend = () => {
             setRawImage(reader.result as string)
@@ -96,6 +99,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
         } catch (error: any) {
             toast.error(error?.message || 'Failed to upload profile picture')
             formik.setFieldValue('avatar_url', '')
+            formik.setFieldTouched('avatar_url', true)
             setAvatarPreview(null)
         } finally {
             setAvatarUploading(false)
@@ -110,6 +114,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
 
     const handleRemove = () => {
         formik.setFieldValue('avatar_url', '')
+        formik.setFieldTouched('avatar_url', true)
         setAvatarPreview(null)
         if (fileRef.current) fileRef.current.value = ''
     }
@@ -117,6 +122,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
     const handleChange = () => fileRef.current?.click()
 
     const hasImage = !!avatarPreview
+    const avatarError = err('avatar_url')
 
     return (
         <OnboardingLayout
@@ -138,7 +144,7 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
 
                         {/* Profile photo uploader */}
                         <div className="flex flex-col gap-1.5">
-                            <span className="text-sm font-bold text-gray-700">Profile Photo</span>
+                            <span className="text-sm font-bold text-gray-700">Profile Photo *</span>
 
                             {!hasImage ? (
                                 <div
@@ -147,7 +153,11 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
                                     onDragLeave={() => setDragOver(false)}
                                     onClick={handleChange}
                                     className={`border-2 border-dashed rounded-xl py-5 px-4 flex items-center gap-4 cursor-pointer transition-colors
-                                        ${dragOver ? 'border-[#2c1452] bg-blue-50' : 'border-gray-200 hover:border-[#2c1452]'}`}
+                                        ${dragOver
+                                            ? 'border-[#2c1452] bg-blue-50'
+                                            : avatarError
+                                                ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+                                                : 'border-gray-200 hover:border-[#2c1452]'}`}
                                 >
                                     <div className="w-16 h-16 rounded-full bg-[#DFE0FF] flex items-center justify-center shrink-0">
                                         <ImagePlus size={26} className="text-[#2c1452]" />
@@ -214,6 +224,8 @@ const IdentityStep = ({ data, onChange, onNext, onBack, animClass = '', mode = '
                                 className="hidden"
                                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
                             />
+
+                            {avatarError && <p className="text-red-500 text-xs">{avatarError}</p>}
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
