@@ -79,7 +79,7 @@ export function AudioPlayer({ src, meta, content, seed, mine, uploadState, onRet
   const time = mine ? 'text-white/80' : 'text-gray-500'
 
   return (
-    <div className="flex items-center gap-3 min-w-[210px]">
+    <div className="flex w-full max-w-full items-center gap-3 sm:min-w-[210px]">
       <audio ref={audioRef} src={src} preload="metadata" className="hidden" />
 
       {uploadState === 'uploading' ? (
@@ -109,17 +109,17 @@ export function AudioPlayer({ src, meta, content, seed, mine, uploadState, onRet
         </button>
       )}
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <div
           onClick={seek}
-          className={`flex h-8 items-center gap-[2px] ${uploadState ? 'cursor-default opacity-60' : 'cursor-pointer'}`}
+          className={`flex h-8 items-center gap-[2px] overflow-hidden ${uploadState ? 'cursor-default opacity-60' : 'cursor-pointer'}`}
         >
           {peaks.map((h, i) => {
             const filled = i / peaks.length <= progress
             return (
               <span
                 key={i}
-                className={`w-[3px] shrink-0 rounded-full ${filled ? played : track}`}
+                className={`w-[3px] min-w-[2px] rounded-full ${filled ? played : track}`}
                 style={{ height: `${Math.max(10, h)}%` }}
               />
             )

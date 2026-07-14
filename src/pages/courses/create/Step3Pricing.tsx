@@ -295,7 +295,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
               <p className="text-xs font-semibold uppercase tracking-widest opacity-70 mb-2">Students Price</p>
               <p className="text-4xl font-bold tracking-tight">₹{studentPrice.toFixed(2)}</p>
               <p className="text-xs opacity-60 mt-2 leading-relaxed">
-                Calculated based on a {discount}{discountType === 'percentage' ? '%' : '₹'} discount applied to the ₹{price.toFixed(2)}.
+                Calculated based on a {discountType === 'percentage' ? `${discount}%` : `₹${discount}`} discount applied to the ₹{price.toFixed(2)}.
               </p>
               {discount > 0 && (
                 <p className="text-xs opacity-60 mt-2 leading-relaxed">
@@ -313,7 +313,7 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
               <div className="flex justify-between text-sm">
                 <Paragraph className='text-xs font-semibold text-gray-600'>Discount</Paragraph>
                 <span className="font-semibold text-gray-700">
-                  {discount}{discountType === 'percentage' ? '%' : '₹'}
+                  {discountType === 'percentage' ? `${discount}%` : `₹${discount}`}
                 </span>
               </div>
               <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
@@ -325,17 +325,17 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
             {/* Discount Calculator */}
             <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col gap-4">
               <Subheading className='text-[#2c1452] font-bold'>Discount Calculator</Subheading>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-                  <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Sum of Courses</Paragraph>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+                <div className="min-w-0 bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 xl:flex-col xl:items-start xl:gap-1">
+                  <Paragraph className='text-xs font-semibold text-gray-600 leading-tight break-words min-w-0'>Sum of Courses</Paragraph>
                   <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{price.toFixed(2)}</p>
                 </div>
-                <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-                  <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Student Price</Paragraph>
+                <div className="min-w-0 bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 xl:flex-col xl:items-start xl:gap-1">
+                  <Paragraph className='text-xs font-semibold text-gray-600 leading-tight break-words min-w-0'>Student Price</Paragraph>
                   <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{studentPrice.toFixed(2)}</p>
                 </div>
-                <div className="bg-[#E6FBF7] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-                  <Paragraph className='text-xs font-semibold text-[#00A98F] whitespace-nowrap'>Student Saved</Paragraph>
+                <div className="min-w-0 bg-[#E6FBF7] rounded-xl p-3 flex items-center justify-between gap-2 xl:flex-col xl:items-start xl:gap-1">
+                  <Paragraph className='text-xs font-semibold text-[#00A98F] leading-tight break-words min-w-0'>Student Saved</Paragraph>
                   <p className="text-sm font-bold text-[#00A98F] whitespace-nowrap">₹{saved.toFixed(2)}</p>
                 </div>
               </div>

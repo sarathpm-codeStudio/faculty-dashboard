@@ -156,9 +156,12 @@ const AnnouncementsPage = () => {
       header: 'Time Period',
       render: row => {
         const period = parseTimePeriod(row?.time_period)
+        if (!period) return <span className="text-sm text-[#767683]" />
         return (
-          <span className="text-sm text-[#767683] whitespace-pre-line">
-            {period ? `${formatLongDate(period.start)} – ${formatLongDate(period.end)}` : ""}
+          <span className="text-sm text-[#767683]">
+            <span className="whitespace-nowrap">{formatLongDate(period.start)}</span>
+            {' – '}
+            <span className="whitespace-nowrap">{formatLongDate(period.end)}</span>
           </span>
         )
       },
