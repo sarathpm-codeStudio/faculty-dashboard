@@ -84,6 +84,7 @@ const QualificationStep = ({
     const [preview, setPreview] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
     const [noQualError, setNoQualError] = useState(false)
+    const [unsavedDraftError, setUnsavedDraftError] = useState(false)
 
     const existingQualifications = qualifications.filter((q) => q.isExisting)
     const newQualifications = qualifications.filter((q) => !q.isExisting)
@@ -99,11 +100,24 @@ const QualificationStep = ({
             resetForm()
             setPreview(null)
             setNoQualError(false)
+            setUnsavedDraftError(false)
         },
     })
 
     const err = (field: keyof QualificationForm) =>
         formik.touched[field] && formik.errors[field] ? formik.errors[field] : undefined
+
+    // Anything typed into the add-form but not yet committed with "Add Qualification".
+    // Continuing would silently drop it, so we stop and make the user decide.
+    const hasUnsavedDraft = (
+        ['type', 'fieldOfStudy', 'graduationYear', 'teachingExperience', 'document_url', 'fileName'] as const
+    ).some((field) => formik.values[field].trim() !== '')
+
+    const handleDiscardDraft = () => {
+        formik.resetForm()
+        setPreview(null)
+        setUnsavedDraftError(false)
+    }
 
     const handleFile = async (file: File) => {
         if (!isPdfFile(file)) {
@@ -142,6 +156,13 @@ const QualificationStep = ({
         onChange(qualifications.filter((q) => q.id !== id))
 
     const handleContinue = async () => {
+        if (hasUnsavedDraft) {
+            setUnsavedDraftError(true)
+            toast.error('Click "Add Qualification" to save the details you entered, or discard them.')
+            return
+        }
+        setUnsavedDraftError(false)
+
         if (qualifications.length === 0) {
             setNoQualError(true)
             return
@@ -252,7 +273,24 @@ const QualificationStep = ({
                             )}
                         </div>
 
-                        <div className="flex justify-end mt-4">
+                        {unsavedDraftError && hasUnsavedDraft && (
+                            <p className="text-sm text-red-500 font-medium">
+                                This qualification hasn&apos;t been added yet. Click &quot;Add Qualification&quot; to save it,
+                                or discard it — otherwise it will not be submitted.
+                            </p>
+                        )}
+
+                        <div className="flex justify-end gap-3 mt-4">
+                            {hasUnsavedDraft && (
+                                <Button
+                                    type="button"
+                                    variant="white"
+                                    onClick={handleDiscardDraft}
+                                    disabled={uploading}
+                                >
+                                    Discard
+                                </Button>
+                            )}
                             <Button type="submit" variant="secondary" disabled={uploading} loading={uploading}>
                                 <IoAddCircleOutline size={25} />
                                 Add Qualification
