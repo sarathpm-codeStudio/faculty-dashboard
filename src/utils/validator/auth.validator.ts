@@ -10,14 +10,14 @@ export const identitySchema = Yup.object({
         .required('Phone number is required'),
     date_of_birth: Yup.string().required('Date of birth is required'),
     bio: Yup.string().trim().min(20, 'Bio must be at least 20 characters').required('Bio is required'),
-    avatar_url: Yup.string(),
+    avatar_url: Yup.string().required('Profile photo is required'),
 })
 
 export const qualificationFormSchema = Yup.object({
     type: Yup.string().required('Qualification type is required'),
     fieldOfStudy: Yup.string().trim().required('Field of study is required'),
     graduationYear: Yup.string().required('Graduation date is required'),
-    teachingExperience: Yup.string().trim(),
+    teachingExperience: Yup.string().trim().required('Teaching experience is required'),
     document_url: Yup.string().required('Please upload your certificate'),
 })
 

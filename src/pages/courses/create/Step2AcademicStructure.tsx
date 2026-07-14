@@ -20,7 +20,7 @@ import { BsPencilSquare } from 'react-icons/bs'
 import { HiDocumentDuplicate } from 'react-icons/hi'
 import { FaRegImage } from 'react-icons/fa6'
 import { CaretRight } from '@phosphor-icons/react'
-import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder, useUpdateMaterial, useDeleteFolder, useDeleteMaterial } from '@/hooks/useCourse'
+import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder, useUpdateMaterial, useDeleteFolder, useDeleteMaterial, useGetCourseMaterialCount } from '@/hooks/useCourse'
 import { VideoPlayer } from '@/components/features'
 import { toast } from 'sonner'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
@@ -89,6 +89,11 @@ type ContentErrors = {
   videoCover?: string
   video?: string
   file?: string
+}
+
+type FolderErrors = {
+  name?: string
+  description?: string
 }
 
 const MATERIAL_TYPE_META: Record<MaterialDbType, { label: string; icon: React.ReactNode; iconBg: string; iconColor: string }> = {
@@ -255,6 +260,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [showFolderModal, setShowFolderModal] = useState(false)
   const [folderName, setFolderName] = useState('')
   const [folderDescription, setFolderDescription] = useState('')
+  const [folderErrors, setFolderErrors] = useState<FolderErrors>({})
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null)
 
   // Content modal
@@ -407,6 +413,21 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   )
   const currentItems: any[] = content ?? []
 
+  // Course-wide material count — the current level alone can't tell us whether
+  // the course has any content, since the faculty may be sitting in an empty
+  // sub-folder while other folders are full.
+  const { data: materialCount, isLoading: materialCountLoading } = useGetCourseMaterialCount(courseId)
+  const hasContent = (materialCount ?? 0) > 0
+
+  const handleNext = () => {
+    if (materialCountLoading) return
+    if (!hasContent) {
+      toast.error('Add at least one folder with content before setting the price')
+      return
+    }
+    onNext()
+  }
+
   // ── Navigation ──
   const drillInto = (folder: FolderNode) =>
     setNavPath(prev => [...prev, { id: folder.id, title: folder.title }])
@@ -420,6 +441,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setEditingFolderId(null)
     setFolderName('')
     setFolderDescription('')
+    setFolderErrors({})
     setShowFolderModal(true)
   }
 
@@ -427,6 +449,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setEditingFolderId(folder.id)
     setFolderName(folder.title ?? '')
     setFolderDescription(folder.description ?? '')
+    setFolderErrors({})
     setShowFolderModal(true)
   }
 
@@ -434,13 +457,30 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setShowFolderModal(false)
     setFolderName('')
     setFolderDescription('')
+    setFolderErrors({})
     setEditingFolderId(null)
+  }
+
+  const clearFolderError = (field: keyof FolderErrors) =>
+    setFolderErrors(prev => (prev[field] ? { ...prev, [field]: undefined } : prev))
+
+  // Both folder fields are mandatory.
+  const validateFolder = (name: string, description: string): boolean => {
+    const errors: FolderErrors = {}
+    if (!name) errors.name = 'Folder name is required'
+    if (!description) errors.description = 'Description is required'
+    setFolderErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   const handleSubmitFolder = async () => {
     const name = folderName.trim()
-    if (!name) return
     const description = folderDescription.trim()
+
+    if (!validateFolder(name, description)) {
+      toast.error('Please fill in all required fields')
+      return
+    }
 
     try {
       if (editingFolderId) {
@@ -669,13 +709,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         applyIfActiveSession(() => {
           setContentAssetId(assetId)
           setContentUploadStatus('done')
-          toast.success('Video uploaded successfully')
         })
       },
       onError: () => {
         applyIfActiveSession(() => {
           setContentUploadStatus('failed')
-          toast.error('Video upload failed')
         })
       },
     })
@@ -1099,9 +1137,21 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           ))}
         </div> */}
 
-        <Button variant="primary" fullWidth onClick={onNext}>
-          Add Price <ArrowRight size={18} />
-        </Button>
+        <div className="flex flex-col gap-1.5">
+          <Button
+            variant="primary"
+            fullWidth
+            onClick={handleNext}
+            disabled={materialCountLoading}
+          >
+            Add Price <ArrowRight size={18} />
+          </Button>
+          {!materialCountLoading && !hasContent && (
+            <p className="text-xs text-gray-500 text-center">
+              Add at least one folder with content to continue.
+            </p>
+          )}
+        </div>
       </div>
 
       {/* ── Folder Modal (create + edit) ── */}
@@ -1119,7 +1169,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               className='!h-10'
 
               onClick={handleSubmitFolder}
-              disabled={!folderName.trim() || isFolderSaving}
+              disabled={isFolderSaving}
             >
               {isFolderSaving
                 ? <Loader2 size={16} className="animate-spin" />
@@ -1134,18 +1184,20 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
           </p>
         )}
         <Input
-          label="Folder Name"
+          label="Folder Name *"
           placeholder="e.g. Module 1: Introduction"
           value={folderName}
-          onChange={e => setFolderName(e.target.value)}
+          error={folderErrors.name}
+          onChange={e => { setFolderName(e.target.value); clearFolderError('name') }}
           onKeyDown={e => e.key === 'Enter' && handleSubmitFolder()}
           autoFocus
         />
         <Textarea
-          label="Description"
+          label="Description *"
           placeholder="Brief summary of what this folder contains..."
           value={folderDescription}
-          onChange={e => setFolderDescription(e.target.value)}
+          error={folderErrors.description}
+          onChange={e => { setFolderDescription(e.target.value); clearFolderError('description') }}
           maxLength={5000}
           showCount
           rows={4}

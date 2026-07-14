@@ -124,6 +124,8 @@ export const useDeleteFolder = (courseId: string) => {
     mutationFn: (folderId: string) => courseService.deleteFolder(courseId, folderId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['content', courseId] })
+      // Deleting a folder takes its materials with it.
+      qc.invalidateQueries({ queryKey: ['course-material-count', courseId] })
     },
   })
 }
@@ -138,6 +140,7 @@ export const useCreateMaterial = (courseId: string) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['content', courseId] })
       qc.invalidateQueries({ queryKey: ['content-in-module'] })
+      qc.invalidateQueries({ queryKey: ['course-material-count', courseId] })
     },
   })
 }
@@ -164,7 +167,7 @@ export const useDeleteMaterial = (courseId: string) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['content', courseId] })
       qc.invalidateQueries({ queryKey: ['tests'] })
-
+      qc.invalidateQueries({ queryKey: ['course-material-count', courseId] })
     },
   })
 }
@@ -182,6 +185,14 @@ export const useGetAllContent = (courseId: string, parentId?: string) => {
     queryKey: ['content', courseId, parentId],
     queryFn: () => courseService.getAllContent(courseId, parentId),
     enabled: true,
+  })
+}
+
+export const useGetCourseMaterialCount = (courseId: string) => {
+  return useQuery({
+    queryKey: ['course-material-count', courseId],
+    queryFn: () => courseService.countCourseMaterials(courseId),
+    enabled: !!courseId,
   })
 }
 

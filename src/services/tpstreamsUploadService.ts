@@ -238,7 +238,14 @@ class TPStreamsUploadService {
                 meta.callbacks.onSuccess?.(assetId)
                 meta.callbacks.onStatus?.('done')
 
-                toast.success('Video uploaded successfully!')
+                // Sole success toast for video uploads — callers must not add their
+                // own, or the user sees two. This fires even if the uploading view
+                // has since unmounted, which a component-level toast cannot do.
+                toast.success(
+                    meta.type === 'intro'
+                        ? 'Intro video uploaded successfully'
+                        : 'Video uploaded successfully',
+                )
                 setTimeout(() => removeUpload(assetId), 3000)
             } catch (err) {
                 try {

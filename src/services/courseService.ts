@@ -1225,6 +1225,20 @@ export const courseService = {
   },
 
 
+  // Number of live materials in the course, across every folder. Used to stop a
+  // faculty leaving the academic step with an empty (or folders-only) course.
+  countCourseMaterials: async (courseId: string): Promise<number> => {
+    const { count, error } = await supabase
+      .from("course_materials")
+      .select("id", { count: "exact", head: true })
+      .eq("course_id", courseId)
+      .eq("is_deleted", false)
+
+    if (error) throw new Error(error.message)
+    return count ?? 0
+  },
+
+
   getCourseReviews: async (courseId: string, { page, limit }: any): Promise<any> => {
     // try {
     //   const { data } = await apiClient.get(`/courses/${courseId}/reviews`, { params: payload })

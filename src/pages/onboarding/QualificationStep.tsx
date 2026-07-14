@@ -221,12 +221,13 @@ const QualificationStep = ({
                                 error={err('graduationYear')}
                             />
                             <Input
-                                label="Teaching Experience"
+                                label="Teaching Experience *"
                                 id="teachingExperience"
                                 value={formik.values.teachingExperience}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
                                 placeholder="e.g. 2 Years"
+                                error={err('teachingExperience')}
                             />
                         </div>
 
