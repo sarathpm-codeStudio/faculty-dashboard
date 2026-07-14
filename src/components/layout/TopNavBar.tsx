@@ -1,12 +1,12 @@
 
 
 import { useState, useRef, useEffect } from 'react'
-import { Bell, Search, LogOut, ChevronDown, UserCircle2 } from 'lucide-react'
-import manAvatar from '@/assets/images/man.jpg'
+import { Bell, LogOut, ChevronDown, UserCircle2 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
 import { useNavigate } from 'react-router-dom'
-import { Button, Button2, Input, Paragraph } from '@/components/ui'
+import { Button, Paragraph } from '@/components/ui'
+import GlobalSearch from '@/components/layout/GlobalSearch'
 import { useUnreadNotificationCount, useUnreadAnnouncementCount } from '@/hooks/notification'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -54,15 +54,7 @@ const TopNavBar = ({ onNotifClick }: Props) => {
         <header className="h-20 flex items-center justify-between px-6 flex-shrink-0 bg-gray-50 z-20 sticky top-0">
 
             {/* Search */}
-            {!locked && (
-                <div className="w-full max-w-[300px] lg:max-w-[700px] mr-4">
-                    <Input
-                        placeholder="Search by course and students..."
-                        leftIcon={<Search size={16} />}
-                        className="!py-2.5 lg:!py-4 !text-sm lg:!text-base"
-                    />
-                </div>
-            )}
+            {!locked && <GlobalSearch />}
             {locked && <div />}
 
             {/* Right side */}

@@ -84,6 +84,13 @@ const rowVariants: Variants = {
 
 type MaterialDbType = 'VIDEO' | 'PDF' | 'IMAGE' | 'NOTES' | 'LINK' | 'TEST'
 
+type ContentErrors = {
+  title?: string
+  videoCover?: string
+  video?: string
+  file?: string
+}
+
 const MATERIAL_TYPE_META: Record<MaterialDbType, { label: string; icon: React.ReactNode; iconBg: string; iconColor: string }> = {
   VIDEO: { label: 'Video', icon: <VideoIcon size={16} />, iconBg: 'bg-[#E8EBFF]', iconColor: 'text-[#2c1452]' },
   PDF: { label: 'Document', icon: <FilePdfIcon size={16} />, iconBg: 'bg-[#FEE7E7]', iconColor: 'text-[#D63B3B]' },
@@ -106,11 +113,12 @@ interface UploadBoxProps {
   loading?: boolean
   videoBlockedMessage?: string | null
   aspectRatio?: number
+  error?: string | null
   onFile: (file: File) => void
   onClear: () => void
 }
 
-const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, title, hint, loading = false, videoBlockedMessage = null, aspectRatio, onFile, onClear }: UploadBoxProps) => {
+const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, title, hint, loading = false, videoBlockedMessage = null, aspectRatio, error = null, onFile, onClear }: UploadBoxProps) => {
   const ref = useRef<HTMLInputElement>(null)
   const [drag, setDrag] = useState(false)
 
@@ -122,6 +130,7 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
   }
 
   return (
+    <div className="flex flex-col gap-1.5 w-full">
     <div
       onClick={() => ref.current?.click()}
       onDragOver={(e) => { e.preventDefault(); setDrag(true) }}
@@ -129,7 +138,11 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
       onDrop={handleDrop}
       className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed cursor-pointer transition-all overflow-hidden w-full
         ${aspectRatio ? 'min-h-[120px]' : 'h-[200px]'}
-        ${drag ? 'border-[#2c1452] bg-[#eef0ff]' : 'border-gray-200 bg-[#F8F9FB] hover:border-[#2c1452]/40'}`}
+        ${drag
+          ? 'border-[#2c1452] bg-[#eef0ff]'
+          : error
+            ? 'border-red-400 bg-red-50/40 hover:border-red-500'
+            : 'border-gray-200 bg-[#F8F9FB] hover:border-[#2c1452]/40'}`}
       style={aspectRatio ? { aspectRatio: String(aspectRatio) } : undefined}
     >
       {preview ? (
@@ -214,6 +227,8 @@ const UploadBox = ({ accept, preview, previewType = 'video', fileName, icon, tit
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f) }}
       />
     </div>
+      {error && <p className="text-red-500 text-xs">{error}</p>}
+    </div>
   )
 }
 
@@ -245,6 +260,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   // Content modal
   const [showContentModal, setShowContentModal] = useState(false)
   const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null)
+  const [contentErrors, setContentErrors] = useState<ContentErrors>({})
   const [contentTitle, setContentTitle] = useState('')
   const [contentDesc, setContentDesc] = useState('')
   const [contentKind, setContentKind] = useState<ContentKind>('video')
@@ -282,7 +298,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setVideoCoverCropperOpen(false)
     setShowContentModal(false)
     setEditingMaterialId(null)
+    setContentErrors({})
   }
+
+  const clearContentError = (field: keyof ContentErrors) =>
+    setContentErrors(prev => (prev[field] ? { ...prev, [field]: undefined } : prev))
 
   const getVideoBlockedMessage = (status: string | null | undefined) => {
     if (!status) return null
@@ -458,6 +478,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
 
     setEditingMaterialId(null)
+    setContentErrors({})
     setContentUniqueId(generateUniqueId())
     setContentTitle('')
     setContentDesc('')
@@ -490,6 +511,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     const kind = DB_TO_CONTENT_KIND[dbType] ?? 'document'
 
     setEditingMaterialId(material.id)
+    setContentErrors({})
     setContentUniqueId(material.unique_id || generateUniqueId())
     setContentTitle(material.title ?? '')
     setContentDesc(material.description ?? '')
@@ -568,6 +590,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       const uploadFile = dataUrlToFile(cropped, `video-cover-${Date.now()}.jpg`)
       const url = await storageService.uploadCourseCover(uploadFile)
       setContentVideoCoverImg(url)
+      clearContentError('videoCover')
       toast.success('Video cover image uploaded')
     } catch (err: any) {
       toast.error(err?.message || 'Failed to upload video cover image')
@@ -589,11 +612,21 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   }
 
   const handleContentFileUpload = async (file: File) => {
+    if (contentKind === 'document' && file.type !== 'application/pdf') {
+      toast.error('Please upload a PDF file')
+      return
+    }
+    if (contentKind === 'image' && !file.type.startsWith('image/')) {
+      toast.error('Please upload a JPEG, PNG, or WebP image')
+      return
+    }
+
     setContentFileUploading(true)
     setContentFileName(file.name)
     try {
       const url = await storageService.uploadCourseCover(file)
       setContentFileUrl(url)
+      clearContentError('file')
       toast.success('File uploaded')
     } catch (err: any) {
       toast.error(err?.message || 'Failed to upload file')
@@ -605,8 +638,14 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   }
 
   const handleContentVideoFile = (file: File) => {
+    if (!file.type.startsWith('video/')) {
+      toast.error('Please upload an MP4, WebM, or MOV video')
+      return
+    }
+
     const uploadSessionId = contentUniqueId
     contentUploadSessionRef.current = uploadSessionId
+    clearContentError('video')
 
     if (contentVidPreviewRef.current?.startsWith('blob:')) {
       URL.revokeObjectURL(contentVidPreviewRef.current)
@@ -649,8 +688,37 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     test: 'NOTES',
   }
 
+  // Every field in the content modal is mandatory: title, plus the media the
+  // chosen kind is built around (cover + video, or the document/image file).
+  const validateContent = (): boolean => {
+    const errors: ContentErrors = {}
+    const isFileKind = contentKind === 'image' || contentKind === 'document'
+
+    if (!contentTitle.trim()) errors.title = 'Title is required'
+
+    if (contentKind === 'video') {
+      if (!contentVideoCoverImg) errors.videoCover = 'Video cover image is required'
+      if (!contentAssetId) {
+        errors.video = contentUploadStatus === 'uploading' || contentUploadStatus === 'saving'
+          ? 'Please wait for the video to finish uploading'
+          : contentUploadStatus === 'failed'
+            ? 'Video upload failed — please upload again'
+            : 'Video is required'
+      }
+    }
+
+    if (isFileKind) {
+      const label = contentKind === 'document' ? 'Document' : 'Image'
+      if (contentFileUploading) errors.file = `Please wait for the ${label.toLowerCase()} upload to finish`
+      else if (!contentFileUrl) errors.file = `${label} is required`
+    }
+
+    setContentErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
   const handleSaveContent = async () => {
-    const title = contentTitle.trim() || 'Untitled'
+    const title = contentTitle.trim()
     const type = MATERIAL_TYPE_MAP[contentKind]
 
     if (currentParentId === null) {
@@ -658,21 +726,13 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       return
     }
 
-    // if (contentKind === 'video' && !contentAssetId) {
-    //   toast.error('Please wait for the video to finish uploading')
-    //   return
-    // }
     if (contentKind === 'video' && contentVideoCoverUploading) {
       toast.error('Please wait for the video cover image to finish uploading')
       return
     }
 
-    if ((contentKind === 'image' || contentKind === 'document') && !contentFileUrl) {
-      toast.error('Please upload a file first')
-      return
-    }
-    if ((contentKind === 'image' || contentKind === 'document') && contentFileUploading) {
-      toast.error('Please wait for the file upload to finish')
+    if (!validateContent()) {
+      toast.error('Please fill in all required fields')
       return
     }
 
@@ -1126,16 +1186,17 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         )}
 
         <Input
-          label="Title"
+          label="Title *"
           placeholder="e.g. Introduction to Business Law"
           value={contentTitle}
-          onChange={e => setContentTitle(e.target.value)}
+          error={contentErrors.title}
+          onChange={e => { setContentTitle(e.target.value); clearContentError('title') }}
         />
 
         {contentKind === 'video' && (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-gray-700">Video Cover Image</label>
+              <label className="text-sm font-bold text-gray-700">Video Cover Image *</label>
               <UploadBox
                 accept="image/jpeg,image/png,image/webp"
                 preview={contentVideoCoverImg}
@@ -1146,13 +1207,14 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                 title="Upload Video Cover Image"
                 hint="JPEG or PNG — 16:9 required (e.g. 1920×1080)"
                 loading={contentVideoCoverUploading}
+                error={contentErrors.videoCover}
                 onFile={handleVideoCoverFile}
                 onClear={handleVideoCoverClear}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-gray-700">Video</label>
+              <label className="text-sm font-bold text-gray-700">Video *</label>
               <UploadBox
                 accept="video/mp4,video/webm,video/mov"
                 preview={contentVidPreview}
@@ -1161,6 +1223,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
                 hint="MP4, WebM or MOV — max 200 MB"
                 loading={contentUploadStatus === 'uploading' || contentUploadStatus === 'saving'}
                 videoBlockedMessage={getVideoBlockedMessage(videoTranscodeStatus)}
+                error={contentErrors.video}
                 onFile={handleContentVideoFile}
                 onClear={() => {
                   contentUploadSessionRef.current = null
@@ -1205,7 +1268,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
         {contentKind === 'image' && (
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-gray-700">Image</label>
+            <label className="text-sm font-bold text-gray-700">Image *</label>
             <UploadBox
               accept="image/jpeg,image/png,image/webp"
               preview={contentFileUrl}
@@ -1214,6 +1277,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               title="Upload Image"
               hint="JPEG, PNG or WebP"
               loading={contentFileUploading}
+              error={contentErrors.file}
               onFile={handleContentFileUpload}
               onClear={() => {
                 setContentFileUrl(null)
@@ -1225,7 +1289,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
         {contentKind === 'document' && (
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-bold text-gray-700">Document</label>
+            <label className="text-sm font-bold text-gray-700">Document *</label>
             <UploadBox
               accept="application/pdf"
               preview={contentFileUrl}
@@ -1235,6 +1299,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               title="Upload Document"
               hint="PDF only"
               loading={contentFileUploading}
+              error={contentErrors.file}
               onFile={handleContentFileUpload}
               onClear={() => {
                 setContentFileUrl(null)

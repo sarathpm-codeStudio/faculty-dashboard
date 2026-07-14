@@ -275,7 +275,7 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
           </Button>
         ) : (
 
-          coursePreview?.status === "draft" ? (
+          coursePreview?.is_draft ? (
             <>
               <Button variant="white" onClick={onDraft}>Save as draft</Button>
               <Button variant="primary" onClick={() => setConfirmOpen(true)} disabled={isPublishing}>
