@@ -625,12 +625,12 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentVideoCoverImg(cropped)
     setContentVideoCoverName('video-cover.jpg')
     setContentVideoCoverUploading(true)
+    clearContentError('videoCover')
 
     try {
       const uploadFile = dataUrlToFile(cropped, `video-cover-${Date.now()}.jpg`)
       const url = await storageService.uploadCourseCover(uploadFile)
       setContentVideoCoverImg(url)
-      clearContentError('videoCover')
       toast.success('Video cover image uploaded')
     } catch (err: any) {
       toast.error(err?.message || 'Failed to upload video cover image')
@@ -663,10 +663,10 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
     setContentFileUploading(true)
     setContentFileName(file.name)
+    clearContentError('file')
     try {
       const url = await storageService.uploadCourseCover(file)
       setContentFileUrl(url)
-      clearContentError('file')
       toast.success('File uploaded')
     } catch (err: any) {
       toast.error(err?.message || 'Failed to upload file')
@@ -726,8 +726,8 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     test: 'NOTES',
   }
 
-  // Every field in the content modal is mandatory: title, plus the media the
-  // chosen kind is built around (cover + video, or the document/image file).
+  // Only checks that a file was picked. The video keeps uploading in the
+  // background, so a running upload is never a reason to block the save.
   const validateContent = (): boolean => {
     const errors: ContentErrors = {}
     const isFileKind = contentKind === 'image' || contentKind === 'document'
@@ -736,19 +736,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
     if (contentKind === 'video') {
       if (!contentVideoCoverImg) errors.videoCover = 'Video cover image is required'
-      if (!contentAssetId) {
-        errors.video = contentUploadStatus === 'uploading' || contentUploadStatus === 'saving'
-          ? 'Please wait for the video to finish uploading'
-          : contentUploadStatus === 'failed'
-            ? 'Video upload failed — please upload again'
-            : 'Video is required'
-      }
+      if (!contentVidPreview && !contentAssetId) errors.video = 'Video is required'
     }
 
-    if (isFileKind) {
-      const label = contentKind === 'document' ? 'Document' : 'Image'
-      if (contentFileUploading) errors.file = `Please wait for the ${label.toLowerCase()} upload to finish`
-      else if (!contentFileUrl) errors.file = `${label} is required`
+    if (isFileKind && !contentFileUrl && !contentFileUploading) {
+      errors.file = contentKind === 'document' ? 'Document is required' : 'Image is required'
     }
 
     setContentErrors(errors)
@@ -761,11 +753,6 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
 
     if (currentParentId === null) {
       toast.error('Please select a folder first')
-      return
-    }
-
-    if (contentKind === 'video' && contentVideoCoverUploading) {
-      toast.error('Please wait for the video cover image to finish uploading')
       return
     }
 
@@ -1222,7 +1209,6 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               className='!h-10'
 
               onClick={handleSaveContent}
-            // disabled={isMaterialSaving || (contentKind === 'video' && contentUploadStatus === 'uploading') || contentFileUploading}
             >
               {isMaterialSaving
                 ? <Loader2 size={16} className="animate-spin" />

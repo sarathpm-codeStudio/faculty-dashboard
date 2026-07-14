@@ -851,6 +851,16 @@ export const courseService = {
         if (testError) throw new Error(testError.message);
       }
 
+      if (material?.type === MaterialType.VIDEO && material?.unique_id) {
+        const { error: uploadProgressError } = await supabase
+          .from("video_upload_progress")
+          .delete()
+          .eq("unique_id", material.unique_id)
+          .eq("type", "module");
+
+        if (uploadProgressError) throw new Error(uploadProgressError.message);
+      }
+
       if (material?.folder_id) {
         const folderCountField =
           material.type === MaterialType.VIDEO ? "total_video" :
