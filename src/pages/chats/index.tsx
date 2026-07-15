@@ -12,7 +12,7 @@ import brandLogo from '@/assets/icons/brand_icon.svg'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { RiCustomerService2Line, RiChat3Line } from 'react-icons/ri'
 import { useGetMyChatRooms, useGetAdminId, useStartAdminChat, useRoomMessages, useSendMessage, useSendAudioMessage, useSendFilesMessage, useDeleteMessage, useMarkRoomRead, useMarkMessagesSeen, useActiveThreadRealtime, useThreadCatchUp, useTyping } from '@/hooks/chat'
-import { usePresenceHeartbeat, usePeerPresence } from '@/hooks/presence'
+import { usePeerPresence } from '@/hooks/presence'
 import { MessageAttachments } from '@/components/ui/MessageAttachments'
 import { CHAT_ATTACHMENT_MAX_BYTES, type ChatRoomSummary, type ChatMessage, type ChatReplyPreview, type ChatAttachment } from '@/services/chatService'
 import { useAuthStore } from '@/store/authStore'
@@ -311,10 +311,8 @@ const ChatsPage = () => {
   // Ephemeral typing indicator for the open room (broadcast, no DB writes).
   const { peerTyping, notifyTyping, stopTyping } = useTyping(activeId, myId)
 
-  // Broadcast my own presence for as long as I'm on the chat page (online +
-  // heartbeat now, offline on leave). Live presence of the open peer for the
-  // header's active / last-seen indicator.
-  usePresenceHeartbeat(!!myId)
+  // My own presence heartbeat runs app-wide in AppShell; this page only reads
+  // the open peer's presence for the header's active / last-seen indicator.
 
   const handleSend = () => {
     const body = text.trim()

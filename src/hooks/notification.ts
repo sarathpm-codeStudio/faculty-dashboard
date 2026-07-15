@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/services/supabase'
+import { uniqueChannel } from '@/utils/realtimeChannel'
 import { notificationService, type NotificationItem } from '@/services/notificationService'
 import { playNotificationSound, unlockNotificationSound } from '@/utils/notificationSound'
 
@@ -52,7 +53,7 @@ export const useNotificationRealtime = (userId?: string) => {
         if (!userId) return
 
         const channel = supabase
-            .channel(`notifications:${userId}`)
+            .channel(uniqueChannel(`notifications:${userId}`))
             .on(
                 'postgres_changes',
                 {
