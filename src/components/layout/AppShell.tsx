@@ -13,6 +13,7 @@ import ChatWidget from '@/components/features/ChatWidget'
 import { useNotificationRealtime } from '@/hooks/notification'
 import { useChatRealtimeGlobal } from '@/hooks/chat'
 import { usePresenceHeartbeat } from '@/hooks/presence'
+import { useUsageSession } from '@/hooks/usageSession'
 // import { useVideoUploadProgress } from '@/hooks/video'
 
 
@@ -63,6 +64,9 @@ const AppShell = () => {
     // Broadcast my presence for the whole session, not just the chat page, so
     // peers see me online as soon as I open the app.
     usePresenceHeartbeat(!!user?.id)
+    // Record this visit in usage_sessions so the admin dashboard can show the
+    // faculty's "recent active" time.
+    useUsageSession(!!user?.id)
     // useVideoUploadProgress(user?.id)
 
 

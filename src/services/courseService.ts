@@ -316,6 +316,40 @@ export const courseService = {
     }
   },
 
+  /**
+   * Current GST % from platform_settings ('gst_percent', fallback 18).
+   * Course prices are GST-inclusive: the faculty enters the base
+   * (exclude_price) and price/final_price are derived with this rate.
+   */
+  getGstPercent: async (): Promise<number> => {
+    const { data, error } = await supabase
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'gst_percent')
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    return parseFloat(data?.value ?? '18') || 18
+  },
+
+  /**
+   * Validity (in DAYS) applied to every free course, from platform_settings
+   * ('free_course_validity', fallback 7). Free courses don't let the faculty
+   * pick a validity: the admin sets it platform-wide, and it's stored on the
+   * course as '<n>d' (e.g. '7d') to keep it distinct from the month-based
+   * values of paid courses.
+   */
+  getFreeCourseValidity: async (): Promise<number> => {
+    const { data, error } = await supabase
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'free_course_validity')
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    return parseInt(data?.value ?? '7', 10) || 7
+  },
+
   addCoursePricing: async (courseId: string, data: any): Promise<any> => {
     // try {
     //   const { data } = await apiClient.patch(`/courses/${courseId}/pricing`, payload)
@@ -334,12 +368,16 @@ export const courseService = {
         .from("courses")
         .update({
           validity: data.validity,
-          price: data.price,
+          exclude_price: data.exclude_price, // faculty's base price WITHOUT GST (source of truth)
+          price: data.price,                 // exclude_price + GST
           discount: data.discount,
           discount_type: data.discount_type === "" ? null : data.discount_type,
-          final_price: data.final_price,
+          discount_mode: data.discount_mode ?? 'INCLUSIVE_GST', // INCLUSIVE_GST (default) | EXCLUSIVE_GST
+          final_price: data.final_price,     // student pays (incl. GST), per discount_mode
           enableCoupons: data.enableCoupons,
           is_free: data.is_free,
+          // Free courses upsell a paid "main" course when they expire.
+          main_course_id: data.main_course_id ?? null,
         })
         .eq("id", courseId)
         .select()

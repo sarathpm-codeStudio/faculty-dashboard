@@ -24,7 +24,18 @@ export const courseBasicDetailsSchema = Yup.object({
 
 export const coursePricingSchema = Yup.object({
     isFree: Yup.boolean().optional(),
-    validity: Yup.string().required('Validity is required'),
+    // Free courses get their validity from platform_settings (free_course_validity)
+    validity: Yup.string().when('isFree', {
+        is: true,
+        then: (schema) => schema.optional(),
+        otherwise: (schema) => schema.required('Validity is required'),
+    }),
+    // Free courses must upsell a paid main course when they expire
+    mainCourseId: Yup.string().when('isFree', {
+        is: true,
+        then: (schema) => schema.required('Main course is required'),
+        otherwise: (schema) => schema.optional(),
+    }),
     price: Yup.string().when('isFree', {
         is: true,
         then: (schema) => schema.optional(),

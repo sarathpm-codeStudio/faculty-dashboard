@@ -36,10 +36,14 @@ export const bundleService = {
                 faculty_id: getCurrentFacultyId(),
                 title: data.title,
                 description: data.description,
+                // GST model (course-gst-pricing.md): exclude_price is the ex-GST
+                // base — source of truth; price / final_price are GST-inclusive.
+                exclude_price: Number(data.excludePrice) || 0,
                 price: Math.round(Number(data.price)),
                 final_price: Math.round(Number(data.finalPrice)),
                 discount: data?.discount != null ? Math.round(Number(data.discount)) : null,
-                discount_type: "percentage",
+                discount_type: data.discountType ?? "percentage",
+                discount_mode: data.discountMode ?? "INCLUSIVE_GST",
                 image_url: data.coverImage ?? null,
                 enable_coupons: data.enableCoupons ?? false,
                 total_courses_count: data.courses.length,
@@ -165,7 +169,10 @@ export const bundleService = {
         title,
         description,
         price,
+        exclude_price,
         discount,
+        discount_type,
+        discount_mode,
         image_url,
         is_active,
         is_draft,
@@ -215,10 +222,14 @@ export const bundleService = {
                     .update({
                         title: data.title,
                         description: data.description,
+                        // GST model: ex-GST base is the source of truth;
+                        // price / final_price are GST-inclusive.
+                        exclude_price: Number(data.excludePrice) || 0,
                         price: data.price,
                         final_price: data.finalPrice,
                         discount: Number(data.discount),
-                        discount_type: "percentage",
+                        discount_type: data.discountType ?? "percentage",
+                        discount_mode: data.discountMode ?? "INCLUSIVE_GST",
                         image_url: data.coverImage ?? null,
                         enable_coupons: data.enableCoupons ?? false,
                         total_courses_count: data.courses.length,
