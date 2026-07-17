@@ -32,11 +32,18 @@ const resolveFacultyCommission = async (): Promise<number> => {
   return Number.isFinite(rate) ? rate : 20;
 };
 
-// Faculty's net revenue for one enrollment = (amount_paid − GST) − commission.
-const facultyRevenueOf = (amountPaid: number, gst: number, rate: number): number => {
-  const base = (amountPaid ?? 0) - (gst ?? 0);
-  return base - Math.round((base * rate) / 100);
+// Faculty's net revenue for one enrollment:
+//   base = (amount_paid − GST) + admin-funded discounts (coins/offers) — the
+//   faculty is paid as if the student paid full price (workflow §9).
+// Paise precision — never round to whole rupees, payouts are transferred online.
+const facultyRevenueOf = (amountPaid: number, gst: number, rate: number, subsidy = 0): number => {
+  const base = (amountPaid ?? 0) - (gst ?? 0) + (subsidy ?? 0);
+  return base - (base * rate) / 100;
 };
+
+// Admin-funded coin/offer subsidy stored on an enrollment row.
+const subsidyOf = (e: { coin_redeem_amount?: number | null; offer_discount_amount?: number | null }): number =>
+  Number(e.coin_redeem_amount ?? 0) + Number(e.offer_discount_amount ?? 0);
 
 // Actual settled faculty share (recorded COURSE_SALE.amount) per enrollment.
 // Already-processed sales keep this amount even if commission later changes
@@ -1381,7 +1388,7 @@ export const courseService = {
       // 1. Total Revenue (faculty net = after GST + commission) + Active Students
       const { data: enrollments, error: enrollmentError } = await supabase
         .from("enrollments")
-        .select("id, amount_paid, gst_amount, student_id")
+        .select("id, amount_paid, gst_amount, coin_redeem_amount, offer_discount_amount, student_id")
         .eq("course_id", courseId);
 
       if (enrollmentError) throw new Error(enrollmentError.message);
@@ -1391,7 +1398,7 @@ export const courseService = {
       const totalRevenue = enrollments?.reduce(
         (sum, e) => sum + (settled.has(e.id)
           ? settled.get(e.id)!
-          : facultyRevenueOf(e.amount_paid ?? 0, e.gst_amount ?? 0, commissionRate)),
+          : facultyRevenueOf(e.amount_paid ?? 0, e.gst_amount ?? 0, commissionRate, subsidyOf(e))),
         0,
       ) ?? 0;
       const activeStudents = enrollments?.length ?? 0;
@@ -1509,7 +1516,7 @@ export const courseService = {
 
       const { data: current, error: currentError } = await supabase
         .from("enrollments")
-        .select("id, enrolled_at, amount_paid, gst_amount")
+        .select("id, enrolled_at, amount_paid, gst_amount, coin_redeem_amount, offer_discount_amount")
         .eq("course_id", courseId)
         .gte("enrolled_at", bounds.fromDate.toISOString())
         .lte("enrolled_at", bounds.rangeEnd.toISOString());
@@ -1519,7 +1526,7 @@ export const courseService = {
 
       const { data: previous, error: previousError } = await supabase
         .from("enrollments")
-        .select("id, amount_paid, gst_amount")
+        .select("id, amount_paid, gst_amount, coin_redeem_amount, offer_discount_amount")
         .eq("course_id", courseId)
         .gte("enrolled_at", previousStart.toISOString())
         .lte("enrolled_at", previousEnd.toISOString());
@@ -1533,10 +1540,10 @@ export const courseService = {
       const settled = await settledSharesFor(
         [...currentEnrollments, ...previousEnrollments].map((e) => e.id).filter(Boolean),
       );
-      const netOf = (e: { id?: string; amount_paid?: number; gst_amount?: number }) =>
+      const netOf = (e: { id?: string; amount_paid?: number; gst_amount?: number; coin_redeem_amount?: number; offer_discount_amount?: number }) =>
         e.id && settled.has(e.id)
           ? settled.get(e.id)!
-          : facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate);
+          : facultyRevenueOf(Number(e.amount_paid), Number(e.gst_amount ?? 0), commissionRate, subsidyOf(e));
 
       const currentTotal = currentEnrollments.reduce((sum, e) => sum + netOf(e), 0);
       const previousTotal = previousEnrollments.reduce((sum, e) => sum + netOf(e), 0);
