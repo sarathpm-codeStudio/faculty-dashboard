@@ -6,7 +6,7 @@ import { TbMessage2 } from 'react-icons/tb'
 import { MdOutlineCalendarMonth } from 'react-icons/md'
 import { RiMegaphoneLine } from 'react-icons/ri'
 import { IoAddCircleOutline } from 'react-icons/io5'
-import { Button, Heading, Paragraph, DataTable } from '@/components/ui'
+import { Button, Heading, Paragraph, DataTable, ConfirmDeleteModal } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { useGetAllAnnouncements, useDeleteAnnouncement } from '@/hooks/announcement'
 import { formatDate, formatDateTime, formatLongDate } from '@/utils/helper/formatDate'
@@ -100,7 +100,8 @@ const AnnouncementsPage = () => {
   })
 
   // mutation
-  const { mutateAsync: deleteAnnouncement } = useDeleteAnnouncement()
+  const { mutateAsync: deleteAnnouncement, isPending: isDeleting } = useDeleteAnnouncement()
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; title: string } | null>(null)
 
 
 
@@ -198,19 +199,19 @@ const AnnouncementsPage = () => {
 
 
 
-  const handleDeleteAnnouncement = async (id: any) => {
+  // Open the confirmation modal for an announcement (does not delete yet).
+  const handleDeleteAnnouncement = (id: any) => {
+    const announcement = announcementsData.find((a: any) => a.id === id)
+    setDeleteTarget({ id, title: announcement?.title ?? 'this announcement' })
+  }
 
+  const confirmDeleteAnnouncement = async () => {
+    if (!deleteTarget) return
     const toastId = toast.loading("Deleting announcement...")
-
     try {
-
-      await deleteAnnouncement(id)
-
-
+      await deleteAnnouncement(deleteTarget.id)
       toast.success("Announcement deleted successfully", { id: toastId })
-      navigate('/announcements')
-
-
+      setDeleteTarget(null)
     } catch {
       // Error toast handled globally; just clear the loading spinner.
       toast.dismiss(toastId)
@@ -303,6 +304,14 @@ const AnnouncementsPage = () => {
         />
       </motion.div>
 
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onClose={() => !isDeleting && setDeleteTarget(null)}
+        onConfirm={confirmDeleteAnnouncement}
+        title="Delete Announcement"
+        itemName={deleteTarget?.title}
+        loading={isDeleting}
+      />
     </div>
   )
 }

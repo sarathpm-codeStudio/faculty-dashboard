@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, MoreVertical, CheckCircle2, FileText, BarChart2, SlidersHorizontal, Download } from 'lucide-react'
-import { Heading, Paragraph, DataTable, Input, SkeletonStatCard } from '@/components/ui'
+import { Heading, Paragraph, DataTable, Input, SkeletonStatCard, ConfirmDeleteModal } from '@/components/ui'
 import type { TableColumn } from '@/components/ui'
 import { StatCard } from '@/components/features'
 import Button from '@/components/ui/Button'
@@ -43,6 +43,7 @@ const TestsPage = () => {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; title: string } | null>(null)
 
 
   useEffect(() => {
@@ -60,11 +61,19 @@ const TestsPage = () => {
   const { mutateAsync: deleteTest, isPending: isDeletingTest } = useDeleteTest()
 
 
-  const handleDeleteTest = async (id: any) => {
+  // Open the confirmation modal for a test (does not delete yet).
+  const handleDeleteTest = (id: any) => {
+    const test = testsData.find((t: any) => t.id === id)
+    setDeleteTarget({ id, title: test?.title ?? 'this test' })
+  }
+
+  const confirmDeleteTest = async () => {
+    if (!deleteTarget) return
     const toastId = toast.loading("Deleting test...")
     try {
-      await deleteTest(id)
+      await deleteTest(deleteTarget.id)
       toast.success('Test deleted successfully', { id: toastId })
+      setDeleteTarget(null)
     } catch {
       // Error toast handled globally; just clear the loading spinner.
       toast.dismiss(toastId)
@@ -286,6 +295,14 @@ const TestsPage = () => {
         )}
       </motion.div>
 
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onClose={() => !isDeletingTest && setDeleteTarget(null)}
+        onConfirm={confirmDeleteTest}
+        title="Delete Test"
+        itemName={deleteTarget?.title}
+        loading={isDeletingTest}
+      />
     </div>
   )
 }

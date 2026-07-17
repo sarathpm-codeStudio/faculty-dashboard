@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Archive, Send, Info, Eye, Pencil, Trash2 } from 'lucide-react'
 import { RocketLaunch } from '@phosphor-icons/react'
-import { Button, Heading, Paragraph, Subheading, Skeleton } from '@/components/ui'
+import { Button, Heading, Paragraph, Subheading, Skeleton, ConfirmDeleteModal } from '@/components/ui'
 import { useParams } from 'react-router-dom'
 import { useGetAnnouncementById, useDeleteAnnouncement } from '@/hooks/announcement'
 import { calculateDays, formatDateTime, formatLongDate } from '@/utils/helper/formatDate'
@@ -24,6 +24,7 @@ const AnnouncementDetailPage = () => {
 
   // mutation
   const { mutateAsync: deleteAnnouncement, isPending: isDeleting } = useDeleteAnnouncement()
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
 
 
   if (isLoading) {
@@ -45,18 +46,13 @@ const AnnouncementDetailPage = () => {
     )
   }
 
-  const handleDeleteAnnouncement = async () => {
-
+  const confirmDeleteAnnouncement = async () => {
     const toastId = toast.loading("Deleting announcement...")
-
     try {
-
       await deleteAnnouncement(id)
-
-
       toast.success("Announcement deleted successfully", { id: toastId })
+      setDeleteModalOpen(false)
       navigate('/announcements')
-
     } catch {
       // Error toast handled globally; just clear the loading spinner.
       toast.dismiss(toastId)
@@ -169,7 +165,7 @@ const AnnouncementDetailPage = () => {
               <Pencil size={14} />
               Edit
             </button>
-            <button onClick={handleDeleteAnnouncement} className="flex items-center gap-1.5 text-sm font-bold text-red-500 hover:underline transition-colors">
+            <button onClick={() => setDeleteModalOpen(true)} className="flex items-center gap-1.5 text-sm font-bold text-red-500 hover:underline transition-colors">
               <Trash2 size={14} />
               Delete
             </button>
@@ -188,6 +184,15 @@ const AnnouncementDetailPage = () => {
         </motion.div>
 
       </div>
+
+      <ConfirmDeleteModal
+        open={deleteModalOpen}
+        onClose={() => !isDeleting && setDeleteModalOpen(false)}
+        onConfirm={confirmDeleteAnnouncement}
+        title="Delete Announcement"
+        itemName={announcement?.data?.title}
+        loading={isDeleting}
+      />
     </div>
   )
 }

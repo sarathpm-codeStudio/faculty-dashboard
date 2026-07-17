@@ -1405,7 +1405,6 @@ const ChatsPage = () => {
                         <Send size={15} />
                       </button>
                     ) : (
-                      /* Voice message send option — commented out per request
                       <button
                         onClick={handleStartRecording}
                         title="Record voice message"
@@ -1414,8 +1413,6 @@ const ChatsPage = () => {
                       >
                         <Mic size={16} />
                       </button>
-                      */
-                      null
                     )}
                   </>
                 )}
