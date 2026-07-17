@@ -88,6 +88,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/services/supabase'
+import { uniqueChannel } from '@/utils/realtimeChannel'
 
 // export const useVideoUploadProgress = (facultyId: string) => {
 //     const [uploads, setUploads] = useState<any[]>([])
@@ -648,7 +649,7 @@ export const useVideoUploadProgress = (facultyId: any) => {
         fetchProgress()
 
         const channel = supabase
-            .channel(`video_progress:${facultyId}`)
+            .channel(uniqueChannel(`video_progress:${facultyId}`))
 
             // ─── UPDATE event ───────────────────────────────
             .on(

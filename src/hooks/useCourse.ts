@@ -54,6 +54,21 @@ export const useUpdateCourse = (id: string) => {
   })
 }
 
+export const useGstPercent = () =>
+  useQuery({
+    queryKey: ['gst-percent'],
+    queryFn: () => courseService.getGstPercent(),
+    staleTime: 5 * 60 * 1000,
+  })
+
+// Platform-wide validity (in days) applied to every free course.
+export const useFreeCourseValidity = () =>
+  useQuery({
+    queryKey: ['free-course-validity'],
+    queryFn: () => courseService.getFreeCourseValidity(),
+    staleTime: 5 * 60 * 1000,
+  })
+
 export const useAddCoursePricing = (id: string) => {
   const qc = useQueryClient()
   return useMutation({

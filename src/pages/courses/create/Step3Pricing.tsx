@@ -5,7 +5,7 @@ import { Input, Select, Button, Subheading, Paragraph, Skeleton, ConfirmDeleteMo
 import type { CourseFormData } from './index'
 import { RiCoupon2Fill } from "react-icons/ri";
 import { coursePricingSchema } from '@/utils/validator/course.validator'
-import { useAddCoursePricing } from "@/hooks/useCourse"
+import { useAddCoursePricing, useFreeCourseValidity, useGetAllCourses, useGstPercent } from "@/hooks/useCourse"
 import { toast } from 'sonner'
 
 
@@ -35,8 +35,12 @@ type PricingValues = {
   price: string
   discount: string
   discountType: string
+  /** true → INCLUSIVE_GST: discount applies to the GST-inclusive price */
+  discountOnInclusive: boolean
   enableCoupons: boolean
   isFree: boolean
+  /** Free courses only: the paid course upsold when this one expires */
+  mainCourseId: string
 }
 
 const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDetails }: Props) => {
@@ -46,31 +50,44 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
       price: form.price ?? '',
       discount: form.discount ?? '',
       discountType: form.discountType ?? '',
+      discountOnInclusive: true, // platform default: INCLUSIVE_GST
       enableCoupons: form.enableCoupons ?? false,
       isFree: form.isFree ?? false,
+      mainCourseId: '',
     },
     validationSchema: coursePricingSchema,
     enableReinitialize: false,
     onSubmit: async (values) => {
       try {
+        // Faculty enters the base price WITHOUT GST (exclude_price).
+        // price / final_price are stored GST-INCLUSIVE (students see these).
         const payload = values.isFree
           ? {
-            validity: values.validity,
+            // Free courses: validity comes from platform_settings
+            // ('free_course_validity', in DAYS — stored as '<n>d'), and the
+            // faculty picks the paid "main" course upsold on expiry.
+            validity: `${freeValidityDays}d`,
+            exclude_price: 0,
             price: 0,
             discount: 0,
             discount_type: '',
+            discount_mode: 'INCLUSIVE_GST',
             final_price: 0,
             enableCoupons: false,
             is_free: true,
+            main_course_id: values.mainCourseId,
           }
           : {
             validity: values.validity,
-            price: Number(values.price) || 0,
+            exclude_price: Number(values.price) || 0,
+            price: Number(priceInclGst) || 0,
             discount: values.discount ? Number(values.discount) : 0,
             discount_type: values.discountType,
+            discount_mode: values.discountOnInclusive ? 'INCLUSIVE_GST' : 'EXCLUSIVE_GST',
             final_price: Number(studentPrice) || 0,
             enableCoupons: values.enableCoupons,
             is_free: false,
+            main_course_id: null,
           }
         await addCoursePricing(payload)
         toast.success('Course pricing added successfully')
@@ -94,17 +111,38 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
     const d = courseDetails
     formik.setValues({
       validity: d.validity ?? '',
-      price: d.price != null ? String(d.price) : '',
+      // The form edits the ex-GST base (exclude_price). Older rows saved
+      // before the GST model may only have price — fall back to it.
+      price: d.exclude_price ? String(d.exclude_price) : d.price != null ? String(d.price) : '',
       discount: d.discount != null ? String(d.discount) : '',
       discountType: d.discount_type ?? '',
+      discountOnInclusive: d.discount_mode === 'INCLUSIVE_GST',
       enableCoupons: d.enable_coupons ?? d.enableCoupons ?? false,
       isFree: d.is_free ?? false,
+      mainCourseId: d.main_course_id ?? '',
     })
   }, [courseDetails])
+
+  // GST-inclusive pricing: faculty enters the base, GST goes on top.
+  const { data: gstPercent = 18 } = useGstPercent()
+  const gstRate = gstPercent / 100
+
+  // Free courses: validity is platform-set (in days), and the faculty must
+  // pick the paid "main" course students are shown when the freebie expires.
+  const { data: freeValidityDays = 7 } = useFreeCourseValidity()
+  const { data: myCourses } = useGetAllCourses(false, '', values.isFree)
+  const mainCourseOptions = useMemo(
+    () =>
+      (myCourses ?? [])
+        .filter((c: any) => !c.is_free && c.id !== courseId)
+        .map((c: any) => ({ value: c.id, label: c.title })),
+    [myCourses, courseId],
+  )
 
   const price = parseFloat(values.price) || 0
   const discount = parseFloat(values.discount) || 0
   const discountType = values.discountType
+  const discountOnInclusive = values.discountOnInclusive
   const enableCoupons = values.enableCoupons
   const isFree = values.isFree
 
@@ -131,14 +169,26 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
     setFreeConfirmOpen(false)
   }
 
-  const studentPrice = useMemo(() => {
-    if (discountType === 'percentage') {
-      return Math.max(0, price - (price * discount) / 100)
-    }
-    return Math.max(0, price - discount)
-  }, [price, discount, discountType])
+  // price (form field) = faculty's base WITHOUT GST.
+  // Two discount models (course-gst-pricing.md):
+  //   EXCLUSIVE_GST — discount on the ex-GST base, GST added on what remains
+  //   INCLUSIVE_GST — discount straight off the GST-inclusive sticker price
+  const priceInclGst = Math.round(price * (1 + gstRate))       // sticker price (incl. GST)
 
-  const saved = price - studentPrice
+  const discountAmount = useMemo(() => {
+    const appliedTo = discountOnInclusive ? priceInclGst : price
+    if (discountType === 'percentage') return (appliedTo * discount) / 100
+    return discount
+  }, [price, priceInclGst, discount, discountType, discountOnInclusive])
+
+  const studentPrice = discountOnInclusive
+    ? Math.max(0, priceInclGst - Math.round(discountAmount))
+    : Math.round(Math.max(0, price - discountAmount) * (1 + gstRate))
+
+  // GST actually inside what the student pays (extraction works for both models)
+  const gstAmount = (studentPrice * gstPercent) / (100 + gstPercent)
+
+  const saved = priceInclGst - studentPrice
 
   if (courseId && (isLoadingCourseDetails || !courseDetails)) {
     return (
@@ -186,31 +236,72 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
 
         {/* White form card */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-5">
-          <Select
-            label="Course Validity"
-            placeholder="Select Validity"
-            options={validityOptions}
-            name="validity"
-            value={values.validity}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            error={touched.validity && errors.validity ? errors.validity : undefined}
-          />
+          {isFree ? (
+            <>
+              {/* Free courses: validity is fixed platform-wide by the admin */}
+              <div>
+                <Input
+                  label="Course Validity"
+                  value={`${freeValidityDays} ${freeValidityDays === 1 ? 'Day' : 'Days'}`}
+                  readOnly
+                  className="cursor-default"
+                />
+                <Paragraph className="text-xs text-gray-400 mt-1.5">
+                  Free course validity is set by the platform and applies to all free courses.
+                </Paragraph>
+              </div>
+
+              {/* The paid course this freebie upsells once it expires */}
+              <div>
+                <Select
+                  label="Main Course"
+                  placeholder="Select the main course"
+                  options={mainCourseOptions}
+                  name="mainCourseId"
+                  value={values.mainCourseId}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.mainCourseId && errors.mainCourseId ? errors.mainCourseId : undefined}
+                />
+                <Paragraph className="text-xs text-gray-400 mt-1.5">
+                  When the free course expires, students are shown this course to purchase.
+                </Paragraph>
+              </div>
+            </>
+          ) : (
+            <Select
+              label="Course Validity"
+              placeholder="Select Validity"
+              options={validityOptions}
+              name="validity"
+              value={values.validity}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.validity && errors.validity ? errors.validity : undefined}
+            />
+          )}
 
           {!isFree && (
             <>
-              <Input
-                label="Course Price"
-                type="number"
-                min={0}
-                placeholder="0"
-                name="price"
-                value={values.price}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={touched.price && errors.price ? errors.price : undefined}
-                leftIcon={<span className="font-semibold text-gray-500">₹</span>}
-              />
+              <div>
+                <Input
+                  label={`Course Price (excluding GST)`}
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  name="price"
+                  value={values.price}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.price && errors.price ? errors.price : undefined}
+                  leftIcon={<span className="font-semibold text-gray-500">₹</span>}
+                />
+                {price > 0 && (
+                  <Paragraph className="text-xs text-gray-400 mt-1.5">
+                    Students will see ₹{priceInclGst.toLocaleString('en-IN')} (₹{price.toLocaleString('en-IN')} + {gstPercent}% GST)
+                  </Paragraph>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <Select
@@ -235,6 +326,27 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
                   onBlur={handleBlur}
                   error={touched.discount && errors.discount ? errors.discount : undefined}
                 />
+              </div>
+
+              {/* Discount model: EXCLUSIVE_GST (off) vs INCLUSIVE_GST (on) */}
+              <div className="flex items-center justify-between bg-[#F2F4F6] rounded-xl px-4 py-3 gap-4">
+                <div className="min-w-0">
+                  <Paragraph className="text-xs font-semibold text-gray-700">
+                    Apply discount on GST-inclusive price
+                  </Paragraph>
+                  <Paragraph className="!text-[11px] text-gray-400 mt-0.5">
+                    {discountOnInclusive
+                      ? `Discount comes off ₹${priceInclGst.toLocaleString('en-IN')} (price incl. GST). GST is inside the final price.`
+                      : `Discount comes off ₹${price.toLocaleString('en-IN')} (base price). GST is added on the rest.`}
+                  </Paragraph>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFieldValue('discountOnInclusive', !discountOnInclusive)}
+                  className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${discountOnInclusive ? 'bg-[#2c1452]' : 'bg-gray-300'}`}
+                >
+                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${discountOnInclusive ? 'left-5' : 'left-0.5'}`} />
+                </button>
               </div>
             </>
           )}
@@ -295,11 +407,16 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
               <p className="text-xs font-semibold uppercase tracking-widest opacity-70 mb-2">Students Price</p>
               <p className="text-4xl font-bold tracking-tight">₹{studentPrice.toFixed(2)}</p>
               <p className="text-xs opacity-60 mt-2 leading-relaxed">
-                Calculated based on a {discount}{discountType === 'percentage' ? '%' : '₹'} discount applied to the ₹{price.toFixed(2)}.
+                Includes ₹{gstAmount.toFixed(2)} GST ({gstPercent}%)
+                {discount > 0 && (
+                  <> after a {discountType === 'percentage' ? `${discount}%` : `₹${discount}`} discount on the {discountOnInclusive
+                    ? `₹${priceInclGst.toFixed(2)} price (incl. GST)`
+                    : `₹${price.toFixed(2)} base price`}</>
+                )}.
               </p>
               {discount > 0 && (
                 <p className="text-xs opacity-60 mt-2 leading-relaxed">
-                  You save ₹{saved.toFixed(2)} on this course.
+                  Students save ₹{saved.toFixed(2)} on this course.
                 </p>
               )}
             </div>
@@ -307,14 +424,21 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
             {/* Price breakdown */}
             <div className="flex flex-col gap-3 px-1">
               <div className="flex justify-between text-sm">
-                <Paragraph className='text-xs font-semibold text-gray-600'>Course Price</Paragraph>
+                <Paragraph className='text-xs font-semibold text-gray-600'>Base Price (excl. GST)</Paragraph>
                 <span className="font-semibold text-gray-700">₹{price.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <Paragraph className='text-xs font-semibold text-gray-600'>Discount</Paragraph>
+                <Paragraph className='text-xs font-semibold text-gray-600'>
+                  Discount{discountOnInclusive ? ' (on GST-incl. price)' : ''}
+                </Paragraph>
                 <span className="font-semibold text-gray-700">
-                  {discount}{discountType === 'percentage' ? '%' : '₹'}
+                  {discountType === 'percentage' ? `${discount}%` : `₹${discount}`}
+                  {discount > 0 && discountType === 'percentage' && ` (₹${discountAmount.toFixed(2)})`}
                 </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <Paragraph className='text-xs font-semibold text-gray-600'>GST ({gstPercent}%)</Paragraph>
+                <span className="font-semibold text-gray-700">₹{gstAmount.toFixed(2)}</span>
               </div>
               <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
                 <Paragraph className='text-xs font-semibold text-gray-600'>Students Price</Paragraph>
@@ -325,17 +449,17 @@ const Step3Pricing = ({ form, onNext, courseId, courseDetails, isLoadingCourseDe
             {/* Discount Calculator */}
             <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col gap-4">
               <Subheading className='text-[#2c1452] font-bold'>Discount Calculator</Subheading>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-                  <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Sum of Courses</Paragraph>
-                  <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{price.toFixed(2)}</p>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+                <div className="min-w-0 bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 xl:flex-col xl:items-start xl:gap-1">
+                  <Paragraph className='text-xs font-semibold text-gray-600 leading-tight break-words min-w-0'>Course Price (incl. GST)</Paragraph>
+                  <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{priceInclGst.toFixed(2)}</p>
                 </div>
-                <div className="bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-                  <Paragraph className='text-xs font-semibold text-gray-600 whitespace-nowrap'>Student Price</Paragraph>
+                <div className="min-w-0 bg-[#F2F4F6] rounded-xl p-3 flex items-center justify-between gap-2 xl:flex-col xl:items-start xl:gap-1">
+                  <Paragraph className='text-xs font-semibold text-gray-600 leading-tight break-words min-w-0'>Student Price</Paragraph>
                   <p className="text-sm font-bold text-gray-700 whitespace-nowrap">₹{studentPrice.toFixed(2)}</p>
                 </div>
-                <div className="bg-[#E6FBF7] rounded-xl p-3 flex items-center justify-between gap-2 lg:flex-col lg:items-start lg:gap-1">
-                  <Paragraph className='text-xs font-semibold text-[#00A98F] whitespace-nowrap'>Student Saved</Paragraph>
+                <div className="min-w-0 bg-[#E6FBF7] rounded-xl p-3 flex items-center justify-between gap-2 xl:flex-col xl:items-start xl:gap-1">
+                  <Paragraph className='text-xs font-semibold text-[#00A98F] leading-tight break-words min-w-0'>Student Saved</Paragraph>
                   <p className="text-sm font-bold text-[#00A98F] whitespace-nowrap">₹{saved.toFixed(2)}</p>
                 </div>
               </div>

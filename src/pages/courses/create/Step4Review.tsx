@@ -10,6 +10,7 @@ import { HiDocumentDuplicate } from "react-icons/hi";
 import { FaRegImage } from "react-icons/fa6";
 import { MdRocketLaunch } from "react-icons/md";
 import { useGetCoursePreview, usePublishCourse, useResubmitCourse } from '@/hooks/useCourse'
+import { formatValidity } from '@/utils/formatValidity'
 import { useNavigate } from 'react-router-dom'
 
 interface Props {
@@ -236,16 +237,14 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Validity</p>
                 <p className="text-sm font-bold text-[#2c1452]">
-                  {
-                    coursePreview?.validity === "lifetime" ? "Lifetime" : coursePreview?.validity + " months"
-                  }</p>
+                  {formatValidity(coursePreview?.validity)}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Enabled Features — no card */}
-        <div className="lg:col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100 lg:self-center">
+        {/* Enabled Features — hidden for now */}
+        {/* <div className="lg:col-span-6 bg-white rounded-2xl p-5 flex flex-col gap-4 shadow-sm border border-gray-100 lg:self-center">
           <Paragraph className="font-bold uppercase tracking-widest text-black"> Enabled Features </Paragraph>
           <div className="grid grid-cols-2 gap-4">
             {features.map((f) => (
@@ -258,7 +257,7 @@ const Step4Review = ({ form, onDraft, courseId }: Props) => {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* ── Footer actions ── */}

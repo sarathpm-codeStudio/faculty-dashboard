@@ -55,7 +55,7 @@ const getPendingPayout = async (
     db: typeof supabase,
     facultyId: string | undefined,
     courseIds: string[],
-    enrollments: { id: string; amount_paid?: number; gst_amount?: number; is_bundle_enrollment?: boolean }[]
+    enrollments: { id: string; amount_paid?: number; gst_amount?: number; coin_redeem_amount?: number; offer_discount_amount?: number; is_bundle_enrollment?: boolean }[]
 ): Promise<number> => {
     if (!facultyId) return 0;
 
@@ -79,11 +79,14 @@ const getPendingPayout = async (
     }
 
     // Single (non-bundle) enrollments awaiting payout.
-    // base = amount_paid - gst_amount, then apply the faculty share ratio.
+    // base = amount_paid - gst_amount + admin-funded discounts (coins/offers,
+    // workflow §9 — faculty is paid as if the student paid full price),
+    // then apply the faculty share ratio.
     const singlePending = enrollments.reduce((sum, e) => {
         if (e.is_bundle_enrollment) return sum;
         if (settledEnrollmentIds.has(e.id)) return sum;
-        const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0);
+        const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0)
+            + Number(e.coin_redeem_amount ?? 0) + Number(e.offer_discount_amount ?? 0);
         if (base <= 0) return sum;
         return sum + base * facultyShareRatio;
     }, 0);
@@ -94,20 +97,22 @@ const getPendingPayout = async (
     if (courseIds.length > 0) {
         const { data: bundleRows, error: bundleError } = await db
             .from("bundle_enrollments")
-            .select("id, amount_paid")
+            .select("id, amount_paid, coin_redeem_amount, offer_discount_amount")
             .eq("faculty_id", facultyId);
 
         if (bundleError) throw new Error(bundleError.message);
 
         bundlePending = (bundleRows ?? []).reduce((sum, b) => {
             if (settledBundleIds.has(b.id)) return sum;
-            const base = Number(b.amount_paid ?? 0);
+            const base = Number(b.amount_paid ?? 0)
+                + Number(b.coin_redeem_amount ?? 0) + Number(b.offer_discount_amount ?? 0);
             if (base <= 0) return sum;
             return sum + base * facultyShareRatio;
         }, 0);
     }
 
-    return Math.round(singlePending + bundlePending);
+    // Paise precision — payouts are transferred online, never round to rupees.
+    return Math.round((singlePending + bundlePending) * 100) / 100;
 };
 
 
@@ -149,12 +154,14 @@ export const dashboardService = {
                 student_id: string;
                 amount_paid?: number;
                 gst_amount?: number;
+                coin_redeem_amount?: number;
+                offer_discount_amount?: number;
                 is_bundle_enrollment?: boolean;
             }[] = [];
             if (courseIds.length > 0) {
                 const { data, error: enrollmentsError } = await db
                     .from("enrollments")
-                    .select("id, student_id, amount_paid, gst_amount, is_bundle_enrollment")
+                    .select("id, student_id, amount_paid, gst_amount, coin_redeem_amount, offer_discount_amount, is_bundle_enrollment")
                     .in("course_id", courseIds);
 
                 if (enrollmentsError) throw new Error(enrollmentsError.message);
@@ -313,19 +320,23 @@ export const dashboardService = {
             );
 
             const commissionPercent = await getCommissionPercent(db, getCurrentFacultyId());
-            const facultyNet = (e: { id?: string; amount_paid?: number; gst_amount?: number }) => {
+            // Admin-funded discounts (coins/offers) are added back to the base —
+            // faculty is paid as if the student paid full price (workflow §9).
+            // Paise precision: never round to whole rupees, payouts move online.
+            const facultyNet = (e: { id?: string; amount_paid?: number; gst_amount?: number; coin_redeem_amount?: number; offer_discount_amount?: number }) => {
                 if (e.id && settledByEnrollment.has(e.id)) return settledByEnrollment.get(e.id)!;
-                const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0);
+                const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0)
+                    + Number(e.coin_redeem_amount ?? 0) + Number(e.offer_discount_amount ?? 0);
                 if (base <= 0) return 0;
-                return base - Math.round((base * commissionPercent) / 100);
+                return base - (base * commissionPercent) / 100;
             };
 
-            let currentEnrollments: { id?: string; enrolled_at?: string; amount_paid?: number; gst_amount?: number }[] = [];
-            let previousEnrollments: { id?: string; amount_paid?: number; gst_amount?: number }[] = [];
+            let currentEnrollments: { id?: string; enrolled_at?: string; amount_paid?: number; gst_amount?: number; coin_redeem_amount?: number; offer_discount_amount?: number }[] = [];
+            let previousEnrollments: { id?: string; amount_paid?: number; gst_amount?: number; coin_redeem_amount?: number; offer_discount_amount?: number }[] = [];
             if (courseIds.length > 0) {
                 const { data: current, error: currentError } = await db
                     .from("enrollments")
-                    .select("id, enrolled_at, amount_paid, gst_amount")
+                    .select("id, enrolled_at, amount_paid, gst_amount, coin_redeem_amount, offer_discount_amount")
                     .in("course_id", courseIds)
                     .gte("enrolled_at", bounds.fromDate.toISOString())
                     .lte("enrolled_at", bounds.rangeEnd.toISOString());
@@ -335,7 +346,7 @@ export const dashboardService = {
 
                 const { data: previous, error: previousError } = await db
                     .from("enrollments")
-                    .select("id, amount_paid, gst_amount")
+                    .select("id, amount_paid, gst_amount, coin_redeem_amount, offer_discount_amount")
                     .in("course_id", courseIds)
                     .gte("enrolled_at", previousStart.toISOString())
                     .lte("enrolled_at", previousEnd.toISOString());
@@ -392,15 +403,16 @@ export const dashboardService = {
                 const nextMonthStart = new Date(nowY.getFullYear(), nowY.getMonth() + 1, 1).toISOString();
                 const { data: pendEnr } = await db
                     .from('enrollments')
-                    .select('id, amount_paid, gst_amount')
+                    .select('id, amount_paid, gst_amount, coin_redeem_amount, offer_discount_amount')
                     .eq('faculty_id', getCurrentFacultyId()).eq('is_bundle_enrollment', false).eq('payment_status', 'SUCCESS').gt('amount_paid', 0)
                     .gte('enrolled_at', thisMonthStart).lt('enrolled_at', nextMonthStart);
 
                 let pending = 0;
                 for (const e of pendEnr ?? []) {
                     if (paidIds.has(e.id)) continue;
-                    const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0);
-                    if (base > 0) pending += base - Math.round((base * commissionPercent) / 100);
+                    const base = Number(e.amount_paid ?? 0) - Number(e.gst_amount ?? 0)
+                        + Number(e.coin_redeem_amount ?? 0) + Number(e.offer_discount_amount ?? 0);
+                    if (base > 0) pending += base - (base * commissionPercent) / 100;
                 }
                 // Group the current month by "now" so it always lands in range.
                 const curGrouped = groupTimestampForChartPeriod(nowY.toISOString(), period, bounds);

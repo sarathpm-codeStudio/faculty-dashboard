@@ -24,6 +24,7 @@ import { useCreateFolder, useGetAllContent, useCreateMaterial, useUpdateFolder, 
 import { VideoPlayer } from '@/components/features'
 import { toast } from 'sonner'
 import { generateUniqueId } from '@/utils/helper/numberGenarator'
+import { getPdfPageCount } from '@/utils/pdf'
 import { useNavigate } from 'react-router-dom'
 
 
@@ -324,6 +325,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   const [contentFileUrl, setContentFileUrl] = useState<string | null>(null)
   const [contentFileName, setContentFileName] = useState<string | null>(null)
   const [contentFileUploading, setContentFileUploading] = useState(false)
+  const [contentTotalPages, setContentTotalPages] = useState<number | null>(null)
   const [contentVideoCoverImg, setContentVideoCoverImg] = useState<string | null>(null)
   const [contentVideoCoverName, setContentVideoCoverName] = useState<string | null>(null)
   const [contentVideoCoverUploading, setContentVideoCoverUploading] = useState(false)
@@ -529,6 +531,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentFileUrl(null)
     setContentFileName(null)
     setContentFileUploading(false)
+    setContentTotalPages(null)
     setContentVideoCoverImg(null)
     setContentVideoCoverName(null)
     setContentVideoCoverUploading(false)
@@ -585,6 +588,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentFileUrl(fileUrl)
     setContentFileName(fileUrl ? fileUrl.split('/').pop() ?? null : null)
     setContentFileUploading(false)
+    setContentTotalPages(material.total_page ?? null)
     const videoCoverImg: string | null = material.video_cover_img ?? null
     setContentVideoCoverImg(videoCoverImg)
     setContentVideoCoverName(videoCoverImg ? videoCoverImg.split('/').pop() ?? null : null)
@@ -665,13 +669,16 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
     setContentFileName(file.name)
     clearContentError('file')
     try {
+      const totalPages = contentKind === 'document' ? await getPdfPageCount(file) : null
       const url = await storageService.uploadCourseCover(file)
       setContentFileUrl(url)
+      setContentTotalPages(totalPages)
       toast.success('File uploaded')
     } catch (err: any) {
       toast.error(err?.message || 'Failed to upload file')
       setContentFileUrl(null)
       setContentFileName(null)
+      setContentTotalPages(null)
     } finally {
       setContentFileUploading(false)
     }
@@ -773,6 +780,9 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         if ((contentKind === 'image' || contentKind === 'document') && contentFileUrl) {
           payload.file_url = contentFileUrl
         }
+        if (contentKind === 'document') {
+          payload.total_page = contentTotalPages
+        }
 
         const { data, error } = await updateMaterial({
           materialId: editingMaterialId,
@@ -796,6 +806,9 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
         }
         if ((contentKind === 'image' || contentKind === 'document') && contentFileUrl) {
           payload.file_url = contentFileUrl
+        }
+        if (contentKind === 'document') {
+          payload.total_page = contentTotalPages
         }
 
         const { data, error } = await createMaterial(payload)
@@ -1196,12 +1209,13 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
       <Modal
         open={showContentModal}
         onClose={closeContentModal}
+        closeDisabled={isMaterialSaving || contentFileUploading}
         title={`${editingMaterialId ? 'Edit' : 'Add'} ${CONTENT_TYPES.find(t => t.kind === contentKind)?.label ?? 'Content'}`}
         footer={
           <>
             <Button variant="white" className='!h-10'
               onClick={closeContentModal}
-              disabled={isMaterialSaving}>
+              disabled={isMaterialSaving || contentFileUploading}>
               Cancel
             </Button>
             <Button
@@ -1209,6 +1223,7 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
               className='!h-10'
 
               onClick={handleSaveContent}
+              disabled={isMaterialSaving || contentFileUploading}
             >
               {isMaterialSaving
                 ? <Loader2 size={16} className="animate-spin" />

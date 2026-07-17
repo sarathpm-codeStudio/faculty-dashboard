@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { ImagePlus, ArrowRight, Loader2 } from 'lucide-react'
 import { RiCoupon2Fill } from 'react-icons/ri'
-import { Input, Textarea, Subheading, Paragraph } from '@/components/ui'
+import { Input, Select, Textarea, Subheading, Paragraph } from '@/components/ui'
 import Button from '@/components/ui/Button'
 import { Formik, useFormik } from 'formik'
 import { bundleValidator } from '@/utils/validator/bundle.validator'
@@ -10,6 +10,7 @@ import { ImageCropperModal } from '@/components/ui'
 import { storageService } from '@/services'
 import { toast } from 'sonner'
 import { useCreateBundle, useUpdateBundle } from '@/hooks/useBundle'
+import { useGstPercent } from '@/hooks/useCourse'
 import {
   ASPECT_RATIO_16_9,
   dataUrlToFile,
@@ -44,6 +45,9 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
     title: '',
     description: '',
     discount: '0',
+    discountType: 'percentage',
+    /** true → INCLUSIVE_GST: discount applies to the GST-inclusive price */
+    discountOnInclusive: true, // platform default: INCLUSIVE_GST
     coverImage: null,
   }
 
@@ -53,6 +57,8 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
         title: bundle?.title,
         description: bundle?.description,
         discount: bundle?.discount,
+        discountType: bundle?.discount_type ?? 'percentage',
+        discountOnInclusive: bundle?.discount_mode !== 'EXCLUSIVE_GST',
         coverImage: bundle?.image_url,
       })
       setEnableCoupons(bundle?.enable_coupons)
@@ -66,13 +72,19 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
     validationSchema: bundleValidator,
     onSubmit: async (values) => {
       try {
+        // Same GST model as course pricing (course-gst-pricing.md): the bundle
+        // base is stored WITHOUT GST (exclude_price), price / final_price are
+        // stored GST-INCLUSIVE (students see these).
         const payload = {
           title: values.title,
           description: values.description,
           discount: values.discount.toString(),
+          discountType: values.discountType || 'percentage',
+          discountMode: values.discountOnInclusive ? 'INCLUSIVE_GST' : 'EXCLUSIVE_GST',
           coverImage: values.coverImage,
           courses: selectedCourses,
           enableCoupons: enableCoupons,
+          excludePrice: Number(baseExGst.toFixed(2)),
           finalPrice: bundleOffer,
           price: sumOfCourses,
           isDraft: isDraft,
@@ -112,8 +124,34 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
     }
   })
 
-  const discountPct = parseFloat(formik.values.discount) || 0
-  const bundleOffer = useMemo(() => Math.max(0, sumOfCourses - (sumOfCourses * discountPct) / 100), [sumOfCourses, discountPct])
+  // GST-inclusive pricing, same model as the course screen
+  // (course-gst-pricing.md §2). sumOfCourses is the sum of the selected
+  // courses' final_price — already GST-INCLUSIVE — so the bundle's ex-GST
+  // base is extracted from it, and the two discount models apply:
+  //   EXCLUSIVE_GST — discount on the ex-GST base, GST added on what remains
+  //   INCLUSIVE_GST — discount straight off the GST-inclusive sum
+  const { data: gstPercent = 18 } = useGstPercent()
+  const gstRate = gstPercent / 100
+
+  const discount = parseFloat(formik.values.discount) || 0
+  const discountType = formik.values.discountType
+  const discountOnInclusive = formik.values.discountOnInclusive
+
+  const baseExGst = (sumOfCourses * 100) / (100 + gstPercent) // bundle base WITHOUT GST
+
+  const discountAmount = useMemo(() => {
+    const appliedTo = discountOnInclusive ? sumOfCourses : baseExGst
+    if (discountType === 'percentage') return (appliedTo * discount) / 100
+    return discount
+  }, [sumOfCourses, baseExGst, discount, discountType, discountOnInclusive])
+
+  const bundleOffer = discountOnInclusive
+    ? Math.max(0, sumOfCourses - Math.round(discountAmount))
+    : Math.round(Math.max(0, baseExGst - discountAmount) * (1 + gstRate))
+
+  // GST actually inside what the student pays (extraction works for both models)
+  const gstAmount = (bundleOffer * gstPercent) / (100 + gstPercent)
+
   const studentSavings = sumOfCourses - bundleOffer
 
   const handleCoverFile = async (file: File) => {
@@ -200,31 +238,67 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
 
           />
 
-          <div className="grid grid-cols-2 gap-4 items-end">
+          <div>
             <Input
-              label="SUM OF COURSE PRICE"
+              label="SUM OF COURSE PRICE (INCL. GST)"
               labelClassName="uppercase tracking-wider text-xs text-gray-500"
               value={`₹${sumOfCourses.toLocaleString()}.00`}
               readOnly
               className="cursor-default"
             />
-            <div className="relative">
-              <Input
-                label="DISCOUNT (%)"
-                name="discount"
-                labelClassName="uppercase tracking-wider text-xs text-gray-500"
-                type="number"
-                min={0}
-                max={100}
-                placeholder="10"
-                value={formik.values.discount}
-                onChange={e => formik.setFieldValue('discount', e.target.value)}
-                className="pr-8"
-                error={formik.touched.discount && formik.errors.discount ? formik.errors.discount : undefined}
+            {sumOfCourses > 0 && (
+              <Paragraph className="text-xs text-gray-400 mt-1.5">
+                ₹{baseExGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })} base + {gstPercent}% GST
+              </Paragraph>
+            )}
+          </div>
 
-              />
-              <span className="absolute right-3 bottom-4 text-gray-400 font-bold text-sm pointer-events-none">%</span>
+          <div className="grid grid-cols-2 gap-4">
+            <Select
+              label="DISCOUNT TYPE"
+              placeholder="Select discount type"
+              options={[
+                { value: 'percentage', label: 'Percentage' },
+                { value: 'flat', label: 'Flat Amount' },
+              ]}
+              name="discountType"
+              value={formik.values.discountType}
+              onChange={e => formik.setFieldValue('discountType', e.target.value)}
+              error={formik.touched.discountType && formik.errors.discountType ? formik.errors.discountType : undefined}
+            />
+            <Input
+              label="DISCOUNT"
+              name="discount"
+              labelClassName="uppercase tracking-wider text-xs text-gray-500"
+              type="number"
+              min={0}
+              max={discountType === 'percentage' ? 100 : undefined}
+              placeholder="0"
+              value={formik.values.discount}
+              onChange={e => formik.setFieldValue('discount', e.target.value)}
+              error={formik.touched.discount && formik.errors.discount ? formik.errors.discount : undefined}
+            />
+          </div>
+
+          {/* Discount model: EXCLUSIVE_GST (off) vs INCLUSIVE_GST (on) */}
+          <div className="flex items-center justify-between bg-[#F2F4F6] rounded-xl px-4 py-3 gap-4">
+            <div className="min-w-0">
+              <Paragraph className="text-xs font-semibold text-gray-700">
+                Apply discount on GST-inclusive price
+              </Paragraph>
+              <Paragraph className="!text-[11px] text-gray-400 mt-0.5">
+                {discountOnInclusive
+                  ? `Discount comes off ₹${sumOfCourses.toLocaleString('en-IN')} (sum incl. GST). GST is inside the final price.`
+                  : `Discount comes off ₹${baseExGst.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (base price). GST is added on the rest.`}
+              </Paragraph>
             </div>
+            <button
+              type="button"
+              onClick={() => formik.setFieldValue('discountOnInclusive', !discountOnInclusive)}
+              className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${discountOnInclusive ? 'bg-[#2c1452]' : 'bg-gray-300'}`}
+            >
+              <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${discountOnInclusive ? 'left-5' : 'left-0.5'}`} />
+            </button>
           </div>
 
           {/* Enable Coupons toggle */}
@@ -256,7 +330,7 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
             <div className="bg-[#F2F4F6] rounded-xl p-3 lg:p-4 flex items-center justify-between gap-2 lg:block">
-              <Paragraph className="!text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0 lg:mb-1 leading-tight">Sum of Courses</Paragraph>
+              <Paragraph className="!text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0 lg:mb-1 leading-tight">Sum of Courses (incl. GST)</Paragraph>
               <p className="text-sm font-bold text-[#191c1e] whitespace-nowrap">₹{sumOfCourses.toLocaleString()}.00</p>
             </div>
             <div className="bg-[#F2F4F6] rounded-xl p-3 lg:p-4 flex items-center justify-between gap-2 lg:block">
@@ -266,6 +340,31 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
             <div className="bg-[#E6FBF7] rounded-xl p-3 lg:p-4 flex items-center justify-between gap-2 lg:block">
               <Paragraph className="!text-[10px] font-semibold text-[#00A98F] uppercase tracking-wide mb-0 lg:mb-1 leading-tight">Student Savings</Paragraph>
               <p className="text-sm font-bold text-[#00A98F] whitespace-nowrap">₹{studentSavings.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+          </div>
+
+          {/* Price breakdown — same shape as the course pricing screen */}
+          <div className="flex flex-col gap-3 px-1 mt-5">
+            <div className="flex justify-between text-sm">
+              <Paragraph className="text-xs font-semibold text-gray-600">Base Price (excl. GST)</Paragraph>
+              <span className="font-semibold text-gray-700">₹{baseExGst.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <Paragraph className="text-xs font-semibold text-gray-600">
+                Discount{discountOnInclusive ? ' (on GST-incl. price)' : ''}
+              </Paragraph>
+              <span className="font-semibold text-gray-700">
+                {discountType === 'percentage' ? `${discount}%` : `₹${discount}`}
+                {discount > 0 && discountType === 'percentage' && ` (₹${discountAmount.toFixed(2)})`}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <Paragraph className="text-xs font-semibold text-gray-600">GST ({gstPercent}%)</Paragraph>
+              <span className="font-semibold text-gray-700">₹{gstAmount.toFixed(2)}</span>
+            </div>
+            <div className="border-t border-gray-200 pt-3 flex justify-between text-sm">
+              <Paragraph className="text-xs font-semibold text-gray-600">Students Price</Paragraph>
+              <span className="font-bold text-[#2c1452]">₹{bundleOffer.toFixed(2)}</span>
             </div>
           </div>
         </div>
@@ -313,6 +412,14 @@ const Step2Pricing = ({ sumOfCourses, selectedCourses, onPublish, bundleId, bund
             <p className="text-2xl lg:text-3xl font-bold text-[#2c1452] break-words">
               ₹{bundleOffer.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
+            <Paragraph className="!text-[11px] text-gray-400 mt-1.5 leading-relaxed">
+              Includes ₹{gstAmount.toFixed(2)} GST ({gstPercent}%)
+              {discount > 0 && (
+                <> after a {discountType === 'percentage' ? `${discount}%` : `₹${discount}`} discount on the {discountOnInclusive
+                  ? 'sum of courses (incl. GST)'
+                  : `₹${baseExGst.toFixed(2)} base price`}</>
+              )}.
+            </Paragraph>
           </div>
         </div>
 

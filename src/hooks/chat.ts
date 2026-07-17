@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { chatService, attachReplyPreviews, type ChatMessage } from '@/services/chatService'
 import { supabase } from '@/services/supabase'
+import { uniqueChannel } from '@/utils/realtimeChannel'
 import { useAuthStore } from '@/store/authStore'
 import { decryptMessageSafe } from '@/utils/chatEncryption'
 
@@ -214,7 +215,7 @@ export const useChatRealtimeGlobal = (myId?: string) => {
 
     useEffect(() => {
         const channel = supabase
-            .channel('faculty-chat-global')
+            .channel(uniqueChannel('faculty-chat-global'))
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'chat_messages' },
@@ -275,7 +276,7 @@ export const useActiveThreadRealtime = (activeRoomId?: string | null) => {
 
     useEffect(() => {
         const channel = supabase
-            .channel('faculty-chat-thread')
+            .channel(uniqueChannel('faculty-chat-thread'))
             // INSERT: decrypt + resolve the reply preview, then append to the
             // newest page of the open thread in place (no refetch → no reload),
             // skipping any message already present (e.g. our own echo).

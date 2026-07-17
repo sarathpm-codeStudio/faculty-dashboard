@@ -32,6 +32,7 @@
     "formik": "^2.4.9",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
+    "pdf-lib": "^1.17.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-easy-crop": "^5.5.7",

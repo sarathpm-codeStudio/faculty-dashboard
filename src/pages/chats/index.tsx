@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
-import { Search, Paperclip, Mic, Send, FileText, Download, Check, Reply, X, Trash2, Clock, Image as ImageIcon } from 'lucide-react'
+import { Search, Paperclip, Mic, Send, FileText, Download, Check, Reply, X, Trash2, Clock, Image as ImageIcon, ArrowLeft } from 'lucide-react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { toast } from 'sonner'
 import { Heading, Input, Paragraph, Skeleton, ConfirmDeleteModal } from '@/components/ui'
@@ -12,7 +12,7 @@ import brandLogo from '@/assets/icons/brand_icon.svg'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { RiCustomerService2Line, RiChat3Line } from 'react-icons/ri'
 import { useGetMyChatRooms, useGetAdminId, useStartAdminChat, useRoomMessages, useSendMessage, useSendAudioMessage, useSendFilesMessage, useDeleteMessage, useMarkRoomRead, useMarkMessagesSeen, useActiveThreadRealtime, useThreadCatchUp, useTyping } from '@/hooks/chat'
-import { usePresenceHeartbeat, usePeerPresence } from '@/hooks/presence'
+import { usePeerPresence } from '@/hooks/presence'
 import { MessageAttachments } from '@/components/ui/MessageAttachments'
 import { CHAT_ATTACHMENT_MAX_BYTES, type ChatRoomSummary, type ChatMessage, type ChatReplyPreview, type ChatAttachment } from '@/services/chatService'
 import { useAuthStore } from '@/store/authStore'
@@ -311,10 +311,8 @@ const ChatsPage = () => {
   // Ephemeral typing indicator for the open room (broadcast, no DB writes).
   const { peerTyping, notifyTyping, stopTyping } = useTyping(activeId, myId)
 
-  // Broadcast my own presence for as long as I'm on the chat page (online +
-  // heartbeat now, offline on leave). Live presence of the open peer for the
-  // header's active / last-seen indicator.
-  usePresenceHeartbeat(!!myId)
+  // My own presence heartbeat runs app-wide in AppShell; this page only reads
+  // the open peer's presence for the header's active / last-seen indicator.
 
   const handleSend = () => {
     const body = text.trim()
@@ -756,8 +754,14 @@ const ChatsPage = () => {
   return (
     <div className="flex h-full overflow-hidden">
 
-      {/* ── Left Panel ── */}
-      <div className="w-[300px] lg:w-[360px] xl:w-[400px] shrink-0 flex flex-col bg-white">
+      {/* ── Left Panel ──
+          Below lg there isn't room for both panes, so the list and the thread
+          become two separate views: opening a room swaps the list out for the
+          thread, and the header's back arrow brings it back. From lg up both
+          panes sit side by side as before. */}
+      <div
+        className={`w-full lg:w-[360px] xl:w-[400px] shrink-0 flex-col bg-white lg:flex ${activeId ? 'hidden' : 'flex'}`}
+      >
 
         <motion.div
           className="px-5 pt-6 pb-4 shrink-0"
@@ -865,7 +869,9 @@ const ChatsPage = () => {
       </div>
 
       {/* ── Right Panel ── */}
-      <div className="flex-1 flex flex-col min-w-0 bg-gray-100">
+      <div
+        className={`flex-1 flex-col min-w-0 bg-gray-100 lg:flex ${activeId ? 'flex' : 'hidden'}`}
+      >
 
         {!active ? (
           activeId ? (
@@ -904,7 +910,19 @@ const ChatsPage = () => {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  {/* Back to the room list — only exists while the panes are
+                      stacked; from lg up the list is always on screen. */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveId(null)}
+                    title="Back to conversations"
+                    aria-label="Back to conversations"
+                    className="-ml-2 shrink-0 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#2c1452] lg:hidden"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+
                   {/* Admin room → brand logo; peer with a photo → photo; no
                       photo → initials avatar (same look as the room list). */}
                   {active && isAdminRoom(active) ? (

@@ -8,9 +8,10 @@ interface ModalProps {
   children: ReactNode
   footer?: ReactNode
   maxWidth?: string
+  closeDisabled?: boolean
 }
 
-const Modal = ({ open, onClose, title, children, footer, maxWidth = 'max-w-lg' }: ModalProps) => {
+const Modal = ({ open, onClose, title, children, footer, maxWidth = 'max-w-lg', closeDisabled = false }: ModalProps) => {
   if (!open) return null
 
   return (
@@ -18,7 +19,11 @@ const Modal = ({ open, onClose, title, children, footer, maxWidth = 'max-w-lg' }
       <div className={`bg-white rounded-2xl shadow-2xl w-full ${maxWidth} mx-4 overflow-hidden`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h3 className="text-base font-bold text-[#2c1452]">{title}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            disabled={closeDisabled}
+            className="text-gray-400 hover:text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-400"
+          >
             <X size={20} />
           </button>
         </div>

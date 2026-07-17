@@ -9,8 +9,11 @@ import { useAuthStore } from '@/store/authStore'
 import { authService } from '@/services/authService'
 import { toast } from 'sonner'
 import GlobalUploadIndicator from '@/components/ui/GlobalUploadIndicator'
+import ChatWidget from '@/components/features/ChatWidget'
 import { useNotificationRealtime } from '@/hooks/notification'
 import { useChatRealtimeGlobal } from '@/hooks/chat'
+import { usePresenceHeartbeat } from '@/hooks/presence'
+import { useUsageSession } from '@/hooks/usageSession'
 // import { useVideoUploadProgress } from '@/hooks/video'
 
 
@@ -58,6 +61,12 @@ const AppShell = () => {
     // Keep chat live on every page (not only the chat view): updates unread
     // counts/previews and marks incoming messages delivered app-wide.
     useChatRealtimeGlobal(user?.id)
+    // Broadcast my presence for the whole session, not just the chat page, so
+    // peers see me online as soon as I open the app.
+    usePresenceHeartbeat(!!user?.id)
+    // Record this visit in usage_sessions so the admin dashboard can show the
+    // faculty's "recent active" time.
+    useUsageSession(!!user?.id)
     // useVideoUploadProgress(user?.id)
 
 
@@ -71,6 +80,7 @@ const AppShell = () => {
                 </main>
             </div>
             <GlobalUploadIndicator />
+            <ChatWidget />
             <NotificationPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
         </div>
     )

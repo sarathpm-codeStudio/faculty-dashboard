@@ -11,6 +11,7 @@ import man from '@/assets/images/man.jpg'
 import coverImge from "@/assets/images/cou1.png"
 import { useGetCourseById, useGetCourseReviews, useDeleteCourse } from '@/hooks/useCourse'
 import formatNumber from '@/utils/helper/numberFormating'
+import { formatValidity } from '@/utils/formatValidity'
 import { toast } from 'sonner'
 
 
@@ -71,7 +72,7 @@ const CourseDetailPage = () => {
     }
 
     const MOCK_STATS = [
-        { icon: <Clock size={15} className="text-[#00A6BF]" />, label: course?.validity === '1' ? '1 Month Validity' : course?.validity === '3' ? '3 Months Validity' : course?.validity === '6' ? '6 Months Validity' : course?.validity === '12' ? '1 Year Validity' : 'Lifetime Validity' },
+        { icon: <Clock size={15} className="text-[#00A6BF]" />, label: `${formatValidity(course?.validity)} Validity` },
         { icon: <Layers size={15} className="text-[#00A6BF]" />, label: `${course?.level} Level` },
         { icon: <BookOpen size={15} className="text-[#00A6BF]" />, label: `${course?.total_folders} Modules + ${course?.total_materials} Lessons` },
         { icon: <Wallet size={15} className="text-[#00A6BF]" />, label: `₹${formatNumber(course?.total_revenue)} Revenue Earned` },
