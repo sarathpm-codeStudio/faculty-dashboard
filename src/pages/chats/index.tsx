@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, Fragment } from 'react'
-import { Search, Paperclip, Mic, Send, FileText, Download, Check, Reply, X, Trash2, Clock, Image as ImageIcon, ArrowLeft } from 'lucide-react'
+import { Search, Paperclip, Mic, Send, FileText, Download, Check, Reply, X, Trash2, Clock, Image as ImageIcon, ArrowLeft, SmilePlus, Plus } from 'lucide-react'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { toast } from 'sonner'
 import { Heading, Input, Paragraph, Skeleton, ConfirmDeleteModal } from '@/components/ui'
@@ -11,7 +11,7 @@ import courseImg from '@/assets/images/cou1.png'
 import brandLogo from '@/assets/icons/brand_icon.svg'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { RiCustomerService2Line, RiChat3Line } from 'react-icons/ri'
-import { useGetMyChatRooms, useGetAdminId, useStartAdminChat, useRoomMessages, useSendMessage, useSendAudioMessage, useSendFilesMessage, useDeleteMessage, useMarkRoomRead, useMarkMessagesSeen, useActiveThreadRealtime, useThreadCatchUp, useTyping } from '@/hooks/chat'
+import { useGetMyChatRooms, useGetAdminId, useStartAdminChat, useRoomMessages, useSendMessage, useSendAudioMessage, useSendFilesMessage, useDeleteMessage, useMarkRoomRead, useMarkMessagesSeen, useToggleReaction, useActiveThreadRealtime, useThreadCatchUp, useTyping } from '@/hooks/chat'
 import { usePeerPresence } from '@/hooks/presence'
 import { MessageAttachments } from '@/components/ui/MessageAttachments'
 import { CHAT_ATTACHMENT_MAX_BYTES, type ChatRoomSummary, type ChatMessage, type ChatReplyPreview, type ChatAttachment } from '@/services/chatService'
@@ -220,6 +220,9 @@ interface PendingFile {
   replyTo: ChatReplyPreview | null
 }
 
+// The quick-reaction emojis offered when hovering a message (WhatsApp-style).
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const
+
 const ChatsPage = () => {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -252,6 +255,13 @@ const ChatsPage = () => {
   const docInputRef = useRef<HTMLInputElement>(null)
   // Latest pending-audio list, so the unmount cleanup can free object URLs.
   const pendingAudiosRef = useRef<PendingAudio[]>([])
+  // The message whose quick-reaction bar is open (null when none). Anchored to
+  // that message's hover actions; closes on pick or outside click.
+  const [reactionFor, setReactionFor] = useState<string | null>(null)
+  // Whether the open quick-reaction bar has expanded into the full emoji picker.
+  const [reactionExpanded, setReactionExpanded] = useState(false)
+  // The reaction badge whose "who reacted" popover is open (message id + emoji).
+  const [namesFor, setNamesFor] = useState<{ id: string; emoji: string } | null>(null)
   // Emoji picker open state, plus refs to place/close it and to insert at caret.
   const [emojiOpen, setEmojiOpen] = useState(false)
   const emojiWrapRef = useRef<HTMLDivElement>(null)
@@ -296,6 +306,7 @@ const ChatsPage = () => {
   const deleteMessage = useDeleteMessage()
   const markRoomRead = useMarkRoomRead()
   const markMessagesSeen = useMarkMessagesSeen()
+  const toggleReaction = useToggleReaction(activeId)
 
   // Voice-message recorder (mic → blob → upload).
   const recorder = useAudioRecorder()
@@ -687,6 +698,56 @@ const ChatsPage = () => {
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [emojiOpen])
+
+  // Close any open reaction popover (quick-react bar or "who reacted" names) on a
+  // click outside a reaction element.
+  useEffect(() => {
+    if (!reactionFor && !namesFor) return
+    const onDown = (e: MouseEvent) => {
+      if ((e.target as HTMLElement).closest('[data-reaction-ui]')) return
+      setReactionFor(null)
+      setReactionExpanded(false)
+      setNamesFor(null)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [reactionFor, namesFor])
+
+  // Toggle my reaction on a message: if I already reacted with this emoji remove
+  // it, otherwise add it. Closes the quick-reaction bar either way.
+  const handleToggleReaction = (msg: ChatMessage, emoji: string) => {
+    if (!activeId) return
+    const active = msg.reactions?.find(r => r.emoji === emoji)?.mine ?? false
+    toggleReaction.mutate(
+      { messageId: msg.id, emoji, active },
+      { onError: err => toast.error((err as Error)?.message ?? 'Could not react') },
+    )
+    setReactionFor(null)
+    setReactionExpanded(false)
+  }
+
+  // Open (or toggle) the quick-reaction bar for a message, closing the names
+  // popover. Resets any expanded state so it always opens on the compact bar.
+  const openReactionBar = (msgId: string) => {
+    setNamesFor(null)
+    setReactionExpanded(false)
+    setReactionFor(cur => (cur === msgId ? null : msgId))
+  }
+
+  // Toggle the "who reacted" names popover for a message's emoji badge, closing
+  // the quick-reaction bar.
+  const toggleNames = (msgId: string, emoji: string) => {
+    setReactionFor(null)
+    setReactionExpanded(false)
+    setNamesFor(cur =>
+      cur && cur.id === msgId && cur.emoji === emoji ? null : { id: msgId, emoji },
+    )
+  }
+
+  // Display label for a reactor: "You" for me, else the peer's name (DIRECT
+  // rooms have only the two of you).
+  const reactorLabel = (userId: string): string =>
+    userId === myId ? 'You' : active ? roomName(active) : 'Someone'
 
   // Insert a picked emoji at the caret (falling back to the end), keeping focus.
   const insertEmoji = (emoji: string) => {
@@ -1201,7 +1262,52 @@ const ChatsPage = () => {
                               )}
                             </div>
                             {!msg.is_deleted && (
-                              <div className="shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div
+                                data-reaction-ui
+                                className={`shrink-0 flex items-center gap-1 transition-opacity ${reactionFor === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                              >
+                                <div className="relative">
+                                  <button
+                                    onClick={() => openReactionBar(msg.id)}
+                                    title="React"
+                                    className="text-gray-400 hover:text-[#2c1452]"
+                                  >
+                                    <SmilePlus size={15} />
+                                  </button>
+                                  {reactionFor === msg.id && (
+                                    reactionExpanded ? (
+                                      <EmojiPicker
+                                        align={mine ? 'right' : 'left'}
+                                        onSelect={e => handleToggleReaction(msg, e)}
+                                      />
+                                    ) : (
+                                      <div className={`absolute bottom-full z-50 mb-2 flex items-center gap-0.5 rounded-full border border-gray-200 bg-white px-1.5 py-1 shadow-lg ${mine ? 'right-0' : 'left-0'}`}>
+                                        {QUICK_REACTIONS.map(e => {
+                                          const picked = msg.reactions?.find(r => r.emoji === e)?.mine ?? false
+                                          return (
+                                            <button
+                                              key={e}
+                                              type="button"
+                                              onClick={() => handleToggleReaction(msg, e)}
+                                              className={`rounded-full p-1 text-lg leading-none transition-transform hover:scale-125 ${picked ? 'bg-[#2c1452]/10' : ''}`}
+                                            >
+                                              {e}
+                                            </button>
+                                          )
+                                        })}
+                                        <span className="mx-0.5 h-5 w-px bg-gray-200" />
+                                        <button
+                                          type="button"
+                                          onClick={() => setReactionExpanded(true)}
+                                          title="More emojis"
+                                          className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-[#2c1452]"
+                                        >
+                                          <Plus size={16} />
+                                        </button>
+                                      </div>
+                                    )
+                                  )}
+                                </div>
                                 <button
                                   onClick={() => setReplyTo(msg)}
                                   title="Reply"
@@ -1221,6 +1327,40 @@ const ChatsPage = () => {
                               </div>
                             )}
                           </div>
+
+                          {!msg.is_deleted && msg.reactions && msg.reactions.length > 0 && (
+                            <div data-reaction-ui className={`mt-1 flex max-w-[75%] flex-wrap gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                              {msg.reactions.map(r => (
+                                <div key={r.emoji} className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleNames(msg.id, r.emoji)}
+                                    title="Who reacted"
+                                    className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px] leading-none transition-colors ${r.mine
+                                      ? 'bg-[#2c1452]/10 text-[#2c1452]'
+                                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                      }`}
+                                  >
+                                    <span className="text-xs">{r.emoji}</span>
+                                    {r.count > 1 && <span className="font-semibold">{r.count}</span>}
+                                  </button>
+                                  {namesFor?.id === msg.id && namesFor.emoji === r.emoji && (
+                                    <div className={`absolute bottom-full z-50 mb-1 min-w-[110px] max-w-[200px] rounded-lg bg-gray-900 px-2.5 py-1.5 text-[11px] text-white shadow-lg ${mine ? 'right-0' : 'left-0'}`}>
+                                      <div className="mb-1 flex items-center gap-1 border-b border-white/15 pb-1">
+                                        <span className="text-sm">{r.emoji}</span>
+                                        <span className="text-white/60">{r.count}</span>
+                                      </div>
+                                      <div className="flex flex-col gap-0.5">
+                                        {r.userIds.map(uid => (
+                                          <span key={uid}>{reactorLabel(uid)}</span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           <div className={`flex items-center gap-1 mt-1 ${mine ? 'flex-row-reverse' : ''}`}>
                             <span className="text-[10px] text-black">{formatMessageTime(msg.created_at)}</span>
@@ -1405,7 +1545,6 @@ const ChatsPage = () => {
                         <Send size={15} />
                       </button>
                     ) : (
-                      /* Voice message send option — commented out per request
                       <button
                         onClick={handleStartRecording}
                         title="Record voice message"
@@ -1414,8 +1553,6 @@ const ChatsPage = () => {
                       >
                         <Mic size={16} />
                       </button>
-                      */
-                      null
                     )}
                   </>
                 )}

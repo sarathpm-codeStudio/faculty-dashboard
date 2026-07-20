@@ -5,7 +5,7 @@ import { IoAddCircleOutline } from 'react-icons/io5'
 import Button from '../../components/ui/Button'
 import { BundleCard } from '../../components/features'
 import type { BundleCardProps } from '../../components/features/BundleCard'
-import { Heading, Skeleton } from '@/components/ui'
+import { Heading, Skeleton, ConfirmDeleteModal } from '@/components/ui'
 import courseImg from '@/assets/images/cou1.png'
 import courseImg2 from '@/assets/images/cou2.png'
 import courseImg3 from '@/assets/images/cou3.png'
@@ -37,6 +37,7 @@ const BundlesPage = () => {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<Tab>('published')
   const [isLoading, setIsLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; title: string } | null>(null)
 
 
 
@@ -68,11 +69,19 @@ const BundlesPage = () => {
 
   // const filtered = MOCK_BUNDLES.filter(b => b.status === (activeTab === 'published' ? 'published' : 'draft'))
 
-  const handleDeleteBundle = async (id: any) => {
+  // Open the confirmation modal for a bundle (does not delete yet).
+  const handleDeleteBundle = (id: any) => {
+    const bundle = bundles?.find((b: any) => b.id === id)
+    if (bundle) setDeleteTarget({ id: bundle.id, title: bundle.title })
+  }
+
+  const confirmDeleteBundle = async () => {
+    if (!deleteTarget) return
     const toastId = toast.loading("Deleting bundle...")
     try {
-      await deleteBundle(id)
+      await deleteBundle(deleteTarget.id)
       toast.success("Bundle deleted successfully", { id: toastId })
+      setDeleteTarget(null)
     } catch {
       // Error toast handled globally; just clear the loading spinner.
       toast.dismiss(toastId)
@@ -177,6 +186,15 @@ const BundlesPage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onClose={() => !deletePending && setDeleteTarget(null)}
+        onConfirm={confirmDeleteBundle}
+        title="Delete Bundle"
+        itemName={deleteTarget?.title}
+        loading={deletePending}
+      />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { chatService, attachReplyPreviews, type ChatMessage } from '@/services/chatService'
+import { chatService, attachReplyPreviews, type ChatMessage, type ChatReactionGroup } from '@/services/chatService'
 import { supabase } from '@/services/supabase'
 import { uniqueChannel } from '@/utils/realtimeChannel'
 import { useAuthStore } from '@/store/authStore'
@@ -32,6 +32,68 @@ const appendMessageToThread = (
             if (!first) return old
             return { ...old, pages: [{ ...first, items: [...first.items, message] }, ...rest] }
         },
+    )
+}
+
+// Apply a single reaction change (one user's one emoji) to a message's grouped
+// reaction list, returning a new list. Idempotent by (emoji, userId): re-adding
+// a reaction already present, or removing one that's absent, is a no-op — so the
+// realtime echo of our own optimistic change doesn't double-count.
+const applyReactionDelta = (
+    groups: ChatReactionGroup[] | undefined,
+    emoji: string,
+    userId: string,
+    add: boolean,
+    myId?: string,
+): ChatReactionGroup[] => {
+    const list = (groups ?? []).map(g => ({ ...g, userIds: [...g.userIds] }))
+    const idx = list.findIndex(g => g.emoji === emoji)
+
+    if (add) {
+        if (idx === -1) {
+            list.push({ emoji, count: 1, mine: userId === myId, userIds: [userId] })
+        } else {
+            const g = list[idx]
+            if (!g.userIds.includes(userId)) {
+                g.userIds.push(userId)
+                g.count += 1
+                if (userId === myId) g.mine = true
+            }
+        }
+    } else if (idx !== -1) {
+        const g = list[idx]
+        if (g.userIds.includes(userId)) {
+            g.userIds = g.userIds.filter(u => u !== userId)
+            g.count = g.userIds.length
+            if (userId === myId) g.mine = false
+        }
+        if (g.count <= 0) list.splice(idx, 1)
+    }
+
+    return list
+}
+
+// Patch one message's reactions in the open thread cache, in place, via updater.
+const patchMessageReactions = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    roomId: string,
+    messageId: string,
+    updater: (groups: ChatReactionGroup[] | undefined) => ChatReactionGroup[],
+) => {
+    queryClient.setQueryData<MessagesInfiniteData>(
+        chatMessagesQueryKey(roomId),
+        old =>
+            old
+                ? {
+                      ...old,
+                      pages: old.pages.map(p => ({
+                          ...p,
+                          items: p.items.map(m =>
+                              m.id === messageId ? { ...m, reactions: updater(m.reactions) } : m,
+                          ),
+                      })),
+                  }
+                : old,
     )
 }
 
@@ -156,6 +218,44 @@ export const useDeleteMessage = () => {
         // The tombstone flips in via the realtime UPDATE patch (no refetch).
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['chat-rooms'] })
+        },
+    })
+}
+
+// Toggle the current user's emoji reaction on a message: add it when absent,
+// remove it when already present. The thread cache is patched optimistically so
+// the badge flips instantly; the realtime echo is a no-op (idempotent delta),
+// and a failed write rolls the badge back.
+export const useToggleReaction = (roomId?: string | null) => {
+    const queryClient = useQueryClient()
+    return useMutation({
+        mutationFn: ({
+            messageId,
+            emoji,
+            active,
+        }: {
+            messageId: string
+            emoji: string
+            // Whether the user has already reacted with this emoji (→ remove it).
+            active: boolean
+        }) =>
+            active
+                ? chatService.removeReaction(messageId, emoji)
+                : chatService.addReaction(roomId as string, messageId, emoji),
+        onMutate: ({ messageId, emoji, active }) => {
+            if (!roomId) return
+            const myId = useAuthStore.getState().user?.id ?? ''
+            patchMessageReactions(queryClient, roomId, messageId, groups =>
+                applyReactionDelta(groups, emoji, myId, !active, myId),
+            )
+        },
+        onError: (_err, { messageId, emoji, active }) => {
+            if (!roomId) return
+            // Reverse the optimistic change.
+            const myId = useAuthStore.getState().user?.id ?? ''
+            patchMessageReactions(queryClient, roomId, messageId, groups =>
+                applyReactionDelta(groups, emoji, myId, active, myId),
+            )
         },
     })
 }
@@ -348,6 +448,44 @@ export const useActiveThreadRealtime = (activeRoomId?: string | null) => {
                                       })),
                                   }
                                 : old,
+                    )
+                },
+            )
+            // A reaction added anywhere → patch it into the open thread's badges.
+            // The payload carries the full row (replica identity full). Our own
+            // optimistic add makes this echo a no-op; a peer's reaction lands live.
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'chat_message_reactions' },
+                payload => {
+                    const r = payload.new as {
+                        message_id: string
+                        room_id: string
+                        user_id: string
+                        emoji: string
+                    }
+                    if (!r?.room_id || r.room_id !== activeRef.current) return
+                    const myId = useAuthStore.getState().user?.id
+                    patchMessageReactions(queryClient, r.room_id, r.message_id, groups =>
+                        applyReactionDelta(groups, r.emoji, r.user_id, true, myId),
+                    )
+                },
+            )
+            // A reaction removed anywhere → drop it from the open thread's badges.
+            .on(
+                'postgres_changes',
+                { event: 'DELETE', schema: 'public', table: 'chat_message_reactions' },
+                payload => {
+                    const r = payload.old as {
+                        message_id: string
+                        room_id: string
+                        user_id: string
+                        emoji: string
+                    }
+                    if (!r?.room_id || r.room_id !== activeRef.current) return
+                    const myId = useAuthStore.getState().user?.id
+                    patchMessageReactions(queryClient, r.room_id, r.message_id, groups =>
+                        applyReactionDelta(groups, r.emoji, r.user_id, false, myId),
                     )
                 },
             )

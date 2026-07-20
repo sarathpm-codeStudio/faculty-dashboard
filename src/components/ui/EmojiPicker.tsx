@@ -44,13 +44,16 @@ const EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
 
 interface EmojiPickerProps {
   onSelect: (emoji: string) => void
+  // Which edge the popover aligns to (default 'left'). Use 'right' when the
+  // trigger sits near the right edge (e.g. reacting to your own message).
+  align?: 'left' | 'right'
 }
 
-export function EmojiPicker({ onSelect }: EmojiPickerProps) {
+export function EmojiPicker({ onSelect, align = 'left' }: EmojiPickerProps) {
   const [active, setActive] = useState(0)
 
   return (
-    <div className="absolute bottom-full left-0 z-50 mb-2 w-[320px] rounded-2xl border border-gray-200 bg-white shadow-xl">
+    <div className={`absolute bottom-full ${align === 'right' ? 'right-0' : 'left-0'} z-50 mb-2 w-[320px] rounded-2xl border border-gray-200 bg-white shadow-xl`}>
       <div className="flex gap-1 overflow-x-auto border-b border-gray-100 px-2 py-2 scrollbar-hide">
         {EMOJI_GROUPS.map((g, i) => (
           <button

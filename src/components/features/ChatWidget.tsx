@@ -1,19 +1,39 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MessageCircle, Send, X, Maximize2 } from 'lucide-react'
+import { ArrowLeft, Check, MessageCircle, Mic, Send, Trash2, X, Maximize2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { useAuthStore } from '@/store/authStore'
 import {
     useGetMyChatRooms,
     useGetAdminId,
     useRoomMessages,
     useSendMessage,
+    useSendAudioMessage,
     useMarkRoomRead,
+    useMarkMessagesSeen,
     useActiveThreadRealtime,
     useThreadCatchUp,
 } from '@/hooks/chat'
 import { usePeerPresence } from '@/hooks/presence'
+import { useAudioRecorder } from '@/hooks/useAudioRecorder'
+import { AudioPlayer } from '@/components/ui/AudioPlayer'
+import { formatDuration, pseudoPeaks } from '@/utils/audio'
 import type { ChatRoomSummary } from '@/services/chatService'
 import brandLogo from '@/assets/icons/brand_icon.svg'
+
+// An optimistic voice message shown the instant you hit send (spinner on play)
+// while it uploads. On success the real AUDIO message arrives via the thread
+// refresh and this placeholder is dropped; on failure it flips to a retry state.
+interface WidgetPendingAudio {
+    id: string
+    roomId: string
+    src: string
+    duration: number
+    peaks: number[]
+    status: 'uploading' | 'error'
+    blob: Blob
+    meta: { duration: number; peaks: number[]; mimeType: string }
+}
 
 // ── Small local helpers (mirrors of the chat page's) ─────────────────────────
 
@@ -114,17 +134,31 @@ const ChatWidgetPanel = ({ myId }: { myId: string }) => {
     )
 
     const sendMessage = useSendMessage()
+    const sendAudioMessage = useSendAudioMessage()
     const markRoomRead = useMarkRoomRead()
+    const markMessagesSeen = useMarkMessagesSeen()
     const [text, setText] = useState('')
     const inputRef = useRef<HTMLInputElement>(null)
 
+    // Voice recording — same machinery as the full chat page.
+    const recorder = useAudioRecorder()
+    const [pendingAudios, setPendingAudios] = useState<WidgetPendingAudio[]>([])
+    const roomPendingAudios = useMemo(
+        () => pendingAudios.filter(p => p.roomId === activeId),
+        [pendingAudios, activeId],
+    )
+
     const peerPresence = usePeerPresence(open && active ? active.peer?.id : null)
 
-    // Clear the unread badge for the open room (again whenever new messages
-    // arrive while it stays open).
+    // Keep the open room marked as read/seen — on open, and whenever a new
+    // message arrives while it stays open. markMessagesSeen flips the peer's
+    // messages to 'seen' so their read ticks turn blue (same as the chat page).
     useEffect(() => {
-        if (open && activeId && (active?.unread_count ?? 0) > 0) markRoomRead.mutate(activeId)
-    }, [open, activeId, active?.unread_count])
+        if (open && activeId && !messagesLoading) {
+            markRoomRead.mutate(activeId)
+            markMessagesSeen.mutate(activeId)
+        }
+    }, [open, activeId, messagesLoading, messages.length])
 
     const handleSend = () => {
         const body = text.trim()
@@ -134,6 +168,59 @@ const ChatWidgetPanel = ({ myId }: { myId: string }) => {
             { roomId: activeId, content: body },
             { onError: () => setText(body) },
         )
+    }
+
+    const handleStartRecording = async () => {
+        try {
+            await recorder.start()
+        } catch {
+            toast.error('Microphone access is required to record a voice message')
+        }
+    }
+
+    // Upload (or re-upload) a pending voice message. On success the real message
+    // arrives via the thread refresh, so we drop the placeholder; on failure we
+    // flip it to 'error' so its bubble offers a retry.
+    const uploadAudio = (pending: WidgetPendingAudio) => {
+        setPendingAudios(list => list.map(p => (p.id === pending.id ? { ...p, status: 'uploading' } : p)))
+        sendAudioMessage.mutate(
+            { roomId: pending.roomId, blob: pending.blob, meta: pending.meta },
+            {
+                onSuccess: () => {
+                    URL.revokeObjectURL(pending.src)
+                    setPendingAudios(list => list.filter(p => p.id !== pending.id))
+                },
+                onError: (err: any) => {
+                    setPendingAudios(list => list.map(p => (p.id === pending.id ? { ...p, status: 'error' } : p)))
+                    toast.error(err?.message ?? 'Could not send voice message')
+                },
+            },
+        )
+    }
+
+    // Stop recording and show the voice bubble immediately while it uploads.
+    const handleSendAudio = async () => {
+        const result = await recorder.stop()
+        if (!result || !activeId) return
+        const id = `pending-${crypto.randomUUID()}`
+        const peaks = result.peaks.length ? result.peaks : pseudoPeaks(id)
+        const pending: WidgetPendingAudio = {
+            id,
+            roomId: activeId,
+            src: URL.createObjectURL(result.blob),
+            duration: result.duration,
+            peaks,
+            status: 'uploading',
+            blob: result.blob,
+            meta: { duration: result.duration, peaks, mimeType: result.mimeType },
+        }
+        setPendingAudios(list => [...list, pending])
+        uploadAudio(pending)
+    }
+
+    const retryAudio = (id: string) => {
+        const pending = pendingAudios.find(p => p.id === id)
+        if (pending) uploadAudio(pending)
     }
 
     const openFullChat = () => {
@@ -284,9 +371,24 @@ const ChatWidgetPanel = ({ myId }: { myId: string }) => {
                 /* ── Thread ── */
                 <>
                     <div className="flex flex-1 flex-col-reverse gap-2 overflow-y-auto bg-gray-50 px-3 py-3">
+                        {/* Optimistic voice bubbles — newest first, so they sit at the bottom. */}
+                        {roomPendingAudios.slice().reverse().map(p => (
+                            <div key={p.id} className="flex justify-end">
+                                <div className="max-w-[80%] rounded-2xl rounded-tr-sm bg-[#2c1452] px-3 py-1.5 text-white">
+                                    <AudioPlayer
+                                        src={p.src}
+                                        meta={{ d: p.duration, w: p.peaks }}
+                                        seed={p.id}
+                                        mine
+                                        uploadState={p.status}
+                                        onRetry={() => retryAudio(p.id)}
+                                    />
+                                </div>
+                            </div>
+                        ))}
                         {messagesLoading ? (
                             <p className="py-6 text-center text-xs text-gray-400">Loading messages…</p>
-                        ) : messages.length === 0 ? (
+                        ) : messages.length === 0 && roomPendingAudios.length === 0 ? (
                             <p className="py-6 text-center text-xs text-gray-400">No messages yet — say hello!</p>
                         ) : (
                             messages.map(msg => {
@@ -305,8 +407,10 @@ const ChatWidgetPanel = ({ myId }: { myId: string }) => {
                                                 </p>
                                             ) : msg.message_type === 'TEXT' ? (
                                                 <p className="whitespace-pre-wrap break-words text-sm">{msg.content}</p>
+                                            ) : msg.message_type === 'AUDIO' && msg.file_url ? (
+                                                <AudioPlayer src={msg.file_url} content={msg.content} seed={msg.id} mine={mine} />
                                             ) : (
-                                                // Rich content lives in the full chat page.
+                                                // Image / PDF attachments still open in the full chat page.
                                                 <button
                                                     type="button"
                                                     onClick={openFullChat}
@@ -315,9 +419,20 @@ const ChatWidgetPanel = ({ myId }: { myId: string }) => {
                                                     📎 {msg.message_type === 'IMAGE' ? 'Photo' : msg.message_type === 'PDF' ? 'Document' : 'Voice message'} — open in chat
                                                 </button>
                                             )}
-                                            <p className={`mt-0.5 text-right text-[9px] ${mine ? 'text-white/60' : 'text-gray-400'}`}>
-                                                {formatMessageTime(msg.created_at)}
-                                            </p>
+                                            <div className={`mt-0.5 flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                                                <span className={`text-[9px] ${mine ? 'text-white/60' : 'text-gray-400'}`}>
+                                                    {formatMessageTime(msg.created_at)}
+                                                </span>
+                                                {mine && !msg.is_deleted && (
+                                                    <span className="flex items-center">
+                                                        {/* sent → 1 tick, delivered → 2 grey, seen → 2 blue */}
+                                                        <Check size={12} strokeWidth={3} className={msg.status === 'seen' ? 'text-[#53BDEB]' : 'text-white/50'} />
+                                                        {msg.status !== 'sent' && (
+                                                            <Check size={12} strokeWidth={3} className={`-ml-[6px] ${msg.status === 'seen' ? 'text-[#53BDEB]' : 'text-white/50'}`} />
+                                                        )}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 )
@@ -325,30 +440,85 @@ const ChatWidgetPanel = ({ myId }: { myId: string }) => {
                         )}
                     </div>
 
-                    {/* Composer (text only) */}
+                    {/* Composer — text, or a voice recorder while recording. */}
                     <div className="flex shrink-0 items-center gap-2 border-t border-gray-100 bg-white px-3 py-2">
-                        <input
-                            ref={inputRef}
-                            value={text}
-                            onChange={e => setText(e.target.value)}
-                            onKeyDown={e => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault()
-                                    handleSend()
-                                }
-                            }}
-                            placeholder={`Message ${active ? roomName(active) : ''}…`}
-                            className="h-9 min-w-0 flex-1 rounded-xl bg-gray-100 px-3 text-sm text-[#191c1e] outline-none placeholder:text-gray-400"
-                        />
-                        <button
-                            type="button"
-                            onClick={handleSend}
-                            disabled={!text.trim() || sendMessage.isPending}
-                            aria-label="Send message"
-                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#2c1452] text-white disabled:opacity-40"
-                        >
-                            <Send size={15} />
-                        </button>
+                        {recorder.isRecording ? (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={recorder.cancel}
+                                    title="Cancel recording"
+                                    aria-label="Cancel recording"
+                                    className="shrink-0 text-gray-400 hover:text-red-500"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                                <div className="flex min-w-0 flex-1 items-center gap-2">
+                                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500 animate-pulse" />
+                                    <span className="shrink-0 text-sm tabular-nums text-[#191c1e]">{formatDuration(recorder.elapsed)}</span>
+                                    {/* Live waveform: bars rise and fall with your voice. */}
+                                    <div className="flex h-7 min-w-0 flex-1 items-center justify-end gap-[2px] overflow-hidden">
+                                        {recorder.waveform.length === 0 ? (
+                                            <span className="text-xs text-gray-400">Recording…</span>
+                                        ) : (
+                                            recorder.waveform.map((h, i) => (
+                                                <span
+                                                    key={i}
+                                                    className="w-[3px] shrink-0 rounded-full bg-[#2c1452]/70"
+                                                    style={{ height: `${Math.max(10, h)}%` }}
+                                                />
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleSendAudio}
+                                    disabled={sendAudioMessage.isPending}
+                                    aria-label="Send voice message"
+                                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#2c1452] text-white disabled:opacity-40"
+                                >
+                                    <Send size={15} />
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <input
+                                    ref={inputRef}
+                                    value={text}
+                                    onChange={e => setText(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault()
+                                            handleSend()
+                                        }
+                                    }}
+                                    placeholder={`Message ${active ? roomName(active) : ''}…`}
+                                    className="h-9 min-w-0 flex-1 rounded-xl bg-gray-100 px-3 text-sm text-[#191c1e] outline-none placeholder:text-gray-400"
+                                />
+                                {text.trim() ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleSend}
+                                        disabled={sendMessage.isPending}
+                                        aria-label="Send message"
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#2c1452] text-white disabled:opacity-40"
+                                    >
+                                        <Send size={15} />
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={handleStartRecording}
+                                        aria-label="Record voice message"
+                                        title="Record voice message"
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#2c1452] text-white"
+                                    >
+                                        <Mic size={16} />
+                                    </button>
+                                )}
+                            </>
+                        )}
                     </div>
                 </>
             )}

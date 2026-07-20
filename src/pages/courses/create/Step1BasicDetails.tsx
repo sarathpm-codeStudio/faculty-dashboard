@@ -379,12 +379,12 @@ const Step1BasicDetails = ({ form, update, setIsDraft, isSubmitting = false, isE
 
           {/* ── Intro Video Upload ── */}
           <UploadBox
-            accept="video/mp4,video/webm,video/mov"
+            accept="video/mp4,video/webm,video/mov,video/x-matroska,.mkv"
             preview={vidPreview}
             previewType="video"
             icon={<Video size={20} />}
             title="Intro Video"
-            hint="MP4, WebM or MOV — max 200 MB"
+            hint="MP4, WebM, MOV or MKV — max 200 MB"
             loading={
               uploadStatus === 'uploading' ||
               uploadStatus === 'saving'

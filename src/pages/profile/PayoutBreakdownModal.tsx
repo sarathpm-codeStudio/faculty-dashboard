@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Wallet } from 'lucide-react'
+import { X, Wallet, Coins, TicketPercent } from 'lucide-react'
 import { Spinner } from '@/components/ui'
 import { useGetPayoutBreakdown } from '@/hooks/bank'
 
@@ -122,9 +122,36 @@ const PayoutBreakdownModal = ({ open, onClose, payoutId, facultyId }: PayoutBrea
                                             className="border-t border-gray-100 transition-colors hover:bg-[#FAFAFB]"
                                         >
                                             <td className="px-4 py-3.5 align-top">
-                                                <span className="text-sm font-medium leading-snug text-[#191c1e]">
-                                                    {row.item}
-                                                </span>
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-sm font-medium leading-snug text-[#191c1e]">
+                                                        {row.item}
+                                                    </span>
+                                                    {(row.couponCode || row.couponAmount > 0 || row.coinsUsed > 0 || row.offerAmount > 0) && (
+                                                        <span className="flex flex-wrap gap-1">
+                                                            {(row.couponCode || row.couponAmount > 0) && (
+                                                                <span
+                                                                    className="inline-flex items-center gap-1 rounded-full bg-[#F5F3FF] px-2 py-0.5 text-[10px] font-semibold text-[#7C3AED]"
+                                                                    title="Your coupon — this discount reduced your earning on this sale"
+                                                                >
+                                                                    <TicketPercent size={11} aria-hidden />
+                                                                    Your coupon{row.couponCode ? ` ${row.couponCode}` : ''}
+                                                                    {row.couponAmount > 0 ? ` · − ₹${row.couponAmount.toLocaleString('en-IN')}` : ''}
+                                                                </span>
+                                                            )}
+                                                            {(row.coinsUsed > 0 || row.offerAmount > 0) && (
+                                                                <span
+                                                                    className="inline-flex items-center gap-1 rounded-full bg-[#FFFBEB] px-2 py-0.5 text-[10px] font-semibold text-[#B45309]"
+                                                                    title="Platform-funded promotion — your earning is calculated as if the student paid full price"
+                                                                >
+                                                                    <Coins size={11} aria-hidden />
+                                                                    Platform promo
+                                                                    {row.coinsUsed > 0 ? ` (${row.coinsUsed} coins)` : ''}
+                                                                    {' · earning not affected'}
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-4 py-3.5 align-top">
                                                 <span className="inline-flex items-center rounded-md bg-[#EEF2FF] px-2 py-0.5 text-xs font-bold text-[#2c1452]">
@@ -178,6 +205,9 @@ const PayoutBreakdownModal = ({ open, onClose, payoutId, facultyId }: PayoutBrea
 
                     <p className="mt-4 text-xs leading-relaxed text-[#94A3B8]">
                         Amounts are your share after the platform commission shown above.
+                        Platform-funded promotions (coins &amp; offers) never reduce your
+                        earnings — you are paid as if the student paid full price. Your own
+                        coupons reduce the sale price and therefore your share.
                     </p>
                 </div>
             </div>
