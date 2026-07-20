@@ -49,6 +49,43 @@ export interface ChatReplyPreview {
     is_deleted: boolean
 }
 
+// One row in chat_message_reactions: a single user's single emoji on a message.
+export interface ChatMessageReaction {
+    message_id: string
+    user_id: string
+    emoji: string
+}
+
+// Reactions on a message, grouped by emoji for rendering. `mine` is true when
+// the current user is among the reactors (drives the toggle-on styling).
+export interface ChatReactionGroup {
+    emoji: string
+    count: number
+    mine: boolean
+    userIds: string[]
+}
+
+// Group raw reaction rows for one message into per-emoji badges, flagging the
+// ones the current user reacted with.
+export const groupReactions = (
+    rows: { user_id: string; emoji: string }[],
+): ChatReactionGroup[] => {
+    const myId = getCurrentUserId()
+    const byEmoji = new Map<string, ChatReactionGroup>()
+    for (const r of rows) {
+        let g = byEmoji.get(r.emoji)
+        if (!g) {
+            g = { emoji: r.emoji, count: 0, mine: false, userIds: [] }
+            byEmoji.set(r.emoji, g)
+        }
+        if (g.userIds.includes(r.user_id)) continue
+        g.userIds.push(r.user_id)
+        g.count++
+        if (r.user_id === myId) g.mine = true
+    }
+    return Array.from(byEmoji.values())
+}
+
 // A single message inside a room, as stored in chat_messages.
 export interface ChatMessage {
     id: string
@@ -68,6 +105,10 @@ export interface ChatMessage {
     // is the resolved, decrypted preview of that quoted message.
     reply_to_message_id: string | null
     reply_to?: ChatReplyPreview | null
+    // Emoji reactions on this message, grouped per emoji. Populated when the
+    // thread loads (attachReactions) and kept live by realtime; undefined means
+    // "not yet loaded", an empty array means "loaded, none".
+    reactions?: ChatReactionGroup[]
 }
 
 // Resolve the quoted-message preview for any rows that reply to another
@@ -100,6 +141,30 @@ export const attachReplyPreviews = async (rows: ChatMessage[]): Promise<void> =>
     for (const r of rows) {
         if (r.reply_to_message_id)
             r.reply_to = byId.get(r.reply_to_message_id) ?? null
+    }
+}
+
+// Load reactions for a batch of messages in one query and set each message's
+// grouped `reactions` in place. Messages with none get an empty array (so the
+// UI can tell "loaded, none" from "not loaded yet"). Mirrors attachReplyPreviews.
+export const attachReactions = async (rows: ChatMessage[]): Promise<void> => {
+    if (!rows.length) return
+    const ids = rows.map(r => r.id)
+
+    const { data } = await supabase
+        .from('chat_message_reactions')
+        .select('message_id, user_id, emoji')
+        .in('message_id', ids)
+
+    const byMessage = new Map<string, { user_id: string; emoji: string }[]>()
+    for (const row of (data ?? []) as ChatMessageReaction[]) {
+        const arr = byMessage.get(row.message_id) ?? []
+        arr.push({ user_id: row.user_id, emoji: row.emoji })
+        byMessage.set(row.message_id, arr)
+    }
+
+    for (const r of rows) {
+        r.reactions = groupReactions(byMessage.get(r.id) ?? [])
     }
 }
 
@@ -158,6 +223,8 @@ export const chatService = {
         )
         // Resolve the quoted preview for any (non-deleted) replies in this page.
         await attachReplyPreviews(rows.filter(r => !r.is_deleted))
+        // Load existing reactions for this page so they render as the room opens.
+        await attachReactions(rows.filter(r => !r.is_deleted))
 
         // Reverse to oldest→newest so the page renders top→bottom.
         return { items: rows.slice().reverse(), nextCursor }
@@ -656,6 +723,43 @@ export const chatService = {
                 },
                 { onConflict: 'room_id,user_id' },
             )
+
+        if (error) throw new Error(error.message)
+    },
+
+    // Add the current user's emoji reaction to a message. Idempotent: the PK
+    // (message_id, user_id, emoji) means re-adding the same emoji is a no-op, so
+    // an upsert that ignores duplicates never errors on a double-tap. RLS requires
+    // the user to be a member of the room (they are — it's their conversation).
+    addReaction: async (
+        roomId: string,
+        messageId: string,
+        emoji: string,
+    ): Promise<void> => {
+        const userId = getCurrentUserId()
+        if (!userId) throw new Error('Not authenticated')
+
+        const { error } = await supabase
+            .from('chat_message_reactions')
+            .upsert(
+                { message_id: messageId, room_id: roomId, user_id: userId, emoji },
+                { onConflict: 'message_id,user_id,emoji', ignoreDuplicates: true },
+            )
+
+        if (error) throw new Error(error.message)
+    },
+
+    // Remove the current user's own emoji reaction from a message.
+    removeReaction: async (messageId: string, emoji: string): Promise<void> => {
+        const userId = getCurrentUserId()
+        if (!userId) throw new Error('Not authenticated')
+
+        const { error } = await supabase
+            .from('chat_message_reactions')
+            .delete()
+            .eq('message_id', messageId)
+            .eq('user_id', userId)
+            .eq('emoji', emoji)
 
         if (error) throw new Error(error.message)
     },

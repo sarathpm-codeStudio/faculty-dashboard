@@ -212,17 +212,50 @@ export const bankServices = {
             const enrollmentIds = [...new Set(saleRows.map(r => r.enrollment_id).filter(Boolean))];
             const bundleEnrollmentIds = [...new Set(saleRows.map(r => r.bundle_enrollment_id).filter(Boolean))];
 
-            const [enrRes, bundleEnrRes] = await Promise.all([
+            const [enrRes, bundleEnrRes, redemptionRes] = await Promise.all([
                 enrollmentIds.length > 0
-                    ? supabase.from('enrollments').select('id, course_id').in('id', enrollmentIds)
+                    ? supabase.from('enrollments').select('id, course_id, coins_used_count, coin_redeem_amount, offer_discount_amount, coupon_id, coupon_discount_amount').in('id', enrollmentIds)
                     : Promise.resolve({ data: [], error: null }),
                 bundleEnrollmentIds.length > 0
-                    ? supabase.from('bundle_enrollments').select('id, bundle_id').in('id', bundleEnrollmentIds)
+                    ? supabase.from('bundle_enrollments').select('id, bundle_id, coins_used_count, coin_redeem_amount, offer_discount_amount, coupon_id, coupon_discount_amount').in('id', bundleEnrollmentIds)
+                    : Promise.resolve({ data: [], error: null }),
+                // Faculty's own coupon redemptions (RLS: faculty_id = auth.uid())
+                // — authoritative for coupon usage on these enrollments.
+                enrollmentIds.length > 0
+                    ? supabase.from('coupon_redemptions').select('enrollment_id, save_amount, coupons(code)').in('enrollment_id', enrollmentIds)
                     : Promise.resolve({ data: [], error: null }),
             ]);
 
             const courseIdByEnrollment = new Map((enrRes.data ?? []).map(e => [e.id, e.course_id]));
             const bundleIdByEnrollment = new Map((bundleEnrRes.data ?? []).map(b => [b.id, b.bundle_id]));
+
+            // Promotions on each sale (workflow §9):
+            //  - coupon → the faculty's OWN promotion (reduced their earning)
+            //  - coins/offer → PLATFORM-funded (earning NOT affected — the
+            //    payout base adds them back, faculty paid as if full price)
+            type SalePromo = {
+                coinsUsed: number
+                coinAmount: number
+                offerAmount: number
+                couponCode: string | null
+                couponAmount: number
+            }
+            const promoOf = (e: any): SalePromo => ({
+                coinsUsed: e.coins_used_count ?? 0,
+                coinAmount: e.coin_redeem_amount ?? 0,
+                offerAmount: e.offer_discount_amount ?? 0,
+                couponCode: null,
+                couponAmount: e.coupon_discount_amount ?? 0,
+            })
+            const promoByEnrollment = new Map((enrRes.data ?? []).map((e: any) => [e.id, promoOf(e)]));
+            const promoByBundle = new Map((bundleEnrRes.data ?? []).map((b: any) => [b.id, promoOf(b)]));
+            for (const r of (redemptionRes.data ?? []) as any[]) {
+                const p = r.enrollment_id ? promoByEnrollment.get(r.enrollment_id) : null
+                if (!p) continue
+                p.couponCode = r.coupons?.code ?? 'Coupon'
+                if (!p.couponAmount) p.couponAmount = Math.round(Number(r.save_amount ?? 0) * 100) / 100
+            }
+            const NO_PROMO: SalePromo = { coinsUsed: 0, coinAmount: 0, offerAmount: 0, couponCode: null, couponAmount: 0 }
             const courseIds = [...new Set([...courseIdByEnrollment.values()].filter(Boolean))];
             const bundleIds = [...new Set([...bundleIdByEnrollment.values()].filter(Boolean))];
 
@@ -250,20 +283,28 @@ export const bankServices = {
                 return '—';
             };
 
-            const rows = saleRows.map(r => ({
-                id: r.id,
-                transactionId: r.transaction_id ?? '—',
-                type: r.type as 'COURSE_SALE' | 'BUNDLE_SALE',
-                typeLabel: r.type === 'BUNDLE_SALE' ? 'Bundle Sale' : 'Course Sale',
-                item: itemFor(r),
-                grossAmount: r.gross_amount ?? 0,
-                grossDisplay: `₹${(r.gross_amount ?? 0).toLocaleString('en-IN')}`,
-                gstAmount: r.gst_amount ?? 0,
-                gstDisplay: `₹${(r.gst_amount ?? 0).toLocaleString('en-IN')}`,
-                commissionPercent: r.commission_percent,
-                amount: r.amount ?? 0,
-                amountDisplay: `₹${(r.amount ?? 0).toLocaleString('en-IN')}`,
-            }));
+            const rows = saleRows.map(r => {
+                const promo = r.enrollment_id
+                    ? promoByEnrollment.get(r.enrollment_id) ?? NO_PROMO
+                    : r.bundle_enrollment_id
+                        ? promoByBundle.get(r.bundle_enrollment_id) ?? NO_PROMO
+                        : NO_PROMO
+                return {
+                    id: r.id,
+                    transactionId: r.transaction_id ?? '—',
+                    type: r.type as 'COURSE_SALE' | 'BUNDLE_SALE',
+                    typeLabel: r.type === 'BUNDLE_SALE' ? 'Bundle Sale' : 'Course Sale',
+                    item: itemFor(r),
+                    grossAmount: r.gross_amount ?? 0,
+                    grossDisplay: `₹${(r.gross_amount ?? 0).toLocaleString('en-IN')}`,
+                    gstAmount: r.gst_amount ?? 0,
+                    gstDisplay: `₹${(r.gst_amount ?? 0).toLocaleString('en-IN')}`,
+                    commissionPercent: r.commission_percent,
+                    amount: r.amount ?? 0,
+                    amountDisplay: `₹${(r.amount ?? 0).toLocaleString('en-IN')}`,
+                    ...promo,
+                }
+            });
 
             const totalGst = rows.reduce((sum, r) => sum + r.gstAmount, 0);
             const totalGross = rows.reduce((sum, r) => sum + r.grossAmount, 0);

@@ -685,8 +685,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
   }
 
   const handleContentVideoFile = (file: File) => {
-    if (!file.type.startsWith('video/')) {
-      toast.error('Please upload an MP4, WebM, or MOV video')
+    // MKV files often report an empty MIME type (`file.type === ''`), so fall
+    // back to the extension rather than rejecting a valid .mkv.
+    const isVideo = file.type.startsWith('video/') || /\.mkv$/i.test(file.name)
+    if (!isVideo) {
+      toast.error('Please upload an MP4, WebM, MOV, or MKV video')
       return
     }
 
@@ -1269,11 +1272,11 @@ const Step2AcademicStructure = ({ courseId, form, update, onNext }: Props) => {
             <div className="flex flex-col gap-2">
               <label className="text-sm font-bold text-gray-700">Video *</label>
               <UploadBox
-                accept="video/mp4,video/webm,video/mov"
+                accept="video/mp4,video/webm,video/mov,video/x-matroska,.mkv"
                 preview={contentVidPreview}
                 icon={<Video size={20} />}
                 title="Upload Video"
-                hint="MP4, WebM or MOV — max 200 MB"
+                hint="MP4, WebM, MOV or MKV — max 200 MB"
                 loading={contentUploadStatus === 'uploading' || contentUploadStatus === 'saving'}
                 videoBlockedMessage={getVideoBlockedMessage(videoTranscodeStatus)}
                 error={contentErrors.video}

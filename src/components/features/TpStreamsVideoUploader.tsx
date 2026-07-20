@@ -12,7 +12,7 @@ interface Props {
 const TpStreamsVideoUploader = ({
   onSuccess,
   title = 'Intro Video',
-  hint = 'MP4, WebM or MOV — max 200 MB',
+  hint = 'MP4, WebM, MOV or MKV — max 200 MB',
   initialPreview = null,
 }: Props) => {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -84,7 +84,7 @@ const TpStreamsVideoUploader = ({
         <input
           ref={inputRef}
           type="file"
-          accept="video/mp4,video/webm,video/mov"
+          accept="video/mp4,video/webm,video/mov,video/x-matroska,.mkv"
           className="hidden"
           disabled={isLoading}
           onClick={(e) => e.stopPropagation()}
